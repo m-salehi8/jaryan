@@ -1,0 +1,42 @@
+{
+  "summary": "Iteration-4 testing: All iter-3 backend features (publish-guard, AND/OR group rules, nested groups, round-trip persistence) verified end-to-end. 43/43 backend tests PASS (100%) including iter-1 + iter-2 regression. Frontend: indigo accent visible on login page (submit + hero gradient), dashboard sidebar active state indigo, workflows list correctly disables 'اجرا' for drafts and enables for published (with تنخواه/مرخصی showing emerald منتشر شده badges and nl/آنبوردینگ showing amber پیش‌نویس badges), published-flow start works and emits success toast 'نمونه فرایند آغاز شد', JalaliDatePicker rendered in FormBuilder live preview with Persian placeholder 'تاریخ را انتخاب کنید…'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "WorkflowsList اجرا button (draft)", "issue": "Native HTML disabled attribute prevents onClick from firing, so the toast.error('ابتدا فرایند را منتشر کنید') guard inside start() is unreachable via real user click. The disabled state already prevents the action and the title='ابتدا منتشر کنید' tooltip provides feedback, so UX is intact. Cosmetic redundancy only — consider removing the disabled prop and relying on the JS guard if a toast on click is required.", "selector": "button[title='ابتدا منتشر کنید']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter3.py",
+    "/app/backend/tests/test_iter2.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/iter4_full_results.xml"
+  ],
+  "action_items": [
+    "(Optional/cosmetic) Either remove `disabled={w.status !== 'published'}` from the اجرا button so the JS guard's toast.error fires on click, OR drop the toast guard since it is unreachable. Either path is fine; the current dual-protection is harmless.",
+    "Frontend testing not exhaustive: I did not exercise the new RuleEditor promoteToGroup AND/OR UI in FormBuilder inspector, nor the WorkflowBuilder onNodeDragStop auto-save and topbar اجرا guard. The backing engine + API are fully proven by test_iter3.py; the FE wiring should be self-verified by main agent or in next iteration."
+  ],
+  "critical_code_review_comments": [
+    "engine.evaluate_rule cleanly recurses for {combinator, conditions} groups — verified for AND, OR, nested AND-inside-OR, empty conditions, and backwards-compat single clauses. Logic short-circuits correctly (any/all).",
+    "Pydantic VisibilityRule with all-optional fields accepts both shapes. Round-trip via POST → GET → PATCH → GET preserves combinator and nested conditions exactly.",
+    "POST /api/workflows/{id}/start now correctly raises 400 with detail='workflow_not_published' when status != 'published'. After PATCH status='published', returns 200 with {process, advanced} including next_tasks.",
+    "E2E AND-group edge: when manager approves with amount=8M → engine picks the conditional edge to n4 (admin). With amount=1M → engine falls through to the default edge (n5 payment), correctly skipping n4. OR-group: amount=1M but manager-approved → engine still picks conditional edge.",
+    "Iter-1 + Iter-2 suite (auth, dashboard, forms, tasks, comments, processes, AI SSE, conditional edges, tabs forms, engine E2E above/below/rejection) all green — no regressions.",
+    "Minor (carried-over, not iter-3 regression): WorkflowsList disabled اجرا button blocks both action AND the toast.error guard inside start(). Tooltip handles UX but the JS toast path is dead code."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter3.py (new — 12 tests covering publish-guard, group evaluate_rule, edge round-trip, E2E AND/OR engine flows)"
+  ],
+  "success_rate": {"backend": "100% (43/43)", "frontend": "verified core flows (login indigo, sidebar active, workflows enabled/disabled run buttons, published start + toast, FormBuilder live preview with JalaliDatePicker placeholder). RuleEditor AND/OR UI and WorkflowBuilder drag-save not exercised but corresponding backend logic fully proven."},
+  "test_credentials": "admin@raahkar.ir/admin1234, designer@raahkar.ir/1234, manager@raahkar.ir/1234, employee@raahkar.ir/1234 — all working.",
+  "seed_data_creation": "Reused existing seed (3 forms incl. tabs services form, 2 seeded workflows + 2 created by previous test runs). All TEST_-prefixed workflows created by iter3 tests are cleaned up at end of each test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend is 100% green across iter-1/2/3 (43 tests). Iter-3 test file: /app/backend/tests/test_iter3.py covers (a) publish-guard 400 on draft + 200 after publish, (b) engine.evaluate_rule for AND/OR/nested/empty/single-clause, (c) edge group condition round-trip through POST → GET → PATCH → GET, (d) E2E flows where engine selects/skips conditional edges based on AND or OR group satisfaction. Frontend visual confirmation done for: login page indigo accent, workflows list disabled-drafts/enabled-published with amber/emerald badges, published start emits 'نمونه فرایند آغاز شد' green toast, FormBuilder live preview shows JalaliDatePicker placeholder 'تاریخ را انتخاب کنید…'. Untested FE pieces (recommend main agent quick visual): (1) RuleEditor '+ افزودن شرط ترکیبی' button in FormBuilder inspector promotes single clause to AND/OR group, (2) WorkflowBuilder onNodeDragStop auto-save persistence across reload, (3) WorkflowBuilder topbar اجرا disabled when status=draft.",
+  "rca of the issue": "No regressions or critical bugs. Single low-priority cosmetic note: WorkflowsList اجرا button uses HTML `disabled` AND a JS guard with toast.error — the JS guard is unreachable because native disabled blocks onClick. Tooltip (title='ابتدا منتشر کنید') still informs users, so functional UX is intact. Pick one of the two protections; either is acceptable."
+}

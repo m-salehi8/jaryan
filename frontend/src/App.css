@@ -1,0 +1,4 @@
+/* App-level styles intentionally minimal. Most styling is via Tailwind / index.css. */
+.App {
+    min-height: 100%;
+}
