@@ -1,0 +1,14 @@
+# Git
+.git
+.gitconfig
+.gitignore
+
+# Docs
+README.md
+*.md
+
+# Emergent
+.emergent
+
+# Docker files themselves (don't nest)
+docker-compose.yml

@@ -18,7 +18,17 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [lastWorkflow, setLastWorkflow] = useState(null);
-  const [sessionId] = useState(() => crypto.randomUUID());
+const [sessionId] = useState(() => {
+    // crypto.randomUUID() only works on HTTPS or localhost
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    // Fallback UUID v4 for plain HTTP
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  });
   const scrollerRef = useRef(null);
 
   useEffect(() => {
