@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Clock, Workflow, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { fromNow, toJalaliDateTime, toFaNumber } from "@/lib/jalali";
+import { getSLAStatus } from "@/lib/sla";
 
 const STATUS_META = {
   running:   { label: "در حال اجرا", cls: "bg-emerald-50 text-emerald-700 border-emerald-100", dot: "bg-emerald-500 animate-pulse" },
@@ -69,7 +70,12 @@ export default function ProcessMonitoring() {
                   >
                     <div className="flex items-center gap-2">
                       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                      <div className="text-sm font-medium text-neutral-900 truncate flex-1">{p.workflow_name}</div>
+                      <div className="text-sm font-medium text-neutral-900 truncate flex-1 flex items-center gap-1.5">
+                        {p.workflow_name}
+                        {detail?.process?.id === p.id && detail?.tasks?.some(t => getSLAStatus(t.deadline, t.status) === "overdue") && (
+                          <span className="w-2 h-2 rounded-full bg-red-500 inline-block shrink-0" />
+                        )}
+                      </div>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${s.cls}`}>{s.label}</span>
                     </div>
                     <div className="text-[11px] text-neutral-500 mt-1.5 flex items-center gap-2">

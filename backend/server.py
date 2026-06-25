@@ -4,9 +4,10 @@ FastAPI entry point. All routes prefixed with /api.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, FastAPI, HTTPException, Query, status
@@ -35,6 +36,8 @@ from models import (
     Task,
     TaskUpdate,
     User,
+    UserCreate,
+    UserRoleUpdate,
     Workflow,
     WorkflowCreate,
     WorkflowUpdate,
@@ -90,6 +93,53 @@ async def me(user: User = CurrentUser):
 async def list_users(user: User = CurrentUser):
     rows = await db.users.find({"org_id": user.org_id}, {"_id": 0, "password_hash": 0}).to_list(1000)
     return rows
+
+
+@api.post("/users")
+async def create_user(payload: UserCreate, user: User = CurrentUser):
+    if user.role != "ادمین سازمان":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+    existing = await db.users.find_one({"email": payload.email})
+    if existing:
+        raise HTTPException(status.HTTP_409_CONFLICT, "email_already_exists")
+    new_user = User(
+        org_id=user.org_id,
+        email=payload.email,
+        full_name=payload.full_name,
+        role=payload.role,
+        password_hash=hash_password(payload.password),
+    )
+    await db.users.insert_one(new_user.to_mongo())
+    await _activity(user, "user.created", "user", new_user.id, f"کاربر «{new_user.full_name}» اضافه شد")
+    return public_user(new_user)
+
+
+@api.patch("/users/{uid}")
+async def update_user_role(uid: str, payload: UserRoleUpdate, user: User = CurrentUser):
+    if user.role != "ادمین سازمان":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+    doc = await db.users.find_one({"id": uid, "org_id": user.org_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "user_not_found")
+    await db.users.update_one(
+        {"id": uid, "org_id": user.org_id},
+        {"$set": {"role": payload.role, "updated_at": now_iso()}},
+    )
+    updated = await db.users.find_one({"id": uid, "org_id": user.org_id}, {"_id": 0, "password_hash": 0})
+    return updated
+
+
+@api.delete("/users/{uid}")
+async def delete_user(uid: str, user: User = CurrentUser):
+    if user.role != "ادمین سازمان":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+    if uid == user.id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "cannot_delete_self")
+    doc = await db.users.find_one({"id": uid, "org_id": user.org_id})
+    if not doc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "user_not_found")
+    await db.users.delete_one({"id": uid, "org_id": user.org_id})
+    return {"deleted": True}
 
 
 # ---------- Workflows ----------
@@ -335,6 +385,170 @@ async def dashboard(user: User = CurrentUser):
         "running_processes": running,
         "activities": activities,
         "recommendations": recommendations,
+    }
+
+
+# ---------- Global Search ----------
+@api.get("/search")
+async def search(q: str = Query(min_length=2), user: User = CurrentUser):
+    org = user.org_id
+    pattern = {"$regex": q, "$options": "i"}
+
+    tasks_query = db.tasks.find(
+        {"org_id": org, "$or": [{"title": pattern}, {"workflow_name": pattern}]},
+        {"_id": 0, "id": 1, "title": 1, "workflow_name": 1, "status": 1},
+    ).limit(5).to_list(5)
+
+    processes_query = db.process_instances.find(
+        {"org_id": org, "workflow_name": pattern},
+        {"_id": 0, "id": 1, "workflow_name": 1, "status": 1},
+    ).limit(5).to_list(5)
+
+    forms_query = db.forms.find(
+        {"org_id": org, "name": pattern},
+        {"_id": 0, "id": 1, "name": 1, "description": 1},
+    ).limit(5).to_list(5)
+
+    tasks_raw, processes_raw, forms_raw = await asyncio.gather(
+        tasks_query, processes_query, forms_query
+    )
+
+    return {
+        "tasks": [
+            {"type": "task", "id": t["id"], "title": t.get("title", ""), "subtitle": t.get("workflow_name", "")}
+            for t in tasks_raw
+        ],
+        "processes": [
+            {"type": "process", "id": p["id"], "title": p.get("workflow_name", ""), "subtitle": p.get("status", "")}
+            for p in processes_raw
+        ],
+        "forms": [
+            {"type": "form", "id": f["id"], "title": f.get("name", ""), "subtitle": f.get("description", "") or ""}
+            for f in forms_raw
+        ],
+    }
+
+
+# ---------- Analytics Dashboard ----------
+
+@api.get("/analytics/dashboard")
+async def analytics_dashboard(user: User = CurrentUser):
+    import jdatetime
+
+    now = datetime.now(timezone.utc)
+    thirty_days_ago = now - timedelta(days=30)
+    thirty_days_ago_iso = thirty_days_ago.isoformat()
+
+    def _parse_iso(s: str) -> datetime:
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    # ---------- Build the 30 Jalali day keys up front ----------
+    day_keys: list[str] = []
+    for i in range(29, -1, -1):
+        dt = now - timedelta(days=i)
+        jd = jdatetime.datetime.fromgregorian(datetime=dt)
+        day_keys.append(f"{jd.year}-{jd.month:02d}-{jd.day:02d}")
+
+    # ---------- Define all 4 coroutines ----------
+    async def _daily_processes():
+        pi_docs = await db.process_instances.find(
+            {"org_id": user.org_id, "created_at": {"$gte": thirty_days_ago_iso}},
+            {"_id": 0, "created_at": 1},
+        ).to_list(10000)
+        counts: dict[str, int] = {k: 0 for k in day_keys}
+        for doc in pi_docs:
+            raw = doc.get("created_at", "")
+            try:
+                dt = _parse_iso(raw)
+                jd = jdatetime.datetime.fromgregorian(datetime=dt)
+                key = f"{jd.year}-{jd.month:02d}-{jd.day:02d}"
+                if key in counts:
+                    counts[key] += 1
+            except Exception:
+                pass
+        return [{"date": k, "count": counts[k]} for k in day_keys]
+
+    async def _task_status_dist():
+        status_keys = ["pending", "in_progress", "approved", "rejected", "done"]
+        dist: dict[str, int] = {s: 0 for s in status_keys}
+        pipeline = [
+            {"$match": {"org_id": user.org_id}},
+            {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+        ]
+        async for bucket in db.tasks.aggregate(pipeline):
+            s = bucket["_id"]
+            if s in dist:
+                dist[s] = bucket["count"]
+        return dist
+
+    async def _top_users():
+        pipeline = [
+            {"$match": {"org_id": user.org_id, "status": {"$in": ["pending", "in_progress"]}, "assignee_id": {"$ne": None}}},
+            {"$group": {"_id": "$assignee_id", "task_count": {"$sum": 1}}},
+            {"$sort": {"task_count": -1}},
+            {"$limit": 5},
+        ]
+        top_assignees = []
+        async for doc in db.tasks.aggregate(pipeline):
+            top_assignees.append({"user_id": doc["_id"], "task_count": doc["task_count"]})
+
+        result = []
+        for entry in top_assignees:
+            u_doc = await db.users.find_one(
+                {"id": entry["user_id"], "org_id": user.org_id},
+                {"_id": 0, "full_name": 1, "role": 1},
+            )
+            result.append({
+                "user_id": entry["user_id"],
+                "full_name": u_doc["full_name"] if u_doc else entry["user_id"],
+                "role": u_doc["role"] if u_doc else None,
+                "task_count": entry["task_count"],
+            })
+        return result
+
+    async def _avg_completion_minutes():
+        completed_docs = await db.process_instances.find(
+            {
+                "org_id": user.org_id,
+                "status": "completed",
+                "updated_at": {"$gte": thirty_days_ago_iso},
+            },
+            {"_id": 0, "created_at": 1, "updated_at": 1},
+        ).to_list(10000)
+        if not completed_docs:
+            return None
+        total_minutes = 0.0
+        valid_count = 0
+        for doc in completed_docs:
+            try:
+                created = _parse_iso(doc["created_at"])
+                updated = _parse_iso(doc["updated_at"])
+                delta_minutes = (updated - created).total_seconds() / 60.0
+                if delta_minutes >= 0:
+                    total_minutes += delta_minutes
+                    valid_count += 1
+            except Exception:
+                pass
+        return round(total_minutes / valid_count, 2) if valid_count > 0 else None
+
+    # ---------- Run all 4 queries in parallel ----------
+    daily_processes, task_status_dist, top_users, avg_completion_minutes = await asyncio.gather(
+        _daily_processes(),
+        _task_status_dist(),
+        _top_users(),
+        _avg_completion_minutes(),
+    )
+
+    return {
+        "daily_processes": daily_processes,
+        "task_status_dist": task_status_dist,
+        "top_users": top_users,
+        "avg_completion_minutes": avg_completion_minutes,
     }
 
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toJalaliDateTime, toJalaliShort, fromNow, toFaNumber } from "@/lib/jalali";
 import FormRenderer from "@/components/FormRenderer";
+import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
 
 const FILTERS = [
   { key: "all", label: "همه" },
@@ -160,6 +161,7 @@ export default function Inbox() {
                       <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[t.priority]}`} />
                       <div className="text-sm font-medium text-neutral-900 truncate flex-1">{t.title}</div>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${s.cls}`}>{s.label}</span>
+                      {(() => { const sla = getSLAStatus(t.deadline, t.status); return sla ? <span data-testid={`sla-${sla}-${t.id}`} className={`text-[10px] px-1.5 py-0.5 rounded-md ${SLA_BADGE[sla].cls}`}>{SLA_BADGE[sla].label}</span> : null; })()}
                     </div>
                     <div className="flex items-center gap-2 mt-1.5 text-[11px] text-neutral-500">
                       <span className="truncate">{t.workflow_name}</span>

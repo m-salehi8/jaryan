@@ -50,6 +50,17 @@ class LoginResponse(BaseModel):
     user: UserPublic
 
 
+class UserCreate(BaseModel):
+    full_name: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+    role: RoleFa
+    password: str = Field(min_length=6, max_length=128)
+
+
+class UserRoleUpdate(BaseModel):
+    role: RoleFa
+
+
 # ---------- Workflow ----------
 
 

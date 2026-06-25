@@ -7,6 +7,7 @@ import {
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { toFaNumber, fromNow, toJalaliShort } from "@/lib/jalali";
+import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
 
 const PriorityBadge = ({ p }) => {
   const map = {
@@ -95,6 +96,17 @@ export default function Dashboard() {
                       <div className="text-[11px] text-neutral-500 mt-0.5">{t.workflow_name}</div>
                     </div>
                     <PriorityBadge p={t.priority} />
+                    {(() => {
+                      const sla = getSLAStatus(t.deadline, t.status);
+                      return sla ? (
+                        <span
+                          data-testid={`sla-${sla}-${t.id}`}
+                          className={`text-[10px] px-1.5 py-0.5 rounded-md border ${SLA_BADGE[sla].cls}`}
+                        >
+                          {SLA_BADGE[sla].label}
+                        </span>
+                      ) : null;
+                    })()}
                     {t.deadline && (
                       <div className="text-[11px] text-neutral-500 fa-nums hidden sm:block">{toJalaliShort(t.deadline)}</div>
                     )}

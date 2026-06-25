@@ -10,6 +10,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useBadge } from "@/lib/badgeContext";
 import { toFaNumber } from "@/lib/jalali";
 
 const NAV = [
@@ -23,6 +24,7 @@ const NAV = [
 
 function Sidebar() {
   const { user, logout } = useAuth();
+  const { pendingCount } = useBadge();
   const navigate = useNavigate();
 
   return (
@@ -59,6 +61,14 @@ function Sidebar() {
             >
               <Icon className="w-4 h-4" />
               <span>{item.label}</span>
+              {item.to === "/inbox" && pendingCount > 0 && (
+                <span
+                  data-testid="badge-inbox"
+                  className="ms-auto text-[10px] bg-red-500 text-white rounded-full px-1.5 min-w-[18px] text-center leading-5"
+                >
+                  {pendingCount > 99 ? "+۹۹" : toFaNumber(pendingCount)}
+                </span>
+              )}
             </NavLink>
           );
         })}

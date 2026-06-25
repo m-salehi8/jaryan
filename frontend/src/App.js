@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { BadgeProvider } from "@/lib/badgeContext";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -66,10 +67,12 @@ export default function App() {
   return (
     <div className="App" dir="rtl" lang="fa">
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-          <Toaster position="top-center" dir="rtl" richColors />
-        </BrowserRouter>
+        <BadgeProvider>
+          <BrowserRouter>
+            <AppRoutes />
+            <Toaster position="top-center" dir="rtl" richColors />
+          </BrowserRouter>
+        </BadgeProvider>
       </AuthProvider>
     </div>
   );
