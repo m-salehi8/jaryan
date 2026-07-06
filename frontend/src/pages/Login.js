@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isAdmin } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,9 +25,9 @@ export default function Login() {
     e?.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       toast.success("خوش آمدید");
-      nav("/");
+      nav(isAdmin(loggedInUser) ? "/admin" : "/");
     } catch (err) {
       toast.error("ایمیل یا رمز عبور نادرست است");
     } finally {

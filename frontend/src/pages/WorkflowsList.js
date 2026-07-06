@@ -40,7 +40,7 @@ export default function WorkflowsList() {
     toast.success("فرایند ایجاد شد");
     setOpen(false);
     setName("");
-    nav(`/workflows/${r.data.id}`);
+    nav(`/admin/workflows/${r.data.id}`);
   };
 
   const start = async (id, status) => {
@@ -133,7 +133,7 @@ export default function WorkflowsList() {
                   <div className="w-8 h-8 rounded-md bg-neutral-100 grid place-items-center">
                     <Workflow className="w-4 h-4 text-neutral-700" />
                   </div>
-                  <Link to={`/workflows/${w.id}`} className="flex-1 min-w-0">
+                  <Link to={`/admin/workflows/${w.id}`} className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-neutral-900 truncate">{w.name}</div>
                     <div className="text-[11px] text-neutral-500 truncate">{w.description || "بدون توضیح"}</div>
                   </Link>

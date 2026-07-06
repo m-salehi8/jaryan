@@ -61,7 +61,7 @@ export default function TemplateLibraryModal({ open, onClose }) {
       const r = await api.post("/workflows", payload);
       toast.success("فرایند از تمپلیت ایجاد شد");
       onClose();
-      nav(`/workflows/${r.data.id}`);
+      nav(`/admin/workflows/${r.data.id}`);
     } catch {
       toast.error("خطا در ایجاد فرایند. دوباره تلاش کنید.");
     } finally {

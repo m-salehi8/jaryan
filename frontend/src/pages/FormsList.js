@@ -23,7 +23,7 @@ export default function FormsList() {
     const r = await api.post("/forms", { name, description: "", fields: [] });
     toast.success("فرم ایجاد شد");
     setOpen(false); setName("");
-    nav(`/forms/${r.data.id}`);
+    nav(`/admin/forms/${r.data.id}`);
   };
 
   const filtered = rows.filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
@@ -69,7 +69,7 @@ export default function FormsList() {
           <ul>
             {filtered.map((f) => (
               <li key={f.id} className="row-hover border-b border-neutral-100 last:border-0" data-testid={`form-row-${f.id}`}>
-                <Link to={`/forms/${f.id}`} className="flex items-center gap-3 px-4 py-3">
+                <Link to={`/admin/forms/${f.id}`} className="flex items-center gap-3 px-4 py-3">
                   <div className="w-8 h-8 rounded-md bg-neutral-100 grid place-items-center">
                     <FileText className="w-4 h-4 text-neutral-700" />
                   </div>

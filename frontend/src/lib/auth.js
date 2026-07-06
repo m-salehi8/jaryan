@@ -37,3 +37,5 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
+
+export const isAdmin = (user) => user?.role === "ادمین سازمان";

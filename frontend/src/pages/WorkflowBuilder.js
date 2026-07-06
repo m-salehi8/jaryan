@@ -121,7 +121,7 @@ export default function WorkflowBuilder() {
         setEdges(rf.edges);
         setForms(f.data);
       })
-      .catch(() => { toast.error("فرایند یافت نشد"); nav("/workflows"); });
+      .catch(() => { toast.error("فرایند یافت نشد"); nav("/admin/workflows"); });
   }, [id, nav]);
 
   // Handlers
@@ -220,7 +220,7 @@ export default function WorkflowBuilder() {
       {/* Topbar */}
       <div className="border-b border-neutral-200 bg-white px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/workflows" className="text-neutral-400 hover:text-neutral-900">
+          <Link to="/admin/workflows" className="text-neutral-400 hover:text-neutral-900">
             <ArrowRight className="w-4 h-4" />
           </Link>
           <input

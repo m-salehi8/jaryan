@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { AuthProvider, useAuth, isAdmin } from "@/lib/auth";
 import { BadgeProvider } from "@/lib/badgeContext";
 import Layout from "@/components/Layout";
-import CommandPalette from "@/components/CommandPalette";
+import AdminLayout from "@/components/AdminLayout";
+import AdminRoute from "@/components/AdminRoute";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Chat from "@/pages/Chat";
@@ -35,15 +35,40 @@ function RequireAuth({ children }) {
 function RedirectIfAuthed({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  // Redirect admins to their panel, other users to client panel
+  if (user) return <Navigate to={isAdmin(user) ? "/admin" : "/"} replace />;
   return children;
 }
 
 function AppRoutes() {
   return (
     <Routes>
+      {/* ─── Auth ─── */}
       <Route path="/login" element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
+
+      {/* ─── Mobile view (standalone) ─── */}
       <Route path="/mobile" element={<RequireAuth><MobileApprovals /></RequireAuth>} />
+
+      {/* ─── Admin panel: /admin/* ─── */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="workflows" element={<WorkflowsList />} />
+        <Route path="workflows/:id" element={<WorkflowBuilder />} />
+        <Route path="forms" element={<FormsList />} />
+        <Route path="forms/:id" element={<FormBuilder />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="monitoring" element={<ProcessMonitoring />} />
+      </Route>
+
+      {/* ─── Client panel: / ─── */}
       <Route
         path="/"
         element={
@@ -53,12 +78,6 @@ function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="chat" element={<Chat />} />
-        <Route path="workflows" element={<WorkflowsList />} />
-        <Route path="workflows/:id" element={<WorkflowBuilder />} />
-        <Route path="forms" element={<FormsList />} />
-        <Route path="forms/:id" element={<FormBuilder />} />
-        <Route path="users" element={<RequireAuth><UserManagement /></RequireAuth>} />
         <Route path="inbox" element={<Inbox />} />
         <Route path="monitoring" element={<ProcessMonitoring />} />
       </Route>

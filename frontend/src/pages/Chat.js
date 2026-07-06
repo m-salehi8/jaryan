@@ -82,7 +82,7 @@ const [sessionId] = useState(() => {
         edges: lastWorkflow.edges || [],
       });
       toast.success("فرایند ذخیره شد. درحال انتقال به ویرایشگر…");
-      setTimeout(() => nav(`/workflows/${r.data.id}`), 400);
+      setTimeout(() => nav(`/admin/workflows/${r.data.id}`), 400);
     } catch (e) {
       toast.error("خطا در ذخیره فرایند");
     }

@@ -1,15 +1,10 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Sparkles,
-  Workflow,
-  FileText,
   Inbox,
   Activity,
   Smartphone,
   LogOut,
-  Users,
-  Search,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBadge } from "@/lib/badgeContext";
@@ -17,9 +12,6 @@ import { toFaNumber } from "@/lib/jalali";
 
 const NAV = [
   { to: "/", icon: LayoutDashboard, label: "داشبورد", end: true, testId: "nav-dashboard" },
-  { to: "/chat", icon: Sparkles, label: "ساخت با هوش مصنوعی", testId: "nav-chat" },
-  { to: "/workflows", icon: Workflow, label: "فرایندها", testId: "nav-workflows" },
-  { to: "/forms", icon: FileText, label: "فرم‌ها", testId: "nav-forms" },
   { to: "/inbox", icon: Inbox, label: "کارتابل", testId: "nav-inbox" },
   { to: "/monitoring", icon: Activity, label: "پایش زنده", testId: "nav-monitoring" },
 ];
@@ -74,22 +66,7 @@ function Sidebar() {
             </NavLink>
           );
         })}
-        {user?.role === "ادمین سازمان" && (
-          <NavLink
-            to="/users"
-            data-testid="nav-users"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-brand text-white shadow-[0_4px_14px_rgba(79,70,229,0.25)]"
-                  : "text-neutral-700 hover:bg-neutral-100"
-              }`
-            }
-          >
-            <Users className="w-4 h-4" />
-            <span>مدیریت کاربران</span>
-          </NavLink>
-        )}
+
         <a
           href="/mobile"
           target="_blank"

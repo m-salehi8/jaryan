@@ -9,7 +9,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isAdmin } from "@/lib/auth";
 import { toFaNumber, fromNow, toJalaliShort } from "@/lib/jalali";
 import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
 
@@ -52,14 +52,16 @@ export default function Dashboard() {
           </h1>
           <p className="text-sm text-neutral-500 mt-1">یک نگاه سریع به وضعیت فرایندهای سازمان شما.</p>
         </div>
-        <Link
-          to="/chat"
-          data-testid="dashboard-ai-cta"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-strong text-white text-sm font-semibold shadow-[0_4px_14px_rgba(79,70,229,0.25)] transition-all"
-        >
-          <Sparkles className="w-4 h-4" />
-          ساخت فرایند با هوش مصنوعی
-        </Link>
+        {isAdmin(user) && (
+          <Link
+            to="/admin/chat"
+            data-testid="dashboard-ai-cta"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-strong text-white text-sm font-semibold shadow-[0_4px_14px_rgba(79,70,229,0.25)] transition-all"
+          >
+            <Sparkles className="w-4 h-4" />
+            ساخت فرایند با هوش مصنوعی
+          </Link>
+        )}
       </div>
 
       {/* Counters */}
@@ -142,7 +144,7 @@ export default function Dashboard() {
             )}
           </SectionCard>
 
-          <SectionCard title="فرایندهای زنده" link="/monitoring" linkLabel="پایش زنده" testId="section-running">
+          <SectionCard title="فرایندهای زنده" link={isAdmin(user) ? "/admin/monitoring" : "/monitoring"} linkLabel="پایش زنده" testId="section-running">
             {data.running_processes.length === 0 ? (
               <Empty text="هیچ فرایندی در حال اجرا نیست." />
             ) : (

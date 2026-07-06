@@ -73,7 +73,7 @@ export default function FormBuilder() {
         visible_if: null, ...f,
       }));
       setForm({ ...r.data, fields: normalized });
-    }).catch(() => { toast.error("فرم یافت نشد"); nav("/forms"); });
+    }).catch(() => { toast.error("فرم یافت نشد"); nav("/admin/forms"); });
   }, [id, nav]);
 
   const save = async () => {
@@ -133,7 +133,7 @@ export default function FormBuilder() {
       {/* Topbar */}
       <div className="border-b border-neutral-200 bg-white px-6 py-3 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/forms" className="text-neutral-400 hover:text-neutral-900"><ArrowRight className="w-4 h-4" /></Link>
+          <Link to="/admin/forms" className="text-neutral-400 hover:text-neutral-900"><ArrowRight className="w-4 h-4" /></Link>
           <input
             data-testid="form-name"
             value={form.name}
