@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -10,14 +11,16 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import ProductTour from "@/components/onboarding/ProductTour";
 
 const ADMIN_NAV = [
-  { to: "/admin", icon: LayoutDashboard, label: "داشبورد", end: true, testId: "admin-nav-dashboard" },
-  { to: "/admin/chat", icon: Sparkles, label: "ساخت با هوش مصنوعی", testId: "admin-nav-chat" },
-  { to: "/admin/workflows", icon: Workflow, label: "فرایندها", testId: "admin-nav-workflows" },
-  { to: "/admin/forms", icon: FileText, label: "فرم‌ها", testId: "admin-nav-forms" },
-  { to: "/admin/monitoring", icon: Activity, label: "پایش زنده", testId: "admin-nav-monitoring" },
-  { to: "/admin/users", icon: Users, label: "مدیریت کاربران", testId: "admin-nav-users" },
+  { to: "/admin", icon: LayoutDashboard, label: "داشبورد", end: true, testId: "admin-nav-dashboard", tourId: null },
+  { to: "/admin/chat", icon: Sparkles, label: "ساخت با هوش مصنوعی", testId: "admin-nav-chat", tourId: "tour-nav-chat" },
+  { to: "/admin/workflows", icon: Workflow, label: "فرایندها", testId: "admin-nav-workflows", tourId: "tour-nav-workflows" },
+  { to: "/admin/forms", icon: FileText, label: "فرم‌ها", testId: "admin-nav-forms", tourId: null },
+  { to: "/admin/monitoring", icon: Activity, label: "پایش زنده", testId: "admin-nav-monitoring", tourId: null },
+  { to: "/admin/users", icon: Users, label: "مدیریت کاربران", testId: "admin-nav-users", tourId: "tour-nav-inbox" },
 ];
 
 function AdminSidebar() {
@@ -65,6 +68,7 @@ function AdminSidebar() {
               to={item.to}
               end={item.end}
               data-testid={item.testId}
+              data-tour-id={item.tourId || undefined}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
@@ -175,6 +179,23 @@ function AdminMobileBottomNav() {
 }
 
 export default function AdminLayout() {
+  const { hasSeen, markTourSeen, restartTour } = useOnboarding();
+  const [tourOpen, setTourOpen] = useState(!hasSeen);
+
+  const handleTourClose = () => {
+    setTourOpen(false);
+    markTourSeen();
+  };
+
+  // Expose restartTour via window so Dashboard's QuickStartWidget can trigger it
+  useEffect(() => {
+    window.__jaryanRestartTour = () => {
+      restartTour();
+      setTourOpen(true);
+    };
+    return () => { delete window.__jaryanRestartTour; };
+  }, [restartTour]);
+
   return (
     <div className="flex min-h-screen bg-[#f5f5ff]">
       <AdminSidebar />
@@ -185,6 +206,9 @@ export default function AdminLayout() {
         </div>
         <AdminMobileBottomNav />
       </main>
+
+      {/* Product Tour — rendered at layout level so it overlays everything */}
+      <ProductTour active={tourOpen} onClose={handleTourClose} />
     </div>
   );
 }

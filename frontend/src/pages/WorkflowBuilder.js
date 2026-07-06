@@ -216,7 +216,7 @@ export default function WorkflowBuilder() {
   if (!wf) return <div className="p-10 text-sm text-neutral-400">در حال بارگذاری…</div>;
 
   return (
-    <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="builder-root">
+    <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="builder-root" data-tour-id="tour-workflow-canvas">
       {/* Topbar */}
       <div className="border-b border-neutral-200 bg-white px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">

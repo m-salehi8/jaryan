@@ -92,7 +92,7 @@ export default function Inbox() {
   };
 
   return (
-    <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="inbox-root">
+    <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="inbox-root" data-tour-id="tour-inbox-root">
       <div className="border-b border-neutral-200 bg-white px-6 py-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <InboxIcon className="w-4 h-4" />

@@ -12,6 +12,8 @@ import { api } from "@/lib/api";
 import { useAuth, isAdmin } from "@/lib/auth";
 import { toFaNumber, fromNow, toJalaliShort } from "@/lib/jalali";
 import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import QuickStartWidget from "@/components/onboarding/QuickStartWidget";
 
 const PriorityBadge = ({ p }) => {
   const map = {
@@ -30,6 +32,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { widgetDismissed, dismissWidget } = useOnboarding();
 
   useEffect(() => {
     api.get("/dashboard").then(r => setData(r.data)).finally(() => setLoading(false));
@@ -42,7 +45,16 @@ export default function Dashboard() {
   const c = data.counters;
 
   return (
-    <div className="p-6 lg:p-10 max-w-[1400px] mx-auto" data-testid="dashboard-root">
+    <div className="p-6 lg:p-10 max-w-[1400px] mx-auto" data-testid="dashboard-root" data-tour-id="tour-dashboard">
+
+      {/* Quick Start Widget — admin only, dismissible */}
+      {isAdmin(user) && !widgetDismissed && (
+        <QuickStartWidget
+          onDismiss={dismissWidget}
+          onStartTour={() => window.__jaryanRestartTour?.()}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-end justify-between flex-wrap gap-4 mb-8 animate-in">
         <div>
