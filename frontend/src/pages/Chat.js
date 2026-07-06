@@ -100,7 +100,7 @@ const [sessionId] = useState(() => {
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-neutral-900" />
           <h1 className="text-sm font-semibold">ساخت فرایند با هوش مصنوعی</h1>
-          <span className="mono text-[10px] text-neutral-400 ms-2">Claude Sonnet 4.6</span>
+          <span className="mono text-[10px] text-neutral-400 ms-2">Kimi K2.5</span>
         </div>
       </div>
 

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Workflow, Search, Play, MoreHorizontal } from "lucide-react";
+import { Plus, Workflow, Search, Play, MoreHorizontal, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fromNow } from "@/lib/jalali";
+import TemplateLibraryModal from "@/components/TemplateLibraryModal";
 
 const STATUS_LABEL = { draft: "پیش‌نویس", published: "منتشر شده", archived: "بایگانی" };
 
@@ -16,6 +17,7 @@ export default function WorkflowsList() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [templateOpen, setTemplateOpen] = useState(false);
   const nav = useNavigate();
 
   const load = () => {
@@ -65,7 +67,16 @@ export default function WorkflowsList() {
           <h1 className="text-2xl font-bold text-neutral-900">طراحی فرایند</h1>
           <p className="text-sm text-neutral-500 mt-1">فرایندهای سازمانت را روی بوم بصری بساز و منتشر کن.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <Button
+            data-testid="from-template-btn"
+            variant="outline"
+            onClick={() => setTemplateOpen(true)}
+            className="font-semibold"
+          >
+            <Sparkles className="w-4 h-4 me-2" /> از تمپلیت شروع کن
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button data-testid="new-workflow-btn" className="bg-brand hover:bg-brand-strong text-white font-semibold shadow-[0_4px_14px_rgba(79,70,229,0.25)]">
               <Plus className="w-4 h-4 me-2" /> فرایند جدید
@@ -89,7 +100,10 @@ export default function WorkflowsList() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      <TemplateLibraryModal open={templateOpen} onClose={() => setTemplateOpen(false)} />
 
       <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-200">

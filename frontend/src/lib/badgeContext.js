@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -10,7 +10,7 @@ export function BadgeProvider({ children }) {
   const retryCountRef = useRef(0);
   const timerRef = useRef(null);
 
-  const fetchBadge = async () => {
+  const fetchBadge = useCallback(async () => {
     try {
       const r = await api.get("/tasks?assigned_to_me=true&status=pending");
       setPendingCount(r.data.length);
@@ -21,7 +21,7 @@ export function BadgeProvider({ children }) {
         setTimeout(fetchBadge, 10000);
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -54,7 +54,7 @@ export function BadgeProvider({ children }) {
       clearInterval(timerRef.current);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [user]);
+  }, [fetchBadge, user]);
 
   return <BadgeContext.Provider value={{ pendingCount }}>{children}</BadgeContext.Provider>;
 }

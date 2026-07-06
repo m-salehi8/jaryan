@@ -50,7 +50,7 @@ export default function Inbox() {
     }).finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [assignedToMe]);
+  useEffect(() => { load(); }, [assignedToMe]);
 
   useEffect(() => {
     if (!activeId) { setComments([]); return; }

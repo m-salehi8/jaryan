@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { BadgeProvider } from "@/lib/badgeContext";
 import Layout from "@/components/Layout";
+import CommandPalette from "@/components/CommandPalette";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Chat from "@/pages/Chat";
@@ -14,6 +15,7 @@ import FormBuilder from "@/pages/FormBuilder";
 import Inbox from "@/pages/Inbox";
 import ProcessMonitoring from "@/pages/ProcessMonitoring";
 import MobileApprovals from "@/pages/MobileApprovals";
+import UserManagement from "@/pages/UserManagement";
 import "@/App.css";
 
 function RequireAuth({ children }) {
@@ -56,6 +58,7 @@ function AppRoutes() {
         <Route path="workflows/:id" element={<WorkflowBuilder />} />
         <Route path="forms" element={<FormsList />} />
         <Route path="forms/:id" element={<FormBuilder />} />
+        <Route path="users" element={<RequireAuth><UserManagement /></RequireAuth>} />
         <Route path="inbox" element={<Inbox />} />
         <Route path="monitoring" element={<ProcessMonitoring />} />
       </Route>

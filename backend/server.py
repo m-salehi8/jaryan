@@ -48,6 +48,8 @@ from seed import seed as seed_data
 from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
 
 EMERGENT_LLM_KEY = os.environ["EMERGENT_LLM_KEY"]
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:20128/v1")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "cf/@cf/moonshotai/kimi-k2.5")
 
 app = FastAPI(title="Raahkar API")
 api = APIRouter(prefix="/api")
@@ -625,7 +627,8 @@ async def generate_workflow(payload: ChatGenerateRequest, user: User = CurrentUs
         api_key=EMERGENT_LLM_KEY,
         session_id=session_id,
         system_message=SYSTEM_PROMPT,
-    ).with_model("anthropic", "claude-sonnet-4-6")
+        base_url=OPENAI_BASE_URL,
+    ).with_model("custom", OPENAI_MODEL)
 
     async def event_gen():
         full_text = ""

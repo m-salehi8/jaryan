@@ -1,0 +1,39 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────
+# Docker Compose — Development Mode (Native)
+# ─────────────────────────────────────────────
+# Only MongoDB runs in Docker.
+# Backend and Frontend run natively on the host.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Then start backend and frontend manually:
+#   cd backend && source .venv/bin/activate && uvicorn server:app --reload --port 8000
+#   cd frontend && yarn start
+
+services:
+  # ─────────────────────────────
+  # MongoDB only
+  # ─────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: raahkar_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: raahkar
+    volumes:
+      - mongo_data_dev:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  mongo_data_dev:
+    driver: local

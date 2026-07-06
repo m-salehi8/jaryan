@@ -8,6 +8,8 @@ import {
   Activity,
   Smartphone,
   LogOut,
+  Users,
+  Search,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBadge } from "@/lib/badgeContext";
@@ -72,6 +74,22 @@ function Sidebar() {
             </NavLink>
           );
         })}
+        {user?.role === "ادمین سازمان" && (
+          <NavLink
+            to="/users"
+            data-testid="nav-users"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-brand text-white shadow-[0_4px_14px_rgba(79,70,229,0.25)]"
+                  : "text-neutral-700 hover:bg-neutral-100"
+              }`
+            }
+          >
+            <Users className="w-4 h-4" />
+            <span>مدیریت کاربران</span>
+          </NavLink>
+        )}
         <a
           href="/mobile"
           target="_blank"
@@ -129,6 +147,7 @@ function MobileTopbar() {
 }
 
 function MobileBottomNav() {
+  const { pendingCount } = useBadge();
   return (
     <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-neutral-200 grid grid-cols-5">
       {NAV.slice(0, 5).map((item) => {
@@ -140,12 +159,22 @@ function MobileBottomNav() {
             end={item.end}
             data-testid={`m-${item.testId}`}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 py-2 text-[10px] ${
+              `relative flex flex-col items-center justify-center gap-1 py-2 text-[10px] ${
                 isActive ? "text-neutral-900" : "text-neutral-400"
               }`
             }
           >
-            <Icon className="w-5 h-5" />
+            <span className="relative">
+              <Icon className="w-5 h-5" />
+              {item.to === "/inbox" && pendingCount > 0 && (
+                <span
+                  data-testid="m-badge-inbox"
+                  className="absolute -top-1.5 -end-1.5 text-[9px] bg-red-500 text-white rounded-full px-1 min-w-[16px] h-[16px] grid place-items-center leading-none"
+                >
+                  {pendingCount > 99 ? "+۹۹" : toFaNumber(pendingCount)}
+                </span>
+              )}
+            </span>
             <span>{item.label}</span>
           </NavLink>
         );

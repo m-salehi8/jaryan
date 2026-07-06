@@ -1,17 +1,15 @@
 """
 Compatibility shim for emergentintegrations.llm.chat
 
-Uses OpenRouter (OpenAI-compatible API) instead of Anthropic directly.
-Set EMERGENT_LLM_KEY to your OpenRouter API key (starts with sk-or-...).
-
-Free models on OpenRouter you can use:
-  - meta-llama/llama-3.1-8b-instruct:free
-  - mistralai/mistral-7b-instruct:free
-  - google/gemma-2-9b-it:free
-  - microsoft/phi-3-mini-128k-instruct:free
+Uses an OpenAI-compatible API endpoint.
+Configure via:
+  - api_key  → passed from server.py (EMERGENT_LLM_KEY env var)
+  - base_url → OPENAI_BASE_URL env var (default: http://localhost:20128/v1)
+  - model    → set via with_model() or OPENAI_MODEL env var
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import AsyncIterator
 
@@ -38,16 +36,8 @@ class StreamDone:
 
 # ── LlmChat ───────────────────────────────────────────────────────────────────
 
-OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-
-# Map old Emergent/Anthropic model names → OpenRouter model
-_MODEL_MAP = {
-    "claude-sonnet-4-6":              "google/gemma-2-9b-it:free",
-    "claude-sonnet-4-5":              "google/gemma-2-9b-it:free",
-    "claude-3-5-sonnet-20241022":     "google/gemma-2-9b-it:free",
-    "claude-opus-4":                  "google/gemma-2-9b-it:free",
-    "claude-haiku-4":                 "google/gemma-2-9b-it:free",
-}
+_DEFAULT_BASE = os.environ.get("OPENAI_BASE_URL", "http://localhost:20128/v1")
+_DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "cf/@cf/moonshotai/kimi-k2.5")
 
 
 class LlmChat:
@@ -59,17 +49,31 @@ class LlmChat:
         api_key: str,
         session_id: str,
         system_message: str = "",
+        base_url: str = _DEFAULT_BASE,
     ) -> None:
         self._api_key = api_key
         self._session_id = session_id
         self._system_message = system_message
-        self._model = "google/gemma-2-9b-it:free"
+        self._base_url = base_url.rstrip("/")
+        self._model = _DEFAULT_MODEL
 
         if session_id not in LlmChat._sessions:
             LlmChat._sessions[session_id] = []
 
     def with_model(self, provider: str, model: str) -> "LlmChat":
-        self._model = _MODEL_MAP.get(model, "google/gemma-2-9b-it:free")
+        """Override the model. Provider is ignored (we use one endpoint)."""
+        # If the caller passes a well-known Anthropic model name, keep default.
+        # Otherwise use the model string verbatim.
+        anthropic_aliases = {
+            "claude-sonnet-4-6",
+            "claude-sonnet-4-5",
+            "claude-3-5-sonnet-20241022",
+            "claude-opus-4",
+            "claude-haiku-4",
+        }
+        if model not in anthropic_aliases:
+            self._model = model
+        # If it IS an Anthropic alias, keep the env-configured default model
         return self
 
     async def stream_message(
@@ -85,15 +89,13 @@ class LlmChat:
 
         full_response = ""
 
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=120, trust_env=False) as client:
             async with client.stream(
                 "POST",
-                f"{OPENROUTER_BASE}/chat/completions",
+                f"{self._base_url}/chat/completions",
                 headers={
                     "Authorization": f"Bearer {self._api_key}",
                     "Content-Type": "application/json",
-                    "HTTP-Referer": "https://raahkar.app",
-                    "X-Title": "Raahkar",
                 },
                 json={
                     "model": self._model,
