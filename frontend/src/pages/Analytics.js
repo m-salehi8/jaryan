@@ -7,8 +7,11 @@ import {
   PieChart, Pie, Cell, Legend, BarChart, Bar
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 import { toFaNumber } from "@/lib/jalali";
+import JalaliDatePicker from "@/components/JalaliDatePicker";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 const STATUS_PIE = {
   pending:     { label: "در انتظار",   color: "#f59e0b" },
@@ -34,17 +37,24 @@ function formatDuration(minutes) {
 // -----------------------------
 // TAB 1: General Analytics (Overview)
 // -----------------------------
-function GeneralAnalytics() {
+function GeneralAnalytics({ startDate, endDate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.get("/analytics/dashboard")
+    setLoading(true);
+    let url = "/analytics/dashboard";
+    const params = new URLSearchParams();
+    if (startDate) params.append("start_date", startDate);
+    if (endDate) params.append("end_date", endDate);
+    if (params.toString()) url += `?${params.toString()}`;
+
+    api.get(url)
       .then(r => setData(r.data))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [startDate, endDate]);
 
   if (loading) {
     return (
@@ -312,6 +322,28 @@ function FormDataAnalytics() {
 // MAIN PAGE EXPORT
 // -----------------------------
 export default function Analytics() {
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString();
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString());
+
+  const handleExport = () => {
+    let url = `${API_BASE}/analytics/export`;
+    const params = new URLSearchParams();
+    if (startDate) params.append("start_date", startDate);
+    if (endDate) params.append("end_date", endDate);
+    
+    // Add token for authentication since we're opening in a new tab/window
+    const token = localStorage.getItem("raahkar_token");
+    if (token) params.append("token", token);
+    
+    if (params.toString()) url += `?${params.toString()}`;
+    
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="p-6 lg:p-10 max-w-[1400px] mx-auto animate-in">
       <div className="mb-8">
@@ -322,6 +354,22 @@ export default function Analytics() {
         <p className="text-sm text-neutral-500 mt-2">
           تحلیل عملکرد سازمان، گلوگاه‌ها و دیتای فرایندها
         </p>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-end gap-4 bg-white p-4 rounded-xl border border-neutral-200 shadow-sm">
+        <div className="space-y-1.5 w-full sm:w-48">
+          <label className="text-xs font-medium text-neutral-700">از تاریخ</label>
+          <JalaliDatePicker value={startDate} onChange={setStartDate} placeholder="انتخاب تاریخ شروع..." />
+        </div>
+        <div className="space-y-1.5 w-full sm:w-48">
+          <label className="text-xs font-medium text-neutral-700">تا تاریخ</label>
+          <JalaliDatePicker value={endDate} onChange={setEndDate} placeholder="انتخاب تاریخ پایان..." />
+        </div>
+        <div className="ms-auto flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={handleExport} className="w-full sm:w-auto">
+            <Download className="w-4 h-4 me-2" /> خروجی CSV
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
@@ -341,7 +389,7 @@ export default function Analytics() {
         </TabsList>
         
         <TabsContent value="overview">
-          <GeneralAnalytics />
+          <GeneralAnalytics startDate={startDate} endDate={endDate} />
         </TabsContent>
         <TabsContent value="personnel">
           <PersonnelAnalytics />

@@ -29,6 +29,27 @@ class User(BaseDocument):
     role: RoleFa
     password_hash: str
     avatar_color: str = "#737373"
+    department_id: Optional[str] = None
+    manager_id: Optional[str] = None
+
+
+class Department(BaseDocument):
+    org_id: str
+    name: str
+    parent_id: Optional[str] = None
+    manager_id: Optional[str] = None
+
+
+class DepartmentCreate(BaseModel):
+    name: str
+    parent_id: Optional[str] = None
+    manager_id: Optional[str] = None
+
+
+class DepartmentUpdate(BaseModel):
+    name: Optional[str] = None
+    parent_id: Optional[str] = None
+    manager_id: Optional[str] = None
 
 
 class UserPublic(BaseModel):
@@ -38,6 +59,8 @@ class UserPublic(BaseModel):
     full_name: str
     role: RoleFa
     avatar_color: str
+    department_id: Optional[str] = None
+    manager_id: Optional[str] = None
 
 
 class LoginPayload(BaseModel):
@@ -55,10 +78,14 @@ class UserCreate(BaseModel):
     email: EmailStr
     role: RoleFa
     password: str = Field(min_length=6, max_length=128)
+    department_id: Optional[str] = None
+    manager_id: Optional[str] = None
 
 
 class UserRoleUpdate(BaseModel):
-    role: RoleFa
+    role: Optional[RoleFa] = None
+    department_id: Optional[str] = None
+    manager_id: Optional[str] = None
 
 
 # ---------- Workflow ----------
@@ -89,6 +116,10 @@ class WorkflowNode(BaseModel):
     position: dict  # {x, y}
     data: dict = Field(default_factory=dict)  # assignee_role, form_id, condition, etc
     dependencies: list[str] = Field(default_factory=list)
+    timeout_seconds: Optional[int] = None
+    timeout_action: Optional[Literal["escalate_to_manager", "auto_reject", "none"]] = "none"
+    retry_count: Optional[int] = None
+    retry_delay: Optional[int] = None
 
 
 class WorkflowEdge(BaseModel):
@@ -167,6 +198,14 @@ class FormField(BaseModel):
     parent_tab_id: Optional[str] = None
     # Structured visibility rule; null means always visible
     visible_if: Optional[VisibilityRule] = None
+    
+    # Validation Rules
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+    pattern: Optional[str] = None
+    error_message: Optional[str] = None
 
 
 class Form(BaseDocument):
@@ -201,6 +240,7 @@ class ProcessInstance(BaseDocument):
     status: Literal["running", "completed", "rejected", "stuck"] = "running"
     completed_nodes: list[str] = Field(default_factory=list)
     context: dict = Field(default_factory=dict)  # form submissions etc.
+    workflow_snapshot: Optional[dict] = None  # frozen {nodes, edges} at start time
 
 
 class Task(BaseDocument):
@@ -223,6 +263,9 @@ class Task(BaseDocument):
     form_data: dict = Field(default_factory=dict)
     draft_data: dict = Field(default_factory=dict)
     description: str = ""
+    field_permissions: dict = Field(default_factory=dict)  # {field_id: "editable"|"readonly"|"hidden"}
+    escalated: bool = False
+    attempt_number: int = 1
 
 
 class TaskUpdate(BaseModel):

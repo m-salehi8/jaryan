@@ -1,13 +1,8 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Inbox,
-  Activity,
-  Smartphone,
-  LogOut,
-} from "lucide-react";
+import { Inbox, Activity, LogOut, LayoutDashboard, Menu, Moon, Sun, Smartphone } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBadge } from "@/lib/badgeContext";
+import { useTheme } from "@/lib/themeContext";
 import { toFaNumber } from "@/lib/jalali";
 
 const NAV = [
@@ -19,6 +14,7 @@ const NAV = [
 function Sidebar() {
   const { user, logout } = useAuth();
   const { pendingCount } = useBadge();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -92,6 +88,13 @@ function Sidebar() {
             <div className="text-[11px] text-neutral-500 truncate">{user?.role}</div>
           </div>
           <button
+            onClick={toggleTheme}
+            className="p-2 rounded-md hover:bg-neutral-100 text-neutral-500 transition-colors"
+            title="تغییر پوسته"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
             data-testid="logout-btn"
             onClick={() => { logout(); navigate("/login"); }}
             className="p-2 rounded-md hover:bg-neutral-100 text-neutral-500"
@@ -106,18 +109,34 @@ function Sidebar() {
 }
 
 function MobileTopbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   return (
     <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white sticky top-0 z-30">
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-xs font-bold">ر</div>
-        <div className="text-sm font-bold">راهکار</div>
+        <span className="text-[10px] text-brand font-bold bg-brand/10 px-2 py-1 rounded-md">نسخه کاربری</span>
       </div>
-      <div
-        className="w-7 h-7 rounded-full grid place-items-center text-white text-[11px]"
-        style={{ background: user?.avatar_color || "#737373" }}
-      >
-        {user?.full_name?.[0]}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-md text-neutral-500 hover:bg-neutral-100 transition-colors"
+        >
+          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+        <button
+          onClick={() => { logout(); navigate("/login"); }}
+          className="p-2 rounded-md hover:bg-neutral-100 text-neutral-500 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+        <div
+          className="w-7 h-7 rounded-full grid place-items-center text-white text-[11px] ms-1"
+          style={{ background: user?.avatar_color || "#737373" }}
+        >
+          {user?.full_name?.[0]}
+        </div>
       </div>
     </div>
   );

@@ -320,6 +320,73 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
           </Section>
         )}
 
+        {/* Validation rules */}
+        {!["heading", "divider", "tabs", "checkbox", "file"].includes(f.type) && (
+          <Section title="اعتبارسنجی (Validation)">
+            <div className="space-y-3 p-3 bg-neutral-50/50 border border-neutral-100 rounded-lg">
+              {(f.type === "text" || f.type === "textarea") && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Labeled label="حداقل طول">
+                    <Input
+                      type="number"
+                      value={f.min_length || ""}
+                      onChange={(e) => onChange({ min_length: e.target.value ? parseInt(e.target.value, 10) : null })}
+                      className="text-xs bg-white"
+                    />
+                  </Labeled>
+                  <Labeled label="حداکثر طول">
+                    <Input
+                      type="number"
+                      value={f.max_length || ""}
+                      onChange={(e) => onChange({ max_length: e.target.value ? parseInt(e.target.value, 10) : null })}
+                      className="text-xs bg-white"
+                    />
+                  </Labeled>
+                </div>
+              )}
+              {f.type === "number" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Labeled label="حداقل مقدار">
+                    <Input
+                      type="number"
+                      value={f.min_value || ""}
+                      onChange={(e) => onChange({ min_value: e.target.value ? parseFloat(e.target.value) : null })}
+                      className="text-xs bg-white"
+                    />
+                  </Labeled>
+                  <Labeled label="حداکثر مقدار">
+                    <Input
+                      type="number"
+                      value={f.max_value || ""}
+                      onChange={(e) => onChange({ max_value: e.target.value ? parseFloat(e.target.value) : null })}
+                      className="text-xs bg-white"
+                    />
+                  </Labeled>
+                </div>
+              )}
+              {["text", "textarea"].includes(f.type) && (
+                <Labeled label="الگوی اعتبارسنجی (Regex)">
+                  <Input
+                    value={f.pattern || ""}
+                    onChange={(e) => onChange({ pattern: e.target.value })}
+                    placeholder="مثلاً: ^\d{10}$ برای کد ملی"
+                    className="text-xs bg-white"
+                    dir="ltr"
+                  />
+                </Labeled>
+              )}
+              <Labeled label="پیام خطای سفارشی">
+                <Input
+                  value={f.error_message || ""}
+                  onChange={(e) => onChange({ error_message: e.target.value })}
+                  placeholder="مثلاً: مقدار وارد شده نامعتبر است"
+                  className="text-xs bg-white"
+                />
+              </Labeled>
+            </div>
+          </Section>
+        )}
+
         {/* Visibility rule */}
         {!["heading", "divider"].includes(f.type) && (
           <Section title="منطق نمایش (Conditional Visibility)">

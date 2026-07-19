@@ -71,7 +71,15 @@ function toRF(wf) {
       id: n.id,
       type: "custom",
       position: n.position || { x: 80, y: 120 },
-      data: { label: n.label, nodeType: n.type, ...(n.data || {}) },
+      data: { 
+        label: n.label, 
+        nodeType: n.type, 
+        timeout_seconds: n.timeout_seconds,
+        timeout_action: n.timeout_action,
+        retry_count: n.retry_count,
+        retry_delay: n.retry_delay,
+        ...(n.data || {}) 
+      },
     })),
     edges: (wf.edges || []).map((e) => ({
       id: e.id,
@@ -92,12 +100,19 @@ function fromRF(nodes, edges) {
       label: n.data.label,
       position: n.position,
       data: {
+        ...(n.data.assignee_type ? { assignee_type: n.data.assignee_type } : {}),
         ...(n.data.assignee_role ? { assignee_role: n.data.assignee_role } : {}),
+        ...(n.data.assignee_id ? { assignee_id: n.data.assignee_id } : {}),
         ...(n.data.form_id ? { form_id: n.data.form_id } : {}),
         ...(n.data.expression ? { expression: n.data.expression } : {}),
         ...(n.data.dependencies ? { dependencies: n.data.dependencies } : {}),
         ...(n.data.cron_expression ? { cron_expression: n.data.cron_expression } : {}),
+        ...(n.data.field_permissions && Object.keys(n.data.field_permissions).length > 0 ? { field_permissions: n.data.field_permissions } : {}),
       },
+      timeout_seconds: n.data.timeout_seconds || null,
+      timeout_action: n.data.timeout_action || "none",
+      retry_count: n.data.retry_count || null,
+      retry_delay: n.data.retry_delay || null,
     })),
     edges: edges.map((e) => ({
       id: e.id, source: e.source, target: e.target,
@@ -114,20 +129,31 @@ export default function WorkflowBuilder() {
   const [edges, setEdges] = useState([]);
   const [selected, setSelected] = useState(null); // node or edge id
   const [forms, setForms] = useState([]);
-  const [saving, setSaving] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Load
   useEffect(() => {
-    Promise.all([api.get(`/workflows/${id}`), api.get("/forms")])
-      .then(([w, f]) => {
+    (async () => {
+      try {
+        const w = await api.get(`/workflows/${id}`);
         setWf(w.data);
         const rf = toRF(w.data);
         setNodes(rf.nodes);
         setEdges(rf.edges);
-        setForms(f.data);
-      })
-      .catch(() => { toast.error("فرایند یافت نشد"); nav("/admin/workflows"); });
+        const [fRes, uRes] = await Promise.all([
+          api.get("/forms"),
+          api.get("/users").catch(() => ({ data: [] }))
+        ]);
+        setForms(fRes.data);
+        setUsers(uRes.data);
+      } catch {
+        toast.error("فرایند یافت نشد");
+        nav("/admin/workflows");
+      }
+    })();
   }, [id, nav]);
 
   // Handlers
@@ -484,17 +510,58 @@ function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, on
             </div>
 
             {["task", "approval", "form"].includes(selectedNode.data.nodeType) && (
-              <div>
-                <label className="text-xs text-neutral-500 mb-1.5 block">نقش مجری</label>
-                <Select
-                  value={selectedNode.data.assignee_role || ""}
-                  onValueChange={(v) => onNode(selectedNode.id, { assignee_role: v })}
-                >
-                  <SelectTrigger data-testid="node-role"><SelectValue placeholder="انتخاب نقش" /></SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3 border border-neutral-100 rounded-lg p-3 bg-neutral-50/50">
+                <div>
+                  <label className="text-xs font-medium text-neutral-700 mb-1.5 block">نحوه ارجاع تسک</label>
+                  <Select
+                    value={selectedNode.data.assignee_type || "role"}
+                    onValueChange={(v) => onNode(selectedNode.id, { assignee_type: v, assignee_role: undefined, assignee_id: undefined })}
+                  >
+                    <SelectTrigger className="bg-white"><SelectValue placeholder="نحوه ارجاع" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="role">بر اساس نقش (گروهی)</SelectItem>
+                      <SelectItem value="specific_user">کاربر مشخص</SelectItem>
+                      <SelectItem value="manager">مدیر مستقیم ایجادکننده فرایند</SelectItem>
+                      <SelectItem value="department_manager">مدیر دپارتمان ایجادکننده</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(!selectedNode.data.assignee_type || selectedNode.data.assignee_type === "role") && (
+                  <div>
+                    <label className="text-xs text-neutral-500 mb-1.5 block">انتخاب نقش مجری</label>
+                    <Select
+                      value={selectedNode.data.assignee_role || ""}
+                      onValueChange={(v) => onNode(selectedNode.id, { assignee_role: v })}
+                    >
+                      <SelectTrigger className="bg-white"><SelectValue placeholder="انتخاب نقش" /></SelectTrigger>
+                      <SelectContent>
+                        {ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {selectedNode.data.assignee_type === "specific_user" && (
+                  <div>
+                    <label className="text-xs text-neutral-500 mb-1.5 block">انتخاب کاربر</label>
+                    <Select
+                      value={selectedNode.data.assignee_id || ""}
+                      onValueChange={(v) => onNode(selectedNode.id, { assignee_id: v })}
+                    >
+                      <SelectTrigger className="bg-white"><SelectValue placeholder="انتخاب کاربر" /></SelectTrigger>
+                      <SelectContent>
+                        {users.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name} ({u.role})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {["manager", "department_manager"].includes(selectedNode.data.assignee_type) && (
+                  <div className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
+                    ارجاع به صورت خودکار بر اساس سلسله‌مراتب فرد ایجادکننده در زمان اجرای فرایند انجام می‌شود.
+                  </div>
+                )}
               </div>
             )}
 
@@ -512,6 +579,38 @@ function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, on
                 </Select>
               </div>
             )}
+
+            {/* Field Permissions — show when a form is selected on form/approval nodes */}
+            {["form", "approval"].includes(selectedNode.data.nodeType) && selectedNode.data.form_id && (() => {
+              const selectedForm = forms.find(f => f.id === selectedNode.data.form_id);
+              const formFields = (selectedForm?.fields || []).filter(f => !["heading", "divider", "tabs"].includes(f.type));
+              if (formFields.length === 0) return null;
+              const perms = selectedNode.data.field_permissions || {};
+              return (
+                <div data-testid="field-permissions-section">
+                  <label className="text-xs text-neutral-500 mb-2 block">سطح دسترسی فیلدها</label>
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {formFields.map(ff => (
+                      <div key={ff.id} className="flex items-center gap-2 text-xs bg-neutral-50 border border-neutral-100 rounded-md px-2.5 py-1.5">
+                        <span className="flex-1 truncate text-neutral-700">{ff.label}</span>
+                        <select
+                          value={perms[ff.id] || "editable"}
+                          onChange={(e) => {
+                            const newPerms = { ...perms, [ff.id]: e.target.value };
+                            onNode(selectedNode.id, { field_permissions: newPerms });
+                          }}
+                          className="text-[11px] bg-white border border-neutral-200 rounded px-1.5 py-0.5 focus:outline-none"
+                        >
+                          <option value="editable">قابل ویرایش</option>
+                          <option value="readonly">فقط‌خواندنی</option>
+                          <option value="hidden">مخفی</option>
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {selectedNode.data.nodeType === "condition" && (
               <div>
@@ -565,6 +664,69 @@ function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, on
                   })}
                   {edges.filter(e => e.target === selectedNode.id).length === 0 && (
                     <div className="text-xs text-neutral-400">هیچ گره ورودی به این گره متصل نیست.</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Timeout & Retry Settings */}
+            {["task", "approval", "form"].includes(selectedNode.data.nodeType) && (
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
+                <div className="text-sm font-semibold text-neutral-900">تنظیمات پیشرفته (اختیاری)</div>
+                
+                <div className="space-y-3 bg-neutral-50/50 border border-neutral-100 p-3 rounded-lg">
+                  <div>
+                    <label className="text-xs font-medium text-neutral-700 mb-1.5 block">زمان انقضا (ثانیه)</label>
+                    <Input
+                      type="number"
+                      placeholder="مثلاً: 3600 (یک ساعت)"
+                      value={selectedNode.data.timeout_seconds || ""}
+                      onChange={(e) => onNode(selectedNode.id, { timeout_seconds: e.target.value ? parseInt(e.target.value, 10) : undefined })}
+                      className="bg-white text-xs"
+                    />
+                    <div className="text-[10px] text-neutral-400 mt-1">در صورت خالی بودن، زمان انقضا پیش‌فرض سیستم (۳ روز) در نظر گرفته می‌شود.</div>
+                  </div>
+                  
+                  {selectedNode.data.timeout_seconds > 0 && (
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">واکنش پس از انقضا (Escalation)</label>
+                      <Select
+                        value={selectedNode.data.timeout_action || "none"}
+                        onValueChange={(v) => onNode(selectedNode.id, { timeout_action: v })}
+                      >
+                        <SelectTrigger className="bg-white text-xs"><SelectValue placeholder="انتخاب واکنش" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="text-xs">هیچ کاری نکن</SelectItem>
+                          <SelectItem value="escalate_to_manager" className="text-xs">ارجاع به مدیر شخص (تشدید)</SelectItem>
+                          <SelectItem value="auto_reject" className="text-xs">رد خودکار تسک</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 bg-neutral-50/50 border border-neutral-100 p-3 rounded-lg">
+                  <div>
+                    <label className="text-xs font-medium text-neutral-700 mb-1.5 block">تعداد تلاش مجدد (Retry)</label>
+                    <Input
+                      type="number"
+                      placeholder="مثلاً: 3"
+                      value={selectedNode.data.retry_count || ""}
+                      onChange={(e) => onNode(selectedNode.id, { retry_count: e.target.value ? parseInt(e.target.value, 10) : undefined })}
+                      className="bg-white text-xs"
+                    />
+                  </div>
+                  {selectedNode.data.retry_count > 0 && (
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">تاخیر بین تلاش‌ها (ثانیه)</label>
+                      <Input
+                        type="number"
+                        placeholder="مثلاً: 60"
+                        value={selectedNode.data.retry_delay || ""}
+                        onChange={(e) => onNode(selectedNode.id, { retry_delay: e.target.value ? parseInt(e.target.value, 10) : undefined })}
+                        className="bg-white text-xs"
+                      />
+                    </div>
                   )}
                 </div>
               </div>

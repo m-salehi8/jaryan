@@ -10,8 +10,11 @@ import {
   Users,
   Shield,
   BarChart2,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/lib/themeContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import ProductTour from "@/components/onboarding/ProductTour";
 
@@ -22,11 +25,13 @@ const ADMIN_NAV = [
   { to: "/admin/forms", icon: FileText, label: "فرم‌ها", testId: "admin-nav-forms", tourId: null },
   { to: "/admin/monitoring", icon: Activity, label: "پایش زنده", testId: "admin-nav-monitoring", tourId: null },
   { to: "/admin/users", icon: Users, label: "مدیریت کاربران", testId: "admin-nav-users", tourId: "tour-nav-inbox" },
+  { to: "/admin/org-chart", icon: Users, label: "ساختار سازمانی", testId: "admin-nav-org-chart", tourId: null },
   { to: "/admin/analytics", icon: BarChart2, label: "گزارش‌ها", testId: "admin-nav-analytics", tourId: null },
 ];
 
 function AdminSidebar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -103,6 +108,13 @@ function AdminSidebar() {
             <div className="text-[11px] text-indigo-300 truncate">{user?.role}</div>
           </div>
           <button
+            onClick={toggleTheme}
+            className="p-2 rounded-md text-indigo-300 hover:text-white hover:bg-white/10 transition-colors"
+            title="تغییر پوسته"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
             data-testid="admin-logout-btn"
             onClick={() => { logout(); navigate("/login"); }}
             className="p-2 rounded-md text-indigo-300 hover:text-white hover:bg-white/10 transition-colors"
@@ -118,6 +130,7 @@ function AdminSidebar() {
 
 function AdminMobileTopbar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -137,12 +150,20 @@ function AdminMobileTopbar() {
           <div className="text-[10px] text-indigo-300">پنل مدیریت</div>
         </div>
       </div>
-      <button
-        onClick={() => { logout(); navigate("/login"); }}
-        className="p-2 rounded-md text-indigo-300 hover:text-white transition-colors"
-      >
-        <LogOut className="w-4 h-4" />
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-md text-indigo-300 hover:text-white transition-colors"
+        >
+          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+        <button
+          onClick={() => { logout(); navigate("/login"); }}
+          className="p-2 rounded-md text-indigo-300 hover:text-white transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   Sparkles, Inbox, CheckCircle2, Workflow, Clock,
   TrendingUp, ArrowLeft, Activity,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/api";
 import { useAuth, isAdmin } from "@/lib/auth";
@@ -36,7 +37,24 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div className="p-10 text-sm text-neutral-400" data-testid="dashboard-loading">در حال بارگذاری…</div>;
+    return (
+      <div className="p-6 lg:p-10 max-w-[1400px] mx-auto space-y-8" data-testid="dashboard-loading">
+        <div className="space-y-2">
+          <Skeleton className="w-24 h-4" />
+          <Skeleton className="w-48 h-8" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
+        </div>
+      </div>
+    );
   }
 
   const c = data.counters;

@@ -14,6 +14,7 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from croniter import croniter
+from bson import ObjectId
 
 from auth import (
     CurrentUser,
@@ -23,7 +24,7 @@ from auth import (
     verify_password,
 )
 from db import db, new_id, now_iso
-from engine import advance_process, evaluate_rule
+from engine import advance_process, check_timeouts, evaluate_rule
 from models import (
     ChatGenerateRequest,
     Comment,
@@ -101,12 +102,16 @@ async def cron_scheduler():
                             current_node_id=first_node["id"],
                             status="running",
                             context={"requester": "System (Cron)"},
+                            workflow_snapshot={"nodes": wf.get("nodes", []), "edges": wf.get("edges", [])},
                         )
                         await db.process_instances.insert_one(instance.to_mongo())
                         await advance_process(
                             process_id=instance.id,
                             completed_node_id=first_node["id"]
                         )
+            
+            # Check timeouts for escalation/rejection
+            await check_timeouts()
         except Exception as e:
             logger.error(f"Cron scheduler error: {e}")
         
@@ -162,6 +167,8 @@ async def create_user(payload: UserCreate, user: User = CurrentUser):
         full_name=payload.full_name,
         role=payload.role,
         password_hash=hash_password(payload.password),
+        department_id=payload.department_id,
+        manager_id=payload.manager_id,
     )
     await db.users.insert_one(new_user.to_mongo())
     await _activity(user, "user.created", "user", new_user.id, f"کاربر «{new_user.full_name}» اضافه شد")
@@ -175,9 +182,17 @@ async def update_user_role(uid: str, payload: UserRoleUpdate, user: User = Curre
     doc = await db.users.find_one({"id": uid, "org_id": user.org_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "user_not_found")
+    updates = {"updated_at": now_iso()}
+    if payload.role is not None:
+        updates["role"] = payload.role
+    if payload.department_id is not None:
+        updates["department_id"] = payload.department_id
+    if payload.manager_id is not None:
+        updates["manager_id"] = payload.manager_id
+
     await db.users.update_one(
         {"id": uid, "org_id": user.org_id},
-        {"$set": {"role": payload.role, "updated_at": now_iso()}},
+        {"$set": updates},
     )
     updated = await db.users.find_one({"id": uid, "org_id": user.org_id}, {"_id": 0, "password_hash": 0})
     return updated
@@ -194,6 +209,62 @@ async def delete_user(uid: str, user: User = CurrentUser):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "user_not_found")
     await db.users.delete_one({"id": uid, "org_id": user.org_id})
     return {"deleted": True}
+# ---------- Departments ----------
+
+@api.get("/departments")
+async def list_departments(user: User = CurrentUser):
+    rows = await db.departments.find({"org_id": user.org_id}, {"_id": 0}).to_list(1000)
+    return rows
+
+
+@api.post("/departments")
+async def create_department(payload: DepartmentCreate, user: User = CurrentUser):
+    if user.role != "ادمین سازمان":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+    dept = Department(
+        org_id=user.org_id,
+        name=payload.name,
+        parent_id=payload.parent_id,
+        manager_id=payload.manager_id,
+    )
+    await db.departments.insert_one(dept.to_mongo())
+    await _activity(user, "department.created", "department", dept.id, f"دپارتمان «{dept.name}» ایجاد شد")
+    return dept
+
+
+@api.patch("/departments/{did}")
+async def update_department(did: str, payload: DepartmentUpdate, user: User = CurrentUser):
+    if user.role != "ادمین سازمان":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+    updates = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    if not updates:
+        doc = await db.departments.find_one({"id": did, "org_id": user.org_id}, {"_id": 0})
+        if not doc:
+            raise HTTPException(404, "department_not_found")
+        return doc
+    updates["updated_at"] = now_iso()
+    res = await db.departments.update_one(
+        {"id": did, "org_id": user.org_id}, {"$set": updates}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "department_not_found")
+    return await db.departments.find_one({"id": did, "org_id": user.org_id}, {"_id": 0})
+
+
+@api.delete("/departments/{did}")
+async def delete_department(did: str, user: User = CurrentUser):
+    if user.role != "ادمین سازمان":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+    res = await db.departments.delete_one({"id": did, "org_id": user.org_id})
+    if res.deleted_count == 0:
+        raise HTTPException(404, "department_not_found")
+    # Also unset parent_id for child departments
+    await db.departments.update_many({"parent_id": did, "org_id": user.org_id}, {"$set": {"parent_id": None}})
+    # And unset department_id for users in this department
+    await db.users.update_many({"department_id": did, "org_id": user.org_id}, {"$set": {"department_id": None}})
+    return {"deleted": True}
+
+
 
 
 # ---------- Workflows ----------
@@ -264,6 +335,7 @@ async def start_workflow(wf_id: str, user: User = CurrentUser):
         current_node_id=first_node["id"] if first_node else None,
         status="running",
         context={"requester": user.full_name},
+        workflow_snapshot={"nodes": wf.get("nodes", []), "edges": wf.get("edges", [])},
     )
     await db.process_instances.insert_one(instance.to_mongo())
     await _activity(user, "process.started", "process", instance.id, f"اجرای فرایند «{wf['name']}» آغاز شد")
@@ -425,6 +497,10 @@ async def get_process(pid: str, user: User = CurrentUser):
         raise HTTPException(404, "process_not_found")
     tasks = await db.tasks.find({"process_id": pid, "org_id": user.org_id}, {"_id": 0}).to_list(1000)
     wf = await db.workflows.find_one({"id": doc["workflow_id"], "org_id": user.org_id}, {"_id": 0})
+    # If the live workflow is gone or changed, use the frozen snapshot
+    snapshot = doc.get("workflow_snapshot")
+    if not wf and snapshot:
+        wf = {"id": doc["workflow_id"], "name": doc.get("workflow_name", ""), "nodes": snapshot.get("nodes", []), "edges": snapshot.get("edges", []), "status": "snapshot"}
     return {"process": doc, "tasks": tasks, "workflow": wf}
 
 
@@ -504,12 +580,21 @@ async def search(q: str = Query(min_length=2), user: User = CurrentUser):
 # ---------- Analytics Dashboard ----------
 
 @api.get("/analytics/dashboard")
-async def analytics_dashboard(user: User = CurrentUser):
+async def analytics_dashboard(start_date: Optional[str] = None, end_date: Optional[str] = None, user: User = CurrentUser):
     import jdatetime
 
     now = datetime.now(timezone.utc)
-    thirty_days_ago = now - timedelta(days=30)
-    thirty_days_ago_iso = thirty_days_ago.isoformat()
+    
+    # Try to parse ISO start and end dates
+    try:
+        start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00")) if start_date else (now - timedelta(days=30))
+        end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00")) if end_date else now
+    except Exception:
+        start_dt = now - timedelta(days=30)
+        end_dt = now
+        
+    start_iso = start_dt.isoformat()
+    end_iso = end_dt.isoformat()
 
     def _parse_iso(s: str) -> datetime:
         if s.endswith("Z"):
@@ -519,17 +604,23 @@ async def analytics_dashboard(user: User = CurrentUser):
             dt = dt.replace(tzinfo=timezone.utc)
         return dt
 
-    # ---------- Build the 30 Jalali day keys up front ----------
+    # ---------- Build the Jalali day keys between start and end ----------
     day_keys: list[str] = []
-    for i in range(29, -1, -1):
-        dt = now - timedelta(days=i)
+    days_diff = (end_dt - start_dt).days
+    # limit to max 90 days to avoid huge arrays
+    days_diff = min(days_diff, 90)
+    if days_diff < 0:
+        days_diff = 0
+        
+    for i in range(days_diff, -1, -1):
+        dt = end_dt - timedelta(days=i)
         jd = jdatetime.datetime.fromgregorian(datetime=dt)
         day_keys.append(f"{jd.year}-{jd.month:02d}-{jd.day:02d}")
 
     # ---------- Define all 4 coroutines ----------
     async def _daily_processes():
         pi_docs = await db.process_instances.find(
-            {"org_id": user.org_id, "created_at": {"$gte": thirty_days_ago_iso}},
+            {"org_id": user.org_id, "created_at": {"$gte": start_iso, "$lte": end_iso}},
             {"_id": 0, "created_at": 1},
         ).to_list(10000)
         counts: dict[str, int] = {k: 0 for k in day_keys}
@@ -546,16 +637,20 @@ async def analytics_dashboard(user: User = CurrentUser):
         return [{"date": k, "count": counts[k]} for k in day_keys]
 
     async def _task_status_dist():
-        status_keys = ["pending", "in_progress", "approved", "rejected", "done"]
-        dist: dict[str, int] = {s: 0 for s in status_keys}
+        docs = await db.workflows.find(
+            {"org_id": user.org_id, "created_at": {"$gte": start_iso, "$lte": end_iso}},
+            {"_id": 0, "id": 1, "name": 1}
+        ).to_list(100)
+        wf_map = {d["id"]: d["name"] for d in docs}
+        if not wf_map:
+            return []
         pipeline = [
-            {"$match": {"org_id": user.org_id}},
-            {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+            {"$match": {"org_id": user.org_id, "workflow_id": {"$in": list(wf_map.keys())}, "created_at": {"$gte": start_iso, "$lte": end_iso}}},
+            {"$group": {"_id": "$workflow_id", "count": {"$sum": 1}}},
         ]
+        dist = []
         async for bucket in db.tasks.aggregate(pipeline):
-            s = bucket["_id"]
-            if s in dist:
-                dist[s] = bucket["count"]
+            dist.append({"workflow": wf_map.get(bucket["_id"], bucket["_id"]), "count": bucket["count"]})
         return dist
 
     async def _top_users():
@@ -588,7 +683,7 @@ async def analytics_dashboard(user: User = CurrentUser):
             {
                 "org_id": user.org_id,
                 "status": "completed",
-                "updated_at": {"$gte": thirty_days_ago_iso},
+                "updated_at": {"$gte": start_iso, "$lte": end_iso},
             },
             {"_id": 0, "created_at": 1, "updated_at": 1},
         ).to_list(10000)

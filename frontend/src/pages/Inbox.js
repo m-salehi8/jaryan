@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toJalaliDateTime, toJalaliShort, fromNow, toFaNumber } from "@/lib/jalali";
 import FormRenderer from "@/components/FormRenderer";
 import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
@@ -47,6 +48,7 @@ export default function Inbox() {
   const [mentionQuery, setMentionQuery] = useState(null);
   const [mentions, setMentions] = useState([]);
   const textareaRef = useRef(null);
+  const formRef = useRef(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -100,7 +102,16 @@ export default function Inbox() {
   const updateStatus = async (status) => {
     if (!active) return;
     const body = { status };
-    if (formSchema && active.type === "form") body.form_data = formValues;
+    if (formSchema && active.type === "form") {
+      if (status === "done" && formRef.current) {
+        const isValid = formRef.current.validateAll();
+        if (!isValid) {
+          toast.error("لطفا فیلدهای فرم را به درستی تکمیل کنید");
+          return;
+        }
+      }
+      body.form_data = formValues;
+    }
     await api.patch(`/tasks/${active.id}`, body);
     toast.success("به‌روزرسانی انجام شد");
     load();
@@ -202,7 +213,18 @@ export default function Inbox() {
         {/* List */}
         <div className="w-full md:w-[420px] border-l border-neutral-200 bg-white overflow-y-auto">
           {loading ? (
-            <div className="p-10 text-sm text-neutral-400 text-center">در حال بارگذاری…</div>
+            <div className="p-4 space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-2 p-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-1.5 h-1.5 rounded-full shrink-0" />
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="w-12 h-4 rounded-md" />
+                  </div>
+                  <Skeleton className="w-32 h-3" />
+                </div>
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
             <div className="p-10 text-sm text-neutral-400 text-center">تسکی یافت نشد.</div>
           ) : (
@@ -276,10 +298,12 @@ export default function Inbox() {
                     )}
                   </div>
                   <FormRenderer 
+                    ref={formRef}
                     fields={formSchema.fields} 
                     values={formValues} 
                     onChange={setFormValues} 
                     readOnly={active.status === "done" || active.status === "approved" || active.status === "rejected"}
+                    fieldPermissions={active.field_permissions || {}}
                   />
                 </div>
               )}

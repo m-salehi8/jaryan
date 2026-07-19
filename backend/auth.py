@@ -42,11 +42,21 @@ def decode_token(token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token") from exc
 
 
-async def get_current_user(authorization: Optional[str] = Header(default=None)) -> User:
-    if not authorization or not authorization.lower().startswith("bearer "):
+async def get_current_user(
+    authorization: Optional[str] = Header(default=None),
+    token: Optional[str] = None
+) -> User:
+    if not authorization and not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing_token")
-    token = authorization.split(" ", 1)[1].strip()
-    payload = decode_token(token)
+    
+    auth_token = token
+    if authorization and authorization.lower().startswith("bearer "):
+        auth_token = authorization.split(" ", 1)[1].strip()
+        
+    if not auth_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token_format")
+
+    payload = decode_token(auth_token)
     user_doc = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
     if not user_doc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found")

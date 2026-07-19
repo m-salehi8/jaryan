@@ -69,21 +69,54 @@ def evaluate_rule(rule: Optional[dict], context: dict) -> bool:
     return False
 
 
-def _node_to_task(*, org: str, process: dict, workflow: dict, node: dict) -> Optional[dict]:
+async def _node_to_task(*, org: str, process: dict, workflow: dict, node: dict) -> Optional[dict]:
     """Build a Task document for a workflow node (returns None for non-actionable nodes)."""
     ntype = node.get("type")
     if ntype in ("trigger", "end", "condition"):
         return None
 
     data = node.get("data") or {}
+    assignee_type = data.get("assignee_type", "role")
     assignee_role = data.get("assignee_role")
+    assignee_id = data.get("assignee_id")
     form_id = data.get("form_id")
+    field_permissions = data.get("field_permissions") or {}
+
+    resolved_assignee_id = None
+    resolved_assignee_role = None
+
+    if assignee_type == "role":
+        resolved_assignee_role = assignee_role
+    elif assignee_type == "specific_user":
+        resolved_assignee_id = assignee_id
+    elif assignee_type == "manager" and process.get("started_by"):
+        starter = await db.users.find_one({"id": process["started_by"], "org_id": org})
+        if starter and starter.get("manager_id"):
+            resolved_assignee_id = starter["manager_id"]
+        else:
+            resolved_assignee_role = "ادمین سازمان" # Fallback if no manager
+    elif assignee_type == "department_manager" and process.get("started_by"):
+        starter = await db.users.find_one({"id": process["started_by"], "org_id": org})
+        if starter and starter.get("department_id"):
+            dept = await db.departments.find_one({"id": starter["department_id"], "org_id": org})
+            if dept and dept.get("manager_id"):
+                resolved_assignee_id = dept["manager_id"]
+            else:
+                resolved_assignee_role = "ادمین سازمان" # Fallback
+        else:
+            resolved_assignee_role = "ادمین سازمان" # Fallback
 
     task_type = (
         "approval" if ntype == "approval"
         else "form" if ntype == "form"
         else "task"
     )
+
+    timeout_seconds = node.get("timeout_seconds")
+    if timeout_seconds:
+        deadline = (datetime.now(timezone.utc) + timedelta(seconds=timeout_seconds)).isoformat()
+    else:
+        deadline = (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()
 
     return {
         "id": new_id(),
@@ -93,15 +126,18 @@ def _node_to_task(*, org: str, process: dict, workflow: dict, node: dict) -> Opt
         "workflow_name": workflow["name"],
         "node_id": node["id"],
         "title": f"{node.get('label', 'تسک')} — {workflow['name']}",
-        "assignee_id": None,
-        "assignee_role": assignee_role,
+        "assignee_id": resolved_assignee_id,
+        "assignee_role": resolved_assignee_role,
         "type": task_type,
         "status": "pending",
         "priority": "medium",
-        "deadline": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+        "deadline": deadline,
         "form_id": form_id,
         "form_data": {},
+        "field_permissions": field_permissions,
         "description": "",
+        "escalated": False,
+        "attempt_number": 1,
         "created_at": now_iso(),
         "updated_at": now_iso(),
     }
@@ -109,6 +145,118 @@ def _node_to_task(*, org: str, process: dict, workflow: dict, node: dict) -> Opt
 
 def _outgoing(edges: list[dict], node_id: str) -> list[dict]:
     return [e for e in edges if e.get("source") == node_id]
+
+
+async def update_process_status(process_id: str):
+    tasks = await db.tasks.find({"process_id": process_id}).to_list(1000)
+    process = await db.processes.find_one({"id": process_id})
+    if not process:
+        return
+
+    statuses = [t["status"] for t in tasks]
+    if "rejected" in statuses:
+        p_status = "rejected"
+    elif all(s in ("done", "approved", "rejected") for s in statuses) and statuses:
+        # Check if workflow reached end node
+        workflow = await db.workflows.find_one({"id": process["workflow_id"]})
+        if workflow:
+            end_nodes = [n["id"] for n in workflow.get("nodes", []) if n.get("type") == "end"]
+            completed = process.get("completed_nodes", [])
+            if any(e in completed for e in end_nodes):
+                p_status = "completed"
+            else:
+                p_status = "in_progress"
+        else:
+            p_status = "completed"
+    else:
+        p_status = "in_progress"
+
+    if p_status != process["status"]:
+        await db.processes.update_one({"id": process_id}, {"$set": {"status": p_status, "updated_at": now_iso()}})
+
+async def check_timeouts():
+    """
+    Finds tasks that have passed their deadline and handles escalation or rejection.
+    """
+    now = now_iso()
+    expired_tasks = await db.tasks.find({
+        "status": {"$in": ["pending", "in_progress"]},
+        "deadline": {"$lt": now},
+        "escalated": {"$ne": True}
+    }).to_list(1000)
+
+    for task in expired_tasks:
+        process = await db.processes.find_one({"id": task["process_id"]})
+        if not process:
+            continue
+        
+        workflow = await db.workflows.find_one({"id": process["workflow_id"]})
+        if not workflow:
+            continue
+            
+        nodes = {n["id"]: n for n in workflow.get("nodes", [])}
+        node = nodes.get(task["node_id"])
+        if not node:
+            continue
+            
+        action = node.get("timeout_action", "none")
+        if action == "none":
+            continue
+            
+        if action == "auto_reject":
+            await db.tasks.update_one(
+                {"id": task["id"]},
+                {"$set": {"status": "rejected", "done_time": now, "updated_at": now, "escalated": True}}
+            )
+            process_completed = process.get("completed_nodes", [])
+            process_completed.append(node["id"])
+            await db.processes.update_one(
+                {"id": process["id"]},
+                {"$set": {"completed_nodes": process_completed, "updated_at": now}}
+            )
+            # Log
+            await db.activity_logs.insert_one({
+                "id": new_id(),
+                "org_id": task["org_id"],
+                "actor_name": "سیستم (تایم‌اوت)",
+                "action": "task.rejected",
+                "target_type": "task",
+                "target_id": task["id"],
+                "summary": "تسک به صورت خودکار رد شد (پایان مهلت)",
+                "created_at": now
+            })
+            await advance_process(process_id=process["id"], completed_node_id=node["id"])
+            await update_process_status(process["id"])
+            
+        elif action == "escalate_to_manager":
+            starter_id = process.get("starter_id")
+            new_assignee_id = None
+            if starter_id:
+                starter = await db.users.find_one({"id": starter_id})
+                if starter and starter.get("manager_id"):
+                    new_assignee_id = starter["manager_id"]
+                    
+            if new_assignee_id:
+                await db.tasks.update_one(
+                    {"id": task["id"]},
+                    {"$set": {"assignee_id": new_assignee_id, "assignee_role": None, "escalated": True, "updated_at": now}}
+                )
+                await db.activity_logs.insert_one({
+                    "id": new_id(),
+                    "org_id": task["org_id"],
+                    "actor_name": "سیستم (تایم‌اوت)",
+                    "action": "task.escalated",
+                    "target_type": "task",
+                    "target_id": task["id"],
+                    "summary": "تسک به دلیل پایان مهلت به مدیر ارجاع شد",
+                    "created_at": now
+                })
+            else:
+                # No manager to escalate to, just mark as escalated
+                await db.tasks.update_one(
+                    {"id": task["id"]},
+                    {"$set": {"escalated": True, "updated_at": now}}
+                )
 
 
 async def advance_process(*, process_id: str, completed_node_id: str, context_update: dict | None = None) -> dict:
@@ -121,9 +269,20 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
     process = await db.process_instances.find_one({"id": process_id}, {"_id": 0})
     if not process:
         return {"ok": False, "reason": "process_not_found"}
-    workflow = await db.workflows.find_one({"id": process["workflow_id"]}, {"_id": 0})
-    if not workflow:
-        return {"ok": False, "reason": "workflow_not_found"}
+
+    # Use frozen snapshot if available; fall back to live workflow for old instances
+    snapshot = process.get("workflow_snapshot")
+    if snapshot:
+        workflow = {
+            "id": process["workflow_id"],
+            "name": process.get("workflow_name", ""),
+            "nodes": snapshot.get("nodes", []),
+            "edges": snapshot.get("edges", []),
+        }
+    else:
+        workflow = await db.workflows.find_one({"id": process["workflow_id"]}, {"_id": 0})
+        if not workflow:
+            return {"ok": False, "reason": "workflow_not_found"}
 
     # Merge any new context data (form submission for a node)
     ctx = dict(process.get("context") or {})
@@ -192,7 +351,7 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
                     new_node_ids.append(target_id)
                 continue
 
-            task = _node_to_task(org=process["org_id"], process=process, workflow=workflow, node=target_node)
+            task = await _node_to_task(org=process["org_id"], process=process, workflow=workflow, node=target_node)
             if task:
                 if missing_deps:
                     task["status"] = "waiting"

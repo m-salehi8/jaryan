@@ -16,7 +16,9 @@ import Inbox from "@/pages/Inbox";
 import ProcessMonitoring from "@/pages/ProcessMonitoring";
 import MobileApprovals from "@/pages/MobileApprovals";
 import UserManagement from "@/pages/UserManagement";
+import { ThemeProvider } from "@/lib/themeContext";
 import Analytics from "@/pages/Analytics";
+import OrgChart from "@/pages/OrgChart";
 import "@/App.css";
 
 function RequireAuth({ children }) {
@@ -66,6 +68,7 @@ function AppRoutes() {
         <Route path="forms" element={<FormsList />} />
         <Route path="forms/:id" element={<FormBuilder />} />
         <Route path="users" element={<UserManagement />} />
+        <Route path="org-chart" element={<OrgChart />} />
         <Route path="monitoring" element={<ProcessMonitoring />} />
         <Route path="analytics" element={<Analytics />} />
       </Route>
@@ -90,14 +93,16 @@ function AppRoutes() {
 export default function App() {
   return (
     <div className="App" dir="rtl" lang="fa">
-      <AuthProvider>
-        <BadgeProvider>
-          <BrowserRouter>
-            <AppRoutes />
-            <Toaster position="top-center" dir="rtl" richColors />
-          </BrowserRouter>
-        </BadgeProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BadgeProvider>
+            <BrowserRouter>
+              <AppRoutes />
+              <Toaster position="top-center" dir="rtl" richColors />
+            </BrowserRouter>
+          </BadgeProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </div>
   );
 }

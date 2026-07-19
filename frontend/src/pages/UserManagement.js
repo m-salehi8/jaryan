@@ -27,7 +27,7 @@ const ROLE_BADGE = {
   "کارمند": "bg-neutral-100 text-neutral-600 border-neutral-200",
 };
 
-const emptyForm = { full_name: "", email: "", role: "کارمند", password: "" };
+const emptyForm = { full_name: "", email: "", role: "کارمند", password: "", department_id: "", manager_id: "" };
 
 export default function UserManagement() {
   const { user } = useAuth();
@@ -40,7 +40,9 @@ export default function UserManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null); // user object
   const [deleting, setDeleting] = useState(false);
+  const [departments, setDepartments] = useState([]);
   const [roleDrafts, setRoleDrafts] = useState({}); // { [id]: role } for optimistic UI
+  const [deptDrafts, setDeptDrafts] = useState({}); // { [id]: dept }
 
   // Admin guard
   useEffect(() => {
@@ -50,9 +52,18 @@ export default function UserManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    api.get("/users").then((r) => setUsers(r.data)).finally(() => setLoading(false));
+    try {
+      const [uRes, dRes] = await Promise.all([
+        api.get("/users"),
+        api.get("/departments").catch(() => ({ data: [] }))
+      ]);
+      setUsers(uRes.data);
+      setDepartments(dRes.data);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     if (user?.role === "ادمین سازمان") load();
@@ -76,6 +87,8 @@ export default function UserManagement() {
         email: form.email.trim(),
         role: form.role,
         password: form.password,
+        department_id: form.department_id || null,
+        manager_id: form.manager_id || null,
       });
       toast.success("کاربر افزوده شد");
       setForm(emptyForm);
@@ -110,6 +123,21 @@ export default function UserManagement() {
       // rollback
       setUsers((list) => list.map((u) => (u.id === uid ? { ...u, role: prevRole } : u)));
       setRoleDrafts((d) => ({ ...d, [uid]: prevRole }));
+    }
+  };
+
+  const changeDept = async (uid, newDept, prevDept) => {
+    // optimistic update
+    setUsers((list) => list.map((u) => (u.id === uid ? { ...u, department_id: newDept || null } : u)));
+    try {
+      await api.patch(`/users/${uid}`, { department_id: newDept || null });
+      toast.success("دپارتمان کاربر به‌روز شد");
+      setDeptDrafts((d) => ({ ...d, [uid]: undefined }));
+    } catch {
+      toast.error("خطا در به‌روزرسانی دپارتمان");
+      // rollback
+      setUsers((list) => list.map((u) => (u.id === uid ? { ...u, department_id: prevDept } : u)));
+      setDeptDrafts((d) => ({ ...d, [uid]: prevDept }));
     }
   };
 
@@ -187,7 +215,7 @@ export default function UserManagement() {
                     {u.role}
                   </span>
 
-                  <div className="w-[150px]" data-testid={`edit-role-${u.id}`}>
+                  <div className="w-[120px]" data-testid={`edit-role-${u.id}`}>
                     <Select
                       value={currentRole}
                       onValueChange={(v) => changeRole(u.id, v, u.role)}
@@ -198,6 +226,23 @@ export default function UserManagement() {
                       <SelectContent>
                         {ROLES.map((r) => (
                           <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="w-[140px]">
+                    <Select
+                      value={deptDrafts[u.id] !== undefined ? deptDrafts[u.id] : (u.department_id || "none")}
+                      onValueChange={(v) => changeDept(u.id, v === "none" ? null : v, u.department_id)}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="دپارتمان" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none" className="text-xs text-neutral-400">بدون دپارتمان</SelectItem>
+                        {departments.map((d) => (
+                          <SelectItem key={d.id} value={d.id} className="text-xs">{d.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -263,6 +308,40 @@ export default function UserManagement() {
                 <SelectContent>
                   {ROLES.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">دپارتمان</Label>
+              <Select
+                value={form.department_id || "none"}
+                onValueChange={(v) => setForm({ ...form, department_id: v === "none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="انتخاب دپارتمان" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">بدون دپارتمان</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">مدیر مستقیم</Label>
+              <Select
+                value={form.manager_id || "none"}
+                onValueChange={(v) => setForm({ ...form, manager_id: v === "none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="انتخاب مدیر" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">بدون مدیر</SelectItem>
+                  {users.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
