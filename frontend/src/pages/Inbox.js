@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, Filter, CheckCircle2, XCircle, Clock, Inbox as InboxIcon, ArrowLeft, FileText } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Search, Filter, CheckCircle2, XCircle, Clock, Inbox as InboxIcon, ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -40,17 +40,28 @@ export default function Inbox() {
   const [assignedToMe, setAssignedToMe] = useState(true);
   const [formSchema, setFormSchema] = useState(null);
   const [formValues, setFormValues] = useState({});
+  const [saveStatus, setSaveStatus] = useState(""); // "Saving...", "Saved", ""
 
-  const load = () => {
+  // Mentions state
+  const [users, setUsers] = useState([]);
+  const [mentionQuery, setMentionQuery] = useState(null);
+  const [mentions, setMentions] = useState([]);
+  const textareaRef = useRef(null);
+
+  const load = useCallback(() => {
     setLoading(true);
     const q = assignedToMe ? "?assigned_to_me=true" : "";
     api.get(`/tasks${q}`).then(r => {
       setTasks(r.data);
-      if (r.data.length && !activeId) setActiveId(r.data[0].id);
+      setActiveId(prev => (r.data.length && !prev) ? r.data[0].id : prev);
     }).finally(() => setLoading(false));
-  };
+  }, [assignedToMe]);
 
-  useEffect(() => { load(); }, [assignedToMe]);
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    api.get("/users").then(r => setUsers(r.data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!activeId) { setComments([]); return; }
@@ -63,16 +74,28 @@ export default function Inbox() {
     if (!t || !t.form_id) { setFormSchema(null); setFormValues({}); return; }
     api.get(`/forms/${t.form_id}`).then(r => {
       setFormSchema(r.data);
-      setFormValues(t.form_data || {});
+      setFormValues((t.draft_data && Object.keys(t.draft_data).length > 0) ? t.draft_data : (t.form_data || {}));
     }).catch(() => setFormSchema(null));
   }, [activeId, tasks]);
+
+  const active = tasks.find(t => t.id === activeId);
+
+  // Auto-save debounce effect
+  useEffect(() => {
+    if (!active || active.type !== "form" || active.status !== "pending") return;
+    const timeout = setTimeout(() => {
+      setSaveStatus("در حال ذخیره...");
+      api.post(`/tasks/${active.id}/draft`, { draft_data: formValues })
+        .then(() => setSaveStatus("ذخیره شد"))
+        .catch(() => setSaveStatus("خطا در ذخیره"));
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [formValues, active]);
 
   const filtered = useMemo(() => {
     return tasks.filter(t => (filter === "all" || t.status === filter) &&
       (q === "" || t.title.toLowerCase().includes(q.toLowerCase()) || t.workflow_name.toLowerCase().includes(q.toLowerCase())));
   }, [tasks, filter, q]);
-
-  const active = tasks.find(t => t.id === activeId);
 
   const updateStatus = async (status) => {
     if (!active) return;
@@ -80,16 +103,54 @@ export default function Inbox() {
     if (formSchema && active.type === "form") body.form_data = formValues;
     await api.patch(`/tasks/${active.id}`, body);
     toast.success("به‌روزرسانی انجام شد");
-    // Refresh task list so the new tasks created by the engine appear
     load();
+  };
+
+  const handleCommentChange = (e) => {
+    const val = e.target.value;
+    setNewComment(val);
+    
+    // Find the last word if it starts with @
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursor);
+    const lastWordMatch = textBeforeCursor.match(/@(\S*)$/);
+    if (lastWordMatch) {
+      setMentionQuery(lastWordMatch[1]);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const selectMention = (user) => {
+    const cursor = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = newComment.slice(0, cursor);
+    const textAfterCursor = newComment.slice(cursor);
+    const textBeforeMention = textBeforeCursor.replace(/@\S*$/, "");
+    
+    setNewComment(textBeforeMention + "@" + user.full_name + " " + textAfterCursor);
+    if (!mentions.includes(user.id)) {
+      setMentions([...mentions, user.id]);
+    }
+    setMentionQuery(null);
+    textareaRef.current?.focus();
   };
 
   const addComment = async () => {
     if (!newComment.trim() || !active) return;
-    const r = await api.post("/comments", { target_type: "task", target_id: active.id, body: newComment });
+    const r = await api.post("/comments", { 
+      target_type: "task", 
+      target_id: active.id, 
+      body: newComment,
+      mentions: mentions
+    });
     setComments((c) => [...c, r.data]);
     setNewComment("");
+    setMentions([]);
   };
+
+  const filteredUsers = mentionQuery !== null 
+    ? users.filter(u => u.full_name.toLowerCase().includes(mentionQuery.toLowerCase())) 
+    : [];
 
   return (
     <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="inbox-root" data-tour-id="tour-inbox-root">
@@ -202,6 +263,27 @@ export default function Inbox() {
                 </div>
               )}
 
+              {/* Form Rendering */}
+              {active.type === "form" && formSchema && (
+                <div className="mt-6 border border-neutral-200 bg-white rounded-xl p-6 relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-neutral-800">تکمیل فرم</h3>
+                    {saveStatus && (
+                      <span className="text-[10px] text-neutral-400 flex items-center gap-1">
+                        {saveStatus === "در حال ذخیره..." && <Loader2 className="w-3 h-3 animate-spin" />}
+                        {saveStatus}
+                      </span>
+                    )}
+                  </div>
+                  <FormRenderer 
+                    fields={formSchema.fields} 
+                    values={formValues} 
+                    onChange={setFormValues} 
+                    readOnly={active.status === "done" || active.status === "approved" || active.status === "rejected"}
+                  />
+                </div>
+              )}
+
               {active.type === "approval" && active.status === "pending" && (
                 <div className="mt-5 flex gap-2">
                   <Button data-testid="approve-btn" onClick={() => updateStatus("approved")} className="bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -230,13 +312,53 @@ export default function Inbox() {
                         <span className="text-sm font-medium">{c.author_name}</span>
                         <span className="text-[10px] text-neutral-400">{fromNow(c.created_at)}</span>
                       </div>
-                      <div className="text-sm text-neutral-700 leading-6">{c.body}</div>
+                      <div className="text-sm text-neutral-700 leading-6 whitespace-pre-wrap">
+                        {/* Highlight mentions in comment body */}
+                        {c.body.split(/(@\S+)/).map((word, i) => 
+                          word.startsWith('@') ? <span key={i} className="text-blue-600 font-medium">{word}</span> : word
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 flex items-start gap-2">
-                  <Textarea data-testid="comment-input" rows={2} value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="یک کامنت بنویس…" />
-                  <Button data-testid="comment-send" onClick={addComment} className="bg-neutral-900 text-white">
+                <div className="mt-4 flex items-start gap-2 relative">
+                  <div className="flex-1 relative">
+                    <Textarea 
+                      data-testid="comment-input" 
+                      ref={textareaRef}
+                      rows={2} 
+                      value={newComment} 
+                      onChange={handleCommentChange} 
+                      placeholder="یک کامنت بنویس… (با @ دیگران را منشن کن)" 
+                    />
+                    
+                    {/* Mentions Dropdown */}
+                    {mentionQuery !== null && (
+                      <div className="absolute z-10 bottom-full mb-1 left-0 w-64 bg-white border border-neutral-200 shadow-xl rounded-lg overflow-hidden">
+                        {filteredUsers.length === 0 ? (
+                          <div className="text-xs text-neutral-400 p-3 text-center">کاربری یافت نشد</div>
+                        ) : (
+                          <ul className="max-h-48 overflow-y-auto py-1">
+                            {filteredUsers.map(u => (
+                              <li 
+                                key={u.id}
+                                className="px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 cursor-pointer flex items-center gap-2"
+                                onClick={() => selectMention(u)}
+                              >
+                                <span className="w-5 h-5 rounded-full bg-neutral-200 flex items-center justify-center text-[10px] shrink-0">
+                                  {u.full_name[0]}
+                               </span>
+                                <span className="truncate">{u.full_name}</span>
+                                <span className="text-[10px] text-neutral-400 shrink-0">{u.role}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <Button data-testid="comment-send" onClick={addComment} className="bg-neutral-900 text-white shrink-0">
                     ارسال <ArrowLeft className="w-3.5 h-3.5 ms-1" />
                   </Button>
                 </div>

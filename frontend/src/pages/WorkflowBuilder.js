@@ -8,7 +8,9 @@ import "reactflow/dist/style.css";
 import {
   PlayCircle, Save, Trash2, Plus, ArrowRight, MessageSquare,
   Zap, FileText, CheckCircle2, GitBranch, Square, Settings2, X, Send, Loader2, Sparkles,
+  Clock, Split, Wand2,
 } from "lucide-react";
+import dagre from "dagre";
 import { toast } from "sonner";
 import { api, streamAI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -19,12 +21,14 @@ import { fromNow } from "@/lib/jalali";
 import { OP_LABELS } from "@/lib/formLogic";
 
 const NODE_TYPES_META = {
-  trigger:   { label: "شروع",     icon: Zap,          bar: "#10b981" },
-  task:      { label: "تسک",      icon: Square,       bar: "#737373" },
-  approval:  { label: "تایید",    icon: CheckCircle2, bar: "#2563eb" },
-  condition: { label: "شرط",      icon: GitBranch,    bar: "#ca8a04" },
-  form:      { label: "فرم",      icon: FileText,     bar: "#7c3aed" },
-  end:       { label: "پایان",    icon: Square,       bar: "#171717" },
+  trigger:   { label: "شروع دستی",    icon: Zap,          bar: "#10b981" },
+  cron:      { label: "شروع زمان‌دار", icon: Clock,        bar: "#10b981" },
+  task:      { label: "تسک",          icon: Square,       bar: "#737373" },
+  approval:  { label: "تایید",        icon: CheckCircle2, bar: "#2563eb" },
+  condition: { label: "شرط",          icon: GitBranch,    bar: "#ca8a04" },
+  parallel:  { label: "موازی (AND)",  icon: Split,        bar: "#ec4899" },
+  form:      { label: "فرم",          icon: FileText,     bar: "#7c3aed" },
+  end:       { label: "پایان",        icon: Square,       bar: "#171717" },
 };
 const ROLES = ["ادمین سازمان", "طراح فرایند", "مدیر تیم", "کارمند"];
 
@@ -35,7 +39,7 @@ function FlowNode({ data, selected, id }) {
   return (
     <div
       data-testid={`canvas-node-${id}`}
-      className={`bg-white border ${selected ? "border-neutral-900 shadow-sm" : "border-neutral-200"} rounded-xl min-w-[200px] overflow-hidden transition-all`}
+      className={`bg-white border ${selected ? "border-neutral-900 shadow-md" : "border-neutral-200 shadow-sm hover:shadow-md"} rounded-xl min-w-[200px] overflow-hidden transition-all`}
       style={{ direction: "rtl" }}
     >
       <Handle type="target" position={Position.Left} />
@@ -74,7 +78,7 @@ function toRF(wf) {
       source: e.source,
       target: e.target,
       label: e.label || "",
-      type: "smoothstep",
+      type: "step",
       markerEnd: { type: MarkerType.ArrowClosed, color: "#525252" },
       data: { condition: e.condition },
     })),
@@ -91,6 +95,8 @@ function fromRF(nodes, edges) {
         ...(n.data.assignee_role ? { assignee_role: n.data.assignee_role } : {}),
         ...(n.data.form_id ? { form_id: n.data.form_id } : {}),
         ...(n.data.expression ? { expression: n.data.expression } : {}),
+        ...(n.data.dependencies ? { dependencies: n.data.dependencies } : {}),
+        ...(n.data.cron_expression ? { cron_expression: n.data.cron_expression } : {}),
       },
     })),
     edges: edges.map((e) => ({
@@ -131,7 +137,7 @@ export default function WorkflowBuilder() {
     (conn) => setEdges((eds) => addEdge({
       ...conn,
       id: `e_${Date.now()}`,
-      type: "smoothstep",
+      type: "step",
       markerEnd: { type: MarkerType.ArrowClosed, color: "#525252" },
     }, eds)),
     []
@@ -161,6 +167,37 @@ export default function WorkflowBuilder() {
     }]);
   };
 
+  const onLayout = useCallback(() => {
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
+    dagreGraph.setGraph({ rankdir: 'LR', align: 'UL', ranksep: 260, nodesep: 160 });
+
+    nodes.forEach((node) => {
+      dagreGraph.setNode(node.id, { width: 220, height: 100 });
+    });
+    edges.forEach((edge) => {
+      dagreGraph.setEdge(edge.source, edge.target);
+    });
+
+    dagre.layout(dagreGraph);
+
+    const layoutedNodes = nodes.map((node) => {
+      const nodeWithPosition = dagreGraph.node(node.id);
+      return {
+        ...node,
+        targetPosition: Position.Left,
+        sourcePosition: Position.Right,
+        position: {
+          x: nodeWithPosition.x - 110,
+          y: nodeWithPosition.y - 50,
+        }
+      };
+    });
+
+    setNodes(layoutedNodes);
+    setTimeout(() => { saveSilently(layoutedNodes, edges); }, 100);
+  }, [nodes, edges, saveSilently]);
+
   const updateNode = (nodeId, patch) => {
     setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n));
   };
@@ -183,6 +220,14 @@ export default function WorkflowBuilder() {
     setSaving(true);
     try {
       const payload = fromRF(nodes, edges);
+      const cronNode = nodes.find(n => n.data.nodeType === "cron");
+      if (cronNode) {
+          payload.trigger_type = "cron";
+          payload.cron_expression = cronNode.data.cron_expression || "0 0 * * *";
+      } else {
+          payload.trigger_type = "manual";
+          payload.cron_expression = null;
+      }
       await api.patch(`/workflows/${id}`, payload);
       toast.success("ذخیره شد");
     } catch { toast.error("خطا در ذخیره"); }
@@ -191,6 +236,14 @@ export default function WorkflowBuilder() {
 
   const publish = async () => {
     const payload = { ...fromRF(nodes, edges), status: "published" };
+    const cronNode = nodes.find(n => n.data.nodeType === "cron");
+    if (cronNode) {
+        payload.trigger_type = "cron";
+        payload.cron_expression = cronNode.data.cron_expression || "0 0 * * *";
+    } else {
+        payload.trigger_type = "manual";
+        payload.cron_expression = null;
+    }
     await api.patch(`/workflows/${id}`, payload);
     setWf((w) => ({ ...w, status: "published" }));
     toast.success("فرایند منتشر شد");
@@ -237,6 +290,9 @@ export default function WorkflowBuilder() {
           }`}>{wf.status === "published" ? "منتشر شده" : "پیش‌نویس"}</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button data-testid="builder-layout-btn" variant="outline" size="sm" onClick={onLayout}>
+            <Wand2 className="w-4 h-4 me-1" /> چیدمان خودکار
+          </Button>
           <Button data-testid="builder-ai-btn" variant="outline" size="sm" onClick={() => setAiOpen(true)}>
             <Sparkles className="w-4 h-4 me-1" /> هوش مصنوعی
           </Button>
@@ -294,6 +350,7 @@ export default function WorkflowBuilder() {
             onNodeClick={(_, n) => setSelected({ kind: "node", id: n.id })}
             onEdgeClick={(_, e) => setSelected({ kind: "edge", id: e.id })}
             onPaneClick={() => setSelected(null)}
+            defaultEdgeOptions={{ type: 'step' }}
             fitView
             fitViewOptions={{ padding: 0.25 }}
             proOptions={{ hideAttribution: true }}
@@ -325,6 +382,7 @@ export default function WorkflowBuilder() {
           selectedEdge={selectedEdge}
           forms={forms}
           nodes={nodes}
+          edges={edges}
           onNode={updateNode}
           onEdge={updateEdge}
           onDeleteNode={deleteNode}
@@ -351,7 +409,7 @@ export default function WorkflowBuilder() {
   );
 }
 
-function Inspector({ selectedNode, selectedEdge, forms, nodes, onNode, onEdge, onDeleteNode, onDeleteEdge, workflowId }) {
+function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, onEdge, onDeleteNode, onDeleteEdge, workflowId }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const targetId = selectedNode?.id;
@@ -465,6 +523,50 @@ function Inspector({ selectedNode, selectedEdge, forms, nodes, onNode, onEdge, o
                   onChange={(e) => onNode(selectedNode.id, { expression: e.target.value })}
                   placeholder="amount > 1000000"
                 />
+              </div>
+            )}
+
+            {selectedNode.data.nodeType === "cron" && (
+              <div>
+                <label className="text-xs text-neutral-500 mb-1.5 block">عبارت کران (Cron Expression)</label>
+                <Input
+                  dir="ltr"
+                  value={selectedNode.data.cron_expression || ""}
+                  onChange={(e) => onNode(selectedNode.id, { cron_expression: e.target.value })}
+                  placeholder="* * * * *"
+                />
+                <p className="text-[10px] text-neutral-400 mt-1">فرمت استاندارد (دقیقه، ساعت، روز، ماه، روز هفته)</p>
+              </div>
+            )}
+
+            {selectedNode.data.nodeType === "parallel" && (
+              <div>
+                <label className="text-xs text-neutral-500 mb-1.5 block">گره‌های پیش‌نیاز (Wait Conditions)</label>
+                <div className="space-y-2 mt-2">
+                  {edges.filter(e => e.target === selectedNode.id).map(edge => {
+                    const src = nodes.find(n => n.id === edge.source);
+                    if (!src) return null;
+                    const isChecked = (selectedNode.data.dependencies || []).includes(src.id);
+                    return (
+                      <label key={src.id} className="flex items-center gap-2 text-sm text-neutral-700 bg-neutral-50 border border-neutral-100 p-2 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            let deps = selectedNode.data.dependencies || [];
+                            if (e.target.checked) deps = [...deps, src.id];
+                            else deps = deps.filter(id => id !== src.id);
+                            onNode(selectedNode.id, { dependencies: deps });
+                          }}
+                        />
+                        <span className="mono text-[10px] text-neutral-400">[{src.data.nodeType}]</span> {src.data.label}
+                      </label>
+                    );
+                  })}
+                  {edges.filter(e => e.target === selectedNode.id).length === 0 && (
+                    <div className="text-xs text-neutral-400">هیچ گره ورودی به این گره متصل نیست.</div>
+                  )}
+                </div>
               </div>
             )}
           </div>

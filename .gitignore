@@ -86,3 +86,11 @@ android-sdk/
 credentials.json
 *.key
 .credentials
+
+# MongoDB and Data
+data/db/
+data/mongod.log*
+
+# Temp directories
+tmp_deps/
+test_reports/

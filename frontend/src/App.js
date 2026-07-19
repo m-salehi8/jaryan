@@ -16,6 +16,7 @@ import Inbox from "@/pages/Inbox";
 import ProcessMonitoring from "@/pages/ProcessMonitoring";
 import MobileApprovals from "@/pages/MobileApprovals";
 import UserManagement from "@/pages/UserManagement";
+import Analytics from "@/pages/Analytics";
 import "@/App.css";
 
 function RequireAuth({ children }) {
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route path="forms/:id" element={<FormBuilder />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="monitoring" element={<ProcessMonitoring />} />
+        <Route path="analytics" element={<Analytics />} />
       </Route>
 
       {/* ─── Client panel: / ─── */}

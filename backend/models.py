@@ -88,6 +88,7 @@ class WorkflowNode(BaseModel):
     label: str
     position: dict  # {x, y}
     data: dict = Field(default_factory=dict)  # assignee_role, form_id, condition, etc
+    dependencies: list[str] = Field(default_factory=list)
 
 
 class WorkflowEdge(BaseModel):
@@ -105,6 +106,9 @@ class Workflow(BaseDocument):
     name: str
     description: str = ""
     status: Literal["draft", "published", "archived"] = "draft"
+    trigger_type: Literal["manual", "cron"] = "manual"
+    cron_expression: Optional[str] = None
+    last_triggered_at: Optional[str] = None
     nodes: list[WorkflowNode] = Field(default_factory=list)
     edges: list[WorkflowEdge] = Field(default_factory=list)
     created_by: str  # user id
@@ -113,6 +117,8 @@ class Workflow(BaseDocument):
 class WorkflowCreate(BaseModel):
     name: str
     description: str = ""
+    trigger_type: Literal["manual", "cron"] = "manual"
+    cron_expression: Optional[str] = None
     nodes: list[WorkflowNode] = Field(default_factory=list)
     edges: list[WorkflowEdge] = Field(default_factory=list)
 
@@ -121,6 +127,8 @@ class WorkflowUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[Literal["draft", "published", "archived"]] = None
+    trigger_type: Optional[Literal["manual", "cron"]] = None
+    cron_expression: Optional[str] = None
     nodes: Optional[list[WorkflowNode]] = None
     edges: Optional[list[WorkflowEdge]] = None
 
@@ -188,9 +196,10 @@ class ProcessInstance(BaseDocument):
     org_id: str
     workflow_id: str
     workflow_name: str
-    started_by: str
+    started_by: Optional[str] = None
     current_node_id: Optional[str] = None
     status: Literal["running", "completed", "rejected", "stuck"] = "running"
+    completed_nodes: list[str] = Field(default_factory=list)
     context: dict = Field(default_factory=dict)  # form submissions etc.
 
 
@@ -204,18 +213,27 @@ class Task(BaseDocument):
     assignee_id: Optional[str] = None
     assignee_role: Optional[RoleFa] = None
     type: Literal["task", "approval", "form"] = "task"
-    status: Literal["pending", "in_progress", "approved", "rejected", "done"] = "pending"
+    status: Literal["waiting", "pending", "in_progress", "approved", "rejected", "done"] = "pending"
+    wait_conditions: list[str] = Field(default_factory=list)
     priority: Literal["low", "medium", "high", "urgent"] = "medium"
     deadline: Optional[str] = None  # iso
+    seen_time: Optional[str] = None   # iso — set when status → in_progress
+    done_time: Optional[str] = None   # iso — set when status → done/approved/rejected
     form_id: Optional[str] = None
     form_data: dict = Field(default_factory=dict)
+    draft_data: dict = Field(default_factory=dict)
     description: str = ""
 
 
 class TaskUpdate(BaseModel):
-    status: Optional[Literal["pending", "in_progress", "approved", "rejected", "done"]] = None
+    status: Optional[Literal["waiting", "pending", "in_progress", "approved", "rejected", "done"]] = None
+    wait_conditions: Optional[list[str]] = None
     form_data: Optional[dict] = None
     note: Optional[str] = None
+
+
+class TaskDraftUpdate(BaseModel):
+    draft_data: dict
 
 
 # ---------- Comments & Activity ----------
@@ -228,12 +246,14 @@ class Comment(BaseDocument):
     author_id: str
     author_name: str
     body: str
+    mentions: list[str] = Field(default_factory=list)
 
 
 class CommentCreate(BaseModel):
     target_type: Literal["node", "task", "process"]
     target_id: str
     body: str
+    mentions: Optional[list[str]] = None
 
 
 class ActivityLog(BaseDocument):

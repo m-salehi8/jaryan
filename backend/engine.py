@@ -130,6 +130,10 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
     if context_update:
         ctx.update(context_update)
 
+    completed_nodes = list(process.get("completed_nodes") or [])
+    if completed_node_id not in completed_nodes:
+        completed_nodes.append(completed_node_id)
+
     next_tasks: list[dict] = []
     new_node_ids: list[str] = []
     visited: set[str] = set()
@@ -165,13 +169,41 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
                 # Pass-through node: keep traversing without creating a task.
                 frontier.append(target_id)
                 continue
+                
+            dependencies = target_node.get("dependencies") or []
+            missing_deps = [d for d in dependencies if d not in completed_nodes]
+            
+            # Check if there is already a waiting task for this target node
+            existing_task = await db.tasks.find_one({
+                "process_id": process_id,
+                "node_id": target_id,
+                "status": "waiting"
+            })
+            
+            if existing_task:
+                # Update its wait conditions
+                new_wait = [d for d in existing_task.get("wait_conditions", []) if d != current_id]
+                status = "pending" if not new_wait else "waiting"
+                await db.tasks.update_one(
+                    {"id": existing_task["id"]},
+                    {"$set": {"wait_conditions": new_wait, "status": status, "updated_at": now_iso()}}
+                )
+                if status == "pending":
+                    new_node_ids.append(target_id)
+                continue
+
             task = _node_to_task(org=process["org_id"], process=process, workflow=workflow, node=target_node)
             if task:
+                if missing_deps:
+                    task["status"] = "waiting"
+                    task["wait_conditions"] = missing_deps
+                else:
+                    new_node_ids.append(target_id)
                 next_tasks.append(task)
-                new_node_ids.append(target_id)
             else:
                 # trigger or other; just walk further
-                frontier.append(target_id)
+                if not missing_deps:
+                    frontier.append(target_id)
 
     # Persist new tasks
     if next_tasks:
@@ -180,10 +212,14 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
     # Determine new process status
     target_types = [nodes_by_id[nid]["type"] for nid in new_node_ids if nid in nodes_by_id]
     has_end = any(t == "end" for t in target_types)
-    has_action = bool(next_tasks)
+    has_action = bool(next_tasks) or any(t == "pending" for t in [t["status"] for t in next_tasks] if "status" in t) 
+    # Wait, the logic for has_action was bool(next_tasks) which means ANY new task was created.
+    # Actually if next_tasks were all 'waiting', it shouldn't be the 'current_node_id' 
+    
+    pending_new_tasks = [t for t in next_tasks if t.get("status") != "waiting"]
 
-    if has_action:
-        new_current = next_tasks[0]["node_id"]
+    if pending_new_tasks:
+        new_current = pending_new_tasks[0]["node_id"]
         new_status = "running"
     elif has_end:
         new_current = next((nid for nid in new_node_ids if nodes_by_id.get(nid, {}).get("type") == "end"), None)
@@ -198,6 +234,7 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
             "current_node_id": new_current,
             "status": new_status,
             "context": ctx,
+            "completed_nodes": completed_nodes,
             "updated_at": now_iso(),
         }},
     )

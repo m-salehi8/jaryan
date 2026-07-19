@@ -13,6 +13,7 @@ from typing import Optional
 from fastapi import APIRouter, FastAPI, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
+from croniter import croniter
 
 from auth import (
     CurrentUser,
@@ -35,6 +36,7 @@ from models import (
     ProcessInstance,
     Task,
     TaskUpdate,
+    TaskDraftUpdate,
     User,
     UserCreate,
     UserRoleUpdate,
@@ -63,6 +65,56 @@ logger = logging.getLogger("raahkar")
 async def _startup() -> None:
     result = await seed_data()
     logger.info("seed: %s", result)
+    asyncio.create_task(cron_scheduler())
+
+
+async def cron_scheduler():
+    logger.info("Cron scheduler started")
+    while True:
+        try:
+            now_dt = datetime.now(timezone.utc)
+            cursor = db.workflows.find({"status": "published", "trigger_type": "cron"})
+            async for wf in cursor:
+                expr = wf.get("cron_expression")
+                if not expr:
+                    continue
+                if croniter.match(expr, now_dt):
+                    last = wf.get("last_triggered_at")
+                    if last:
+                        last_dt = datetime.fromisoformat(last.replace("Z", "+00:00"))
+                        if (now_dt - last_dt).total_seconds() < 50:
+                            continue
+                    
+                    logger.info(f"Triggering cron workflow {wf['id']} '{wf['name']}'")
+                    await db.workflows.update_one(
+                        {"id": wf["id"]},
+                        {"$set": {"last_triggered_at": now_iso()}}
+                    )
+                    
+                    first_node = next((n for n in wf.get("nodes", []) if n["type"] == "trigger"), wf.get("nodes")[0] if wf.get("nodes") else None)
+                    if first_node:
+                        instance = ProcessInstance(
+                            org_id=wf["org_id"],
+                            workflow_id=wf["id"],
+                            workflow_name=wf["name"],
+                            started_by=None,
+                            current_node_id=first_node["id"],
+                            status="running",
+                            context={"requester": "System (Cron)"},
+                        )
+                        await db.process_instances.insert_one(instance.to_mongo())
+                        await advance_process(
+                            process_id=instance.id,
+                            completed_node_id=first_node["id"]
+                        )
+        except Exception as e:
+            logger.error(f"Cron scheduler error: {e}")
+        
+        now = datetime.now(timezone.utc)
+        sleep_seconds = 60 - now.second - (now.microsecond / 1_000_000.0)
+        if sleep_seconds < 1:
+            sleep_seconds = 60
+        await asyncio.sleep(sleep_seconds)
 
 
 @app.on_event("shutdown")
@@ -304,6 +356,12 @@ async def update_task(task_id: str, payload: TaskUpdate, user: User = CurrentUse
     updates: dict = {"updated_at": now_iso()}
     if payload.status is not None:
         updates["status"] = payload.status
+        # Stamp seen_time on first transition to in_progress (never overwrite)
+        if payload.status == "in_progress" and not doc.get("seen_time"):
+            updates["seen_time"] = now_iso()
+        # Stamp done_time on terminal transitions
+        if payload.status in ("done", "approved", "rejected"):
+            updates["done_time"] = now_iso()
     if payload.form_data is not None:
         updates["form_data"] = payload.form_data
     await db.tasks.update_one({"id": task_id}, {"$set": updates})
@@ -339,6 +397,18 @@ async def update_task(task_id: str, payload: TaskUpdate, user: User = CurrentUse
 
     task = await get_task(task_id, user)
     return {"task": task, "advanced": advanced}
+
+
+@api.post("/tasks/{task_id}/draft")
+async def save_task_draft(task_id: str, payload: TaskDraftUpdate, user: User = CurrentUser):
+    doc = await db.tasks.find_one({"id": task_id, "org_id": user.org_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "task_not_found")
+    await db.tasks.update_one(
+        {"id": task_id}, 
+        {"$set": {"draft_data": payload.draft_data, "updated_at": now_iso()}}
+    )
+    return {"saved": True}
 
 
 # ---------- Processes / Monitoring ----------
@@ -554,6 +624,73 @@ async def analytics_dashboard(user: User = CurrentUser):
     }
 
 
+@api.get("/analytics/users")
+async def analytics_users(user: User = CurrentUser):
+    users_cursor = db.users.find({"org_id": user.org_id}, {"id": 1, "full_name": 1, "role": 1})
+    org_users = await users_cursor.to_list(1000)
+    
+    pipeline = [
+        {"$match": {"org_id": user.org_id, "status": {"$in": ["approved", "rejected", "done"]}}},
+        {"$group": {
+            "_id": "$assignee_id",
+            "task_count": {"$sum": 1},
+            "total_time": {"$sum": {"$subtract": [{"$toDate": "$updated_at"}, {"$toDate": "$created_at"}]}}
+        }}
+    ]
+    
+    stats = {}
+    async for doc in db.tasks.aggregate(pipeline):
+        if doc["_id"]:
+            stats[doc["_id"]] = {
+                "task_count": doc["task_count"],
+                "avg_lead_time": round((doc["total_time"] / doc["task_count"]) / 60000, 2)
+            }
+            
+    result = []
+    for u in org_users:
+        s = stats.get(u["id"], {"task_count": 0, "avg_lead_time": 0})
+        result.append({
+            "user_id": u["id"],
+            "full_name": u.get("full_name", ""),
+            "role": u.get("role", ""),
+            "task_count": s["task_count"],
+            "avg_lead_time": s["avg_lead_time"]
+        })
+    return result
+
+
+@api.get("/analytics/workflows/{wf_id}/heatmap")
+async def analytics_workflow_heatmap(wf_id: str, user: User = CurrentUser):
+    pipeline = [
+        {"$match": {"org_id": user.org_id, "workflow_id": wf_id, "status": {"$in": ["approved", "rejected", "done"]}}},
+        {"$group": {
+            "_id": "$node_id",
+            "avg_time": {"$avg": {"$subtract": [{"$toDate": "$updated_at"}, {"$toDate": "$created_at"}]}},
+            "count": {"$sum": 1}
+        }}
+    ]
+    heatmap = {}
+    async for doc in db.tasks.aggregate(pipeline):
+        if doc["_id"]:
+            heatmap[doc["_id"]] = {
+                "avg_time_minutes": round(doc["avg_time"] / 60000, 2) if doc["avg_time"] else 0,
+                "count": doc["count"]
+            }
+    return heatmap
+
+
+@api.get("/analytics/forms")
+async def analytics_forms(user: User = CurrentUser):
+    pipeline = [
+        {"$match": {"org_id": user.org_id}},
+        {"$group": {"_id": "$workflow_name", "count": {"$sum": 1}}}
+    ]
+    result = []
+    async for doc in db.process_instances.aggregate(pipeline):
+        result.append({"name": doc["_id"], "value": doc["count"]})
+    return result
+
+
 # ---------- Comments ----------
 @api.get("/comments")
 async def list_comments(target_type: str, target_id: str, user: User = CurrentUser):
@@ -573,8 +710,14 @@ async def add_comment(payload: CommentCreate, user: User = CurrentUser):
         author_id=user.id,
         author_name=user.full_name,
         body=payload.body,
+        mentions=payload.mentions or [],
     )
     await db.comments.insert_one(c.to_mongo())
+
+    if c.mentions:
+        for m in c.mentions:
+            await _activity(user, "user.mentioned", "user", m, f"شما توسط {user.full_name} منشن شدید")
+
     return c
 
 

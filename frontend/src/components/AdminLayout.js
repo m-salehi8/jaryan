@@ -9,6 +9,7 @@ import {
   LogOut,
   Users,
   Shield,
+  BarChart2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -21,6 +22,7 @@ const ADMIN_NAV = [
   { to: "/admin/forms", icon: FileText, label: "فرم‌ها", testId: "admin-nav-forms", tourId: null },
   { to: "/admin/monitoring", icon: Activity, label: "پایش زنده", testId: "admin-nav-monitoring", tourId: null },
   { to: "/admin/users", icon: Users, label: "مدیریت کاربران", testId: "admin-nav-users", tourId: "tour-nav-inbox" },
+  { to: "/admin/analytics", icon: BarChart2, label: "گزارش‌ها", testId: "admin-nav-analytics", tourId: null },
 ];
 
 function AdminSidebar() {

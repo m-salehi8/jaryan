@@ -16,6 +16,8 @@ from models import (
     Workflow,
     WorkflowEdge,
     WorkflowNode,
+    Comment,
+    ChatMessage,
 )
 
 
@@ -28,7 +30,11 @@ async def seed() -> dict:
             {"org_id": existing_org["id"], "name": "فرم درخواست خدمات (پشتیبانی)"},
             {"_id": 0},
         )
-        if has_services_form:
+        has_hire_form = await db.forms.find_one(
+            {"org_id": existing_org["id"], "name": "فرم درخواست استخدام"},
+            {"_id": 0},
+        )
+        if has_services_form and has_hire_form:
             return {"status": "exists", "org_id": existing_org["id"]}
         # Wipe and recreate
         for col in ("organizations", "users", "forms", "workflows",
@@ -167,7 +173,29 @@ async def seed() -> dict:
         ],
     )
 
-    await db.forms.insert_many([leave_form.to_mongo(), petty_form.to_mongo(), services_form.to_mongo()])
+    # ---- Form: درخواست استخدام
+    hire_form = Form(
+        org_id=org.id,
+        name="فرم درخواست استخدام",
+        description="فرم ثبت درخواست استخدام نیروی جدید",
+        created_by=designer.id,
+        fields=[
+            FormField(id=new_id(), type="heading", label="اطلاعات متقاضی"),
+            FormField(id=new_id(), type="text", label="نام و نام خانوادگی", required=True),
+            FormField(id=new_id(), type="text", label="موقعیت شغلی پیشنهادی", required=True),
+            FormField(id=new_id(), type="select", label="دپارتمان", required=True,
+                      options=["فنی و مهندسی", "منابع انسانی", "فروش و بازاریابی", "مالی"]),
+            FormField(id=new_id(), type="number", label="حقوق پیشنهادی (ریال)", required=False),
+            FormField(id=new_id(), type="textarea", label="ارزیابی اولیه", required=True),
+        ],
+    )
+
+    await db.forms.insert_many([
+        leave_form.to_mongo(), 
+        petty_form.to_mongo(), 
+        services_form.to_mongo(),
+        hire_form.to_mongo()
+    ])
 
     # ---- Workflow: مرخصی
     leave_wf = Workflow(
@@ -245,9 +273,47 @@ async def seed() -> dict:
             WorkflowEdge(id="e6", source="n5", target="n6"),
         ],
     )
-    await db.workflows.insert_many([leave_wf.to_mongo(), petty_wf.to_mongo()])
+
+    # ---- Workflow: استخدام
+    hire_wf = Workflow(
+        org_id=org.id,
+        name="فرایند استخدام نیروی جدید",
+        description="روند بررسی و تایید استخدام نیروی جدید در سازمان",
+        status="published",
+        created_by=designer.id,
+        nodes=[
+            WorkflowNode(id="n1", type="trigger", label="شروع",
+                         position={"x": 50, "y": 150}, data={}),
+            WorkflowNode(id="n2", type="form", label="تکمیل فرم مصاحبه",
+                         position={"x": 300, "y": 150},
+                         data={"form_id": hire_form.id, "assignee_role": "مدیر تیم"}),
+            WorkflowNode(id="n3", type="approval", label="تایید منابع انسانی",
+                         position={"x": 550, "y": 150},
+                         data={"assignee_role": "ادمین سازمان"}),
+            WorkflowNode(id="n4", type="task", label="تنظیم قرارداد",
+                         position={"x": 800, "y": 50},
+                         data={"assignee_role": "کارمند"}),
+            WorkflowNode(id="n5", type="end", label="رد درخواست",
+                         position={"x": 800, "y": 250}, data={}),
+            WorkflowNode(id="n6", type="end", label="پایان موفقیت‌آمیز",
+                         position={"x": 1050, "y": 50}, data={}),
+        ],
+        edges=[
+            WorkflowEdge(id="e1", source="n1", target="n2"),
+            WorkflowEdge(id="e2", source="n2", target="n3"),
+            WorkflowEdge(id="e3", source="n3", target="n4", label="تایید",
+                         condition={"field_id": "_task_status", "op": "=", "value": "approved"}),
+            WorkflowEdge(id="e4", source="n3", target="n5", label="رد",
+                         condition={"field_id": "_task_status", "op": "=", "value": "rejected"}),
+            WorkflowEdge(id="e5", source="n4", target="n6"),
+        ],
+    )
+
+    await db.workflows.insert_many([leave_wf.to_mongo(), petty_wf.to_mongo(), hire_wf.to_mongo()])
 
     # ---- Sample running process instance + tasks ----
+    now = datetime.now(timezone.utc)
+
     instance = ProcessInstance(
         org_id=org.id,
         workflow_id=leave_wf.id,
@@ -257,11 +323,46 @@ async def seed() -> dict:
         status="running",
         context={"requester": employee.full_name},
     )
-    await db.process_instances.insert_one(instance.to_mongo())
 
-    now = datetime.now(timezone.utc)
+    completed_instance = ProcessInstance(
+        org_id=org.id,
+        workflow_id=petty_wf.id,
+        workflow_name=petty_wf.name,
+        started_by=manager.id,
+        current_node_id="n6",
+        status="completed",
+        context={"requester": manager.full_name, "amount": 15000000},
+    )
+
+    rejected_instance = ProcessInstance(
+        org_id=org.id,
+        workflow_id=leave_wf.id,
+        workflow_name=leave_wf.name,
+        started_by=employee.id,
+        current_node_id="n6",
+        status="rejected",
+        context={"requester": employee.full_name},
+    )
+    
+    stuck_instance = ProcessInstance(
+        org_id=org.id,
+        workflow_id=hire_wf.id,
+        workflow_name=hire_wf.name,
+        started_by=designer.id,
+        current_node_id="n3",
+        status="stuck",
+        context={"requester": designer.full_name, "applicant": "علی رضوی"},
+    )
+
+    await db.process_instances.insert_many([
+        instance.to_mongo(), 
+        completed_instance.to_mongo(),
+        rejected_instance.to_mongo(),
+        stuck_instance.to_mongo()
+    ])
 
     tasks = [
+        # Original tasks
         Task(
             org_id=org.id,
             process_id=instance.id,
@@ -323,6 +424,57 @@ async def seed() -> dict:
             deadline=(now + timedelta(hours=8)).isoformat(),
             description="پرداخت مالی پس از تایید",
         ),
+        
+        # New tasks for completed instance
+        Task(
+            org_id=org.id,
+            process_id=completed_instance.id,
+            workflow_id=petty_wf.id,
+            workflow_name=petty_wf.name,
+            node_id="n5",
+            title="پرداخت تنخواه انجام شد",
+            assignee_id=admin.id,
+            assignee_role="ادمین سازمان",
+            type="task",
+            status="done",
+            priority="high",
+            deadline=(now - timedelta(days=2)).isoformat(),
+            description="مبلغ پرداخت و رسید بایگانی شد.",
+        ),
+        
+        # New task for rejected instance
+        Task(
+            org_id=org.id,
+            process_id=rejected_instance.id,
+            workflow_id=leave_wf.id,
+            workflow_name=leave_wf.name,
+            node_id="n3",
+            title="رد درخواست مرخصی",
+            assignee_id=manager.id,
+            assignee_role="مدیر تیم",
+            type="approval",
+            status="rejected",
+            priority="medium",
+            deadline=(now - timedelta(days=1)).isoformat(),
+            description="مرخصی به دلیل ترافیک کاری رد شد.",
+        ),
+        
+        # New task for stuck instance
+        Task(
+            org_id=org.id,
+            process_id=stuck_instance.id,
+            workflow_id=hire_wf.id,
+            workflow_name=hire_wf.name,
+            node_id="n3",
+            title="نیاز به تایید منابع انسانی (خطا)",
+            assignee_id=admin.id,
+            assignee_role="ادمین سازمان",
+            type="approval",
+            status="in_progress",
+            priority="urgent",
+            deadline=(now - timedelta(days=3)).isoformat(),
+            description="ارتباط با سرور ایمیل قطع شده است.",
+        ),
     ]
     await db.tasks.insert_many([t.to_mongo() for t in tasks])
 
@@ -340,8 +492,60 @@ async def seed() -> dict:
          "action": "task.approved", "target_type": "task", "target_id": new_id(),
          "summary": "درخواست مرخصی تایید شد",
          "created_at": now_iso(), "updated_at": now_iso()},
+        
+        {"id": new_id(), "org_id": org.id, "actor_id": manager.id, "actor_name": manager.full_name,
+         "action": "process.completed", "target_type": "process", "target_id": completed_instance.id,
+         "summary": "فرایند تنخواه با موفقیت به پایان رسید",
+         "created_at": now_iso(), "updated_at": now_iso()},
+         
+        {"id": new_id(), "org_id": org.id, "actor_id": manager.id, "actor_name": manager.full_name,
+         "action": "task.rejected", "target_type": "task", "target_id": rejected_instance.id,
+         "summary": "درخواست مرخصی رد شد",
+         "created_at": now_iso(), "updated_at": now_iso()},
     ]
     await db.activities.insert_many(activities)
+
+    # ---- Comments
+    comments = [
+        Comment(
+            org_id=org.id,
+            target_type="process",
+            target_id=instance.id,
+            author_id=manager.id,
+            author_name=manager.full_name,
+            body="لطفا در اسرع وقت بررسی شود. ممنون."
+        ),
+        Comment(
+            org_id=org.id,
+            target_type="task",
+            target_id=tasks[0].id,
+            author_id=admin.id,
+            author_name=admin.full_name,
+            body="نیاز به مستندات بیشتر دارد. فرم را اصلاح کنید."
+        )
+    ]
+    await db.comments.insert_many([c.to_mongo() for c in comments])
+    
+    # ---- Chat Messages (AI interaction)
+    session_id = new_id()
+    chats = [
+        ChatMessage(
+            org_id=org.id,
+            session_id=session_id,
+            user_id=designer.id,
+            role="user",
+            content="یک فرایند برای ثبت‌نام در دوره‌های آموزشی بساز"
+        ),
+        ChatMessage(
+            org_id=org.id,
+            session_id=session_id,
+            user_id=designer.id,
+            role="assistant",
+            content="بسیار خب، فرایند پیشنهادی با موفقیت ایجاد شد.",
+            generated_workflow={"name": "ثبت‌نام دوره آموزشی", "nodes": []}
+        )
+    ]
+    await db.chat_messages.insert_many([c.to_mongo() for c in chats])
 
     return {"status": "seeded", "org_id": org.id}
 
