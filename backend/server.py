@@ -46,6 +46,10 @@ from models import (
     WorkflowUpdate,
 )
 from seed import seed as seed_data
+from pydantic import BaseModel
+
+class SimulatePayload(BaseModel):
+    mock_context: dict
 
 # ---------- AI ----------
 from services.ai_service import ai_service
@@ -344,6 +348,17 @@ async def start_workflow(wf_id: str, user: User = CurrentUser):
             completed_node_id=first_node["id"],
         )
     return {"process": instance, "advanced": advanced}
+
+
+@api.post("/workflows/{wf_id}/simulate")
+async def simulate_workflow_endpoint(wf_id: str, payload: SimulatePayload, user: User = CurrentUser):
+    wf = await db.workflows.find_one({"id": wf_id, "org_id": user.org_id}, {"_id": 0})
+    if not wf:
+        raise HTTPException(404, "workflow_not_found")
+        
+    from engine import simulate_workflow
+    traces = await simulate_workflow(wf, payload.mock_context)
+    return {"traces": traces}
 
 
 # ---------- Forms ----------

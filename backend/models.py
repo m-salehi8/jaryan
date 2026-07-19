@@ -111,7 +111,7 @@ class VisibilityRule(BaseModel):
 
 class WorkflowNode(BaseModel):
     id: str
-    type: Literal["trigger", "task", "approval", "condition", "form", "end"]
+    type: Literal["trigger", "task", "approval", "condition", "form", "end", "ai_task", "ocr_task"]
     label: str
     position: dict  # {x, y}
     data: dict = Field(default_factory=dict)  # assignee_role, form_id, condition, etc

@@ -13,7 +13,29 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+import re
 from db import db, new_id, now_iso
+
+
+def inject_variables(text: str, context: dict) -> str:
+    """Injects variables from context into text replacing {{variable}}."""
+    if not text:
+        return text
+    
+    def replacer(match):
+        key_path = match.group(1).strip().split('.')
+        val = context
+        try:
+            for k in key_path:
+                if isinstance(val, dict):
+                    val = val[k]
+                else:
+                    return ""
+            return str(val) if val is not None else ""
+        except (KeyError, TypeError):
+            return ""
+        
+    return re.sub(r"\{\{([^}]+)\}\}", replacer, text)
 
 
 def _coerce(a: Any, b: Any):
@@ -72,7 +94,7 @@ def evaluate_rule(rule: Optional[dict], context: dict) -> bool:
 async def _node_to_task(*, org: str, process: dict, workflow: dict, node: dict) -> Optional[dict]:
     """Build a Task document for a workflow node (returns None for non-actionable nodes)."""
     ntype = node.get("type")
-    if ntype in ("trigger", "end", "condition"):
+    if ntype in ("trigger", "end", "condition", "ai_task", "ocr_task"):
         return None
 
     data = node.get("data") or {}
@@ -332,6 +354,82 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
             dependencies = target_node.get("dependencies") or []
             missing_deps = [d for d in dependencies if d not in completed_nodes]
             
+            if ttype == "ai_task":
+                if missing_deps:
+                    continue
+                
+                data = target_node.get("data", {})
+                sys_prompt_template = data.get("system_prompt", "")
+                output_key = data.get("output_key", "ai_evaluation")
+                
+                system_prompt = inject_variables(sys_prompt_template, ctx)
+                
+                from services.ai_service import ai_service
+                import logging
+                try:
+                    ai_result = await ai_service.ask_ai_json(
+                        session_id=process_id,
+                        system_prompt=system_prompt,
+                        user_message="Execute the task based on the provided context and return JSON."
+                    )
+                except Exception as e:
+                    logging.getLogger("raahkar.engine").error(f"AI task failed: {e}")
+                    await db.process_instances.update_one(
+                        {"id": process_id},
+                        {"$set": {"status": "stuck", "updated_at": now_iso()}}
+                    )
+                    return {
+                        "ok": False,
+                        "reason": f"ai_task_failed: {e}",
+                        "status": "stuck"
+                    }
+                
+                ctx[output_key] = ai_result
+                if target_id not in completed_nodes:
+                    completed_nodes.append(target_id)
+                frontier.append(target_id)
+                continue
+
+            if ttype == "ocr_task":
+                if missing_deps:
+                    continue
+                
+                data = target_node.get("data", {})
+                source_file_variable = data.get("source_file_variable", "")
+                extraction_prompt_template = data.get("extraction_prompt", "")
+                output_key = data.get("output_key", "ocr_result")
+                
+                image_data = inject_variables(source_file_variable, ctx).strip()
+                extraction_prompt = inject_variables(extraction_prompt_template, ctx)
+                
+                from services.ai_service import ai_service
+                import logging
+                try:
+                    if not image_data:
+                        raise ValueError(f"Image data not found for variable: {source_file_variable}")
+                        
+                    ai_result = await ai_service.extract_data_from_image(
+                        image_data=image_data,
+                        prompt=extraction_prompt
+                    )
+                except Exception as e:
+                    logging.getLogger("raahkar.engine").error(f"OCR task failed: {e}")
+                    await db.process_instances.update_one(
+                        {"id": process_id},
+                        {"$set": {"status": "stuck", "updated_at": now_iso()}}
+                    )
+                    return {
+                        "ok": False,
+                        "reason": f"ocr_task_failed: {e}",
+                        "status": "stuck"
+                    }
+                
+                ctx[output_key] = ai_result
+                if target_id not in completed_nodes:
+                    completed_nodes.append(target_id)
+                frontier.append(target_id)
+                continue
+
             # Check if there is already a waiting task for this target node
             existing_task = await db.tasks.find_one({
                 "process_id": process_id,
@@ -403,3 +501,104 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
         "next_tasks": [{"id": t["id"], "title": t["title"], "node_id": t["node_id"]} for t in next_tasks],
         "status": new_status,
     }
+
+
+async def simulate_workflow(workflow: dict, mock_context: dict) -> list[dict]:
+    """Runs a workflow purely in memory for testing/simulation. No DB writes."""
+    import time
+    from services.ai_service import ai_service
+    
+    traces = []
+    
+    nodes_by_id = {n["id"]: n for n in workflow.get("nodes", [])}
+    edges = workflow.get("edges", [])
+    
+    trigger_nodes = [n for n in workflow.get("nodes", []) if n.get("type") == "trigger"]
+    if not trigger_nodes:
+        return [{"node_id": None, "status": "error", "result": {"error": "No trigger node found"}}]
+        
+    current_id = trigger_nodes[0]["id"]
+    ctx = dict(mock_context)
+    
+    completed_nodes = []
+    frontier = [current_id]
+    visited = set()
+    
+    while frontier:
+        current_id = frontier.pop(0)
+        if current_id in visited:
+            continue
+        visited.add(current_id)
+        
+        node = nodes_by_id.get(current_id)
+        if not node:
+            continue
+            
+        start_time = time.time()
+        result_data = {}
+        status = "success"
+        
+        ttype = node.get("type")
+        completed_nodes.append(current_id)
+        
+        try:
+            if ttype == "ai_task":
+                data = node.get("data", {})
+                sys_prompt_template = data.get("system_prompt", "")
+                output_key = data.get("output_key", "ai_evaluation")
+                system_prompt = inject_variables(sys_prompt_template, ctx)
+                ai_result = await ai_service.ask_ai_json(
+                    session_id="sim_" + current_id,
+                    system_prompt=system_prompt,
+                    user_message="Execute the task based on the provided context and return JSON."
+                )
+                ctx[output_key] = ai_result
+                result_data = {"ai_output": ai_result}
+                
+            elif ttype == "ocr_task":
+                data = node.get("data", {})
+                source_file_variable = data.get("source_file_variable", "")
+                extraction_prompt_template = data.get("extraction_prompt", "")
+                output_key = data.get("output_key", "ocr_result")
+                image_data = inject_variables(source_file_variable, ctx).strip()
+                extraction_prompt = inject_variables(extraction_prompt_template, ctx)
+                if not image_data:
+                    raise ValueError(f"Image data not found for variable: {source_file_variable}")
+                ai_result = await ai_service.extract_data_from_image(
+                    image_data=image_data,
+                    prompt=extraction_prompt
+                )
+                ctx[output_key] = ai_result
+                result_data = {"ocr_output": ai_result}
+                
+            elif ttype in ("task", "form", "approval"):
+                result_data = {"action": "simulated_manual_completion"}
+                
+        except Exception as e:
+            status = "error"
+            result_data = {"error": str(e)}
+            
+        time_taken_ms = int((time.time() - start_time) * 1000)
+        
+        traces.append({
+            "node_id": current_id,
+            "time_taken_ms": time_taken_ms,
+            "result": result_data,
+            "status": status,
+            "context_snapshot": dict(ctx)
+        })
+        
+        if status == "error":
+            break
+            
+        out_edges = _outgoing(edges, current_id)
+        conditional = [e for e in out_edges if e.get("condition")]
+        defaults = [e for e in out_edges if not e.get("condition")]
+        chosen = [e for e in conditional if evaluate_rule(e.get("condition"), ctx)]
+        if not chosen and defaults:
+            chosen = defaults
+            
+        for edge in chosen:
+            frontier.append(edge["target"])
+            
+    return traces

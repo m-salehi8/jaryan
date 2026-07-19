@@ -8,7 +8,7 @@ import "reactflow/dist/style.css";
 import {
   PlayCircle, Save, Trash2, Plus, ArrowRight, MessageSquare,
   Zap, FileText, CheckCircle2, GitBranch, Square, Settings2, X, Send, Loader2, Sparkles,
-  Clock, Split, Wand2,
+  Clock, Split, Wand2, Bot, ScanText, Activity, Bug, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
 import dagre from "dagre";
 import { toast } from "sonner";
@@ -20,15 +20,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fromNow } from "@/lib/jalali";
 import { OP_LABELS } from "@/lib/formLogic";
 
+import AIAgentNode from "@/components/AIAgentNode";
+import OCRNode from "@/components/OCRNode";
+
 const NODE_TYPES_META = {
-  trigger:   { label: "شروع دستی",    icon: Zap,          bar: "#10b981" },
-  cron:      { label: "شروع زمان‌دار", icon: Clock,        bar: "#10b981" },
-  task:      { label: "تسک",          icon: Square,       bar: "#737373" },
-  approval:  { label: "تایید",        icon: CheckCircle2, bar: "#2563eb" },
-  condition: { label: "شرط",          icon: GitBranch,    bar: "#ca8a04" },
-  parallel:  { label: "موازی (AND)",  icon: Split,        bar: "#ec4899" },
-  form:      { label: "فرم",          icon: FileText,     bar: "#7c3aed" },
-  end:       { label: "پایان",        icon: Square,       bar: "#171717" },
+  trigger:   { label: "شروع دستی",    icon: Zap,          bar: "#10b981", description: "آغاز فرایند به‌صورت دستی توسط کاربر." },
+  cron:      { label: "شروع زمان‌دار", icon: Clock,        bar: "#10b981", description: "اجرای خودکار فرایند در زمان‌های برنامه‌ریزی‌شده." },
+  task:      { label: "تسک",          icon: Square,       bar: "#737373", description: "انجام یک وظیفه مشخص توسط شخص یا سیستم." },
+  approval:  { label: "تایید",        icon: CheckCircle2, bar: "#2563eb", description: "نیاز به تایید یا رد درخواست توسط مدیر یا شخص مسئول." },
+  condition: { label: "شرط",          icon: GitBranch,    bar: "#ca8a04", description: "مسیریابی فرایند بر اساس شروط منطقی (مثلاً مبلغ > 1000)." },
+  parallel:  { label: "موازی (AND)",  icon: Split,        bar: "#ec4899", description: "اجرای همزمان چندین مسیر و انتظار برای تکمیل همه آن‌ها." },
+  form:      { label: "فرم",          icon: FileText,     bar: "#7c3aed", description: "دریافت اطلاعات از کاربر از طریق یک فرم." },
+  ai_task:   { label: "هوش مصنوعی",    icon: Bot,          bar: "linear-gradient(to right, #a855f7, #6366f1)", description: "تصمیم‌گیری و پردازش خودکار با هوش مصنوعی بر اساس متغیرها." },
+  ocr_task:  { label: "پردازش سند / OCR", icon: ScanText,  bar: "linear-gradient(to right, #14b8a6, #06b6d4)", description: "استخراج هوشمند اطلاعات از تصاویر و فاکتورها." },
+  end:       { label: "پایان",        icon: Square,       bar: "#171717", description: "نقطه پایان فرایند." },
 };
 const ROLES = ["ادمین سازمان", "طراح فرایند", "مدیر تیم", "کارمند"];
 
@@ -61,7 +66,7 @@ function FlowNode({ data, selected, id }) {
   );
 }
 
-const nodeTypes = { custom: FlowNode };
+const nodeTypes = { custom: FlowNode, ai_task: AIAgentNode, ocr_task: OCRNode };
 const edgeTypes = {};
 
 // Convert workflow JSON ↔ reactflow nodes/edges
@@ -69,7 +74,7 @@ function toRF(wf) {
   return {
     nodes: (wf.nodes || []).map((n) => ({
       id: n.id,
-      type: "custom",
+      type: (n.type === "ai_task" || n.type === "ocr_task") ? n.type : "custom",
       position: n.position || { x: 80, y: 120 },
       data: { 
         label: n.label, 
@@ -107,6 +112,10 @@ function fromRF(nodes, edges) {
         ...(n.data.expression ? { expression: n.data.expression } : {}),
         ...(n.data.dependencies ? { dependencies: n.data.dependencies } : {}),
         ...(n.data.cron_expression ? { cron_expression: n.data.cron_expression } : {}),
+        ...(n.data.system_prompt ? { system_prompt: n.data.system_prompt } : {}),
+        ...(n.data.extraction_prompt ? { extraction_prompt: n.data.extraction_prompt } : {}),
+        ...(n.data.source_file_variable ? { source_file_variable: n.data.source_file_variable } : {}),
+        ...(n.data.output_key ? { output_key: n.data.output_key } : {}),
         ...(n.data.field_permissions && Object.keys(n.data.field_permissions).length > 0 ? { field_permissions: n.data.field_permissions } : {}),
       },
       timeout_seconds: n.data.timeout_seconds || null,
@@ -133,6 +142,11 @@ export default function WorkflowBuilder() {
   const [error, setError] = useState(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  const [showSimulate, setShowSimulate] = useState(false);
+  const [mockContextStr, setMockContextStr] = useState("{\n  \"requester\": \"Ali\",\n  \"amount\": 50000\n}");
+  const [simulateLoading, setSimulateLoading] = useState(false);
+  const [traces, setTraces] = useState([]);
 
   // Load
   useEffect(() => {
@@ -188,7 +202,7 @@ export default function WorkflowBuilder() {
       ? { x: (last.position?.x ?? 80) + 260, y: last.position?.y ?? 160 }
       : { x: 120, y: 160 };
     setNodes((n) => [...n, {
-      id, type: "custom", position: pos,
+      id, type: (nodeType === "ai_task" || nodeType === "ocr_task") ? nodeType : "custom", position: pos,
       data: { label: NODE_TYPES_META[nodeType].label, nodeType },
     }]);
   };
@@ -289,6 +303,33 @@ export default function WorkflowBuilder() {
     }
   };
 
+  const runSimulation = async () => {
+    try {
+      setSimulateLoading(true);
+      const payload = { mock_context: JSON.parse(mockContextStr) };
+      await saveSilently();
+      const res = await api.post(`/workflows/${id}/simulate`, payload);
+      setTraces(res.data.traces);
+      
+      const traceNodeIds = res.data.traces.map(t => t.node_id).filter(Boolean);
+      setEdges(eds => eds.map(e => {
+        const sIdx = traceNodeIds.indexOf(e.source);
+        const tIdx = traceNodeIds.indexOf(e.target);
+        const isTraversed = sIdx !== -1 && tIdx !== -1 && sIdx < tIdx;
+        return {
+          ...e,
+          animated: isTraversed,
+          style: isTraversed ? { stroke: '#0d9488', strokeWidth: 2 } : { stroke: '#b5b5b5' },
+        };
+      }));
+      toast.success("شبیه‌سازی با موفقیت انجام شد");
+    } catch (e) {
+      toast.error("خطا در شبیه‌سازی یا JSON نامعتبر");
+    } finally {
+      setSimulateLoading(false);
+    }
+  };
+
   const selectedNode = selected?.kind === "node" ? nodes.find(n => n.id === selected.id) : null;
   const selectedEdge = selected?.kind === "edge" ? edges.find(e => e.id === selected.id) : null;
 
@@ -322,6 +363,9 @@ export default function WorkflowBuilder() {
           <Button data-testid="builder-ai-btn" variant="outline" size="sm" onClick={() => setAiOpen(true)}>
             <Sparkles className="w-4 h-4 me-1" /> هوش مصنوعی
           </Button>
+          <Button data-testid="builder-simulate-btn" variant="outline" size="sm" onClick={() => setShowSimulate(true)}>
+            <Activity className="w-4 h-4 me-1" /> دیباگ و شبیه‌سازی
+          </Button>
           <Button data-testid="builder-save" variant="outline" size="sm" onClick={save} disabled={saving}>
             <Save className="w-4 h-4 me-1" /> ذخیره
           </Button>
@@ -352,12 +396,19 @@ export default function WorkflowBuilder() {
                 key={k}
                 data-testid={`palette-${k}`}
                 onClick={() => addNode(k)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 text-sm text-right transition-colors"
+                className="flex flex-col gap-1 px-3 py-2 rounded-lg border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 text-right transition-colors"
               >
-                <span className="w-1 h-4 rounded-sm" style={{ background: m.bar }} />
-                <Icon className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1 text-right">{m.label}</span>
-                <Plus className="w-3.5 h-3.5 text-neutral-300" />
+                <div className="flex items-center gap-2 w-full">
+                  <span className="w-1 h-4 rounded-sm flex-shrink-0" style={{ background: m.bar }} />
+                  <Icon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
+                  <span className="flex-1 text-sm font-medium">{m.label}</span>
+                  <Plus className="w-3.5 h-3.5 text-neutral-300 flex-shrink-0" />
+                </div>
+                {m.description && (
+                  <div className="text-[11px] text-gray-400 leading-tight pr-6">
+                    {m.description}
+                  </div>
+                )}
               </button>
             );
           })}
@@ -431,6 +482,90 @@ export default function WorkflowBuilder() {
           }}
         />
       )}
+
+      {showSimulate && (
+        <SimulationPanel
+          onClose={() => {
+            setShowSimulate(false);
+            setEdges(eds => eds.map(e => ({ ...e, animated: false, style: {} })));
+          }}
+          mockContextStr={mockContextStr}
+          setMockContextStr={setMockContextStr}
+          runSimulation={runSimulation}
+          loading={simulateLoading}
+          traces={traces}
+        />
+      )}
+    </div>
+  );
+}
+
+function SimulationPanel({ onClose, mockContextStr, setMockContextStr, runSimulation, loading, traces }) {
+  const [expanded, setExpanded] = useState({});
+  const toggle = (i) => setExpanded(p => ({...p, [i]: !p[i]}));
+
+  return (
+    <div className="absolute top-14 left-0 w-80 lg:w-96 h-[calc(100%-56px)] bg-white border-r border-neutral-200 z-50 flex flex-col shadow-[10px_0_15px_-3px_rgba(0,0,0,0.1)]">
+      <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/50">
+        <h3 className="font-semibold text-neutral-900 flex items-center gap-2">
+          <Bug className="w-4 h-4 text-purple-600" /> حالت دیباگ (شبیه‌سازی)
+        </h3>
+        <button onClick={onClose} className="p-1 hover:bg-neutral-200 rounded text-neutral-500"><X className="w-4 h-4" /></button>
+      </div>
+      
+      <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
+        <div>
+          <label className="text-xs font-medium text-neutral-700 block mb-1.5">داده‌های ورودی (Mock Context JSON)</label>
+          <Textarea 
+            dir="ltr"
+            className="text-[11px] font-mono bg-neutral-900 text-teal-400 focus-visible:ring-purple-500 border-0 shadow-inner"
+            rows={6}
+            value={mockContextStr}
+            onChange={e => setMockContextStr(e.target.value)}
+          />
+        </div>
+        
+        <Button onClick={runSimulation} disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <PlayCircle className="w-4 h-4 me-2" />}
+          اجرای شبیه‌سازی در لحظه
+        </Button>
+        
+        {traces && traces.length > 0 && (
+          <div className="mt-2 border-t border-neutral-100 pt-4">
+            <h4 className="text-sm font-semibold mb-3 flex items-center justify-between">
+              لاگ‌های اجرا
+              <span className="text-[10px] bg-neutral-100 px-2 py-0.5 rounded text-neutral-500 font-mono">
+                {traces.reduce((acc, t) => acc + (t.time_taken_ms || 0), 0)}ms
+              </span>
+            </h4>
+            <div className="space-y-3">
+              {traces.map((t, i) => (
+                <div key={i} className={`border ${t.status === 'success' ? 'border-neutral-200' : 'border-red-200'} rounded-md bg-neutral-50 overflow-hidden`}>
+                  <div className="p-2.5 flex items-center justify-between bg-white cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => toggle(i)}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+                      <span className="text-xs font-semibold text-neutral-800 truncate" dir="ltr">{t.node_id?.substring(0,8) || "SYSTEM"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] text-neutral-500 mono bg-neutral-100 px-1.5 py-0.5 rounded">⏱ {t.time_taken_ms}ms</span>
+                      {expanded[i] ? <ChevronUp className="w-3.5 h-3.5 text-neutral-400" /> : <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />}
+                    </div>
+                  </div>
+                  {expanded[i] && (
+                    <div className="p-3 border-t border-neutral-100 bg-neutral-900 overflow-auto max-h-48" dir="ltr">
+                      <div className="text-[10px] text-neutral-400 mb-1">Result:</div>
+                      <pre className="text-[11px] text-teal-400 font-mono leading-tight">{JSON.stringify(t.result, null, 2)}</pre>
+                      
+                      <div className="text-[10px] text-neutral-400 mt-3 mb-1">Context Snapshot:</div>
+                      <pre className="text-[10px] text-purple-300 font-mono leading-tight">{JSON.stringify(t.context_snapshot, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -497,6 +632,18 @@ function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, on
             >
               <Trash2 className="w-4 h-4" />
             </button>
+          </div>
+
+          <div className="mb-5 bg-blue-50/50 border border-blue-100 rounded-lg p-3 flex gap-2.5">
+            <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-800 leading-relaxed space-y-1.5">
+              <p className="font-medium">{NODE_TYPES_META[selectedNode.data.nodeType]?.description}</p>
+              {["ai_task", "ocr_task"].includes(selectedNode.data.nodeType) && (
+                <p className="text-blue-700/80 mt-1.5 pt-1.5 border-t border-blue-100/50">
+                  راهنما: برای استفاده از مقادیر فرم‌های قبلی، نام فیلد را داخل آکولاد قرار دهید: <code className="bg-blue-100/50 px-1 py-0.5 rounded text-blue-700 font-mono" dir="ltr">{"{{form1.total_amount}}"}</code>
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -622,6 +769,83 @@ function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, on
                   onChange={(e) => onNode(selectedNode.id, { expression: e.target.value })}
                   placeholder="amount > 1000000"
                 />
+              </div>
+            )}
+
+            {selectedNode.data.nodeType === "ai_task" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1.5 block">پرامپت سیستم (System Prompt)</label>
+                  <Textarea
+                    data-testid="node-ai-prompt"
+                    dir="ltr"
+                    value={selectedNode.data.system_prompt || ""}
+                    onChange={(e) => onNode(selectedNode.id, { system_prompt: e.target.value })}
+                    placeholder="You are an AI assistant. Use context: {{form_id.field_name}}"
+                    rows={6}
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    شما می‌توانید از مقادیر فرم‌های قبلی با استفاده از سینتکس <code className="bg-neutral-100 text-purple-600 px-1 py-0.5 rounded">{"{{form_name.field_name}}"}</code> استفاده کنید.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1.5 block">کلید خروجی (Output Key)</label>
+                  <Input
+                    data-testid="node-ai-output"
+                    dir="ltr"
+                    value={selectedNode.data.output_key || ""}
+                    onChange={(e) => onNode(selectedNode.id, { output_key: e.target.value })}
+                    placeholder="ai_evaluation"
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    نتیجه (JSON) در این کلید در Context ذخیره می‌شود.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {selectedNode.data.nodeType === "ocr_task" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1.5 block">متغیر فایل منبع (Source File)</label>
+                  <Input
+                    data-testid="node-ocr-source"
+                    dir="ltr"
+                    value={selectedNode.data.source_file_variable || ""}
+                    onChange={(e) => onNode(selectedNode.id, { source_file_variable: e.target.value })}
+                    placeholder="{{form1.receipt_image}}"
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    آدرس تصویر یا فایل در Context.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1.5 block">پرامپت استخراج (Extraction Prompt)</label>
+                  <Textarea
+                    data-testid="node-ocr-prompt"
+                    dir="ltr"
+                    value={selectedNode.data.extraction_prompt || ""}
+                    onChange={(e) => onNode(selectedNode.id, { extraction_prompt: e.target.value })}
+                    placeholder="Extract total amount and vendor name..."
+                    rows={4}
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    دقیقاً چه اطلاعاتی از تصویر استخراج شود؟ (JSON خروجی بر این اساس است)
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1.5 block">کلید خروجی (Output Key)</label>
+                  <Input
+                    data-testid="node-ocr-output"
+                    dir="ltr"
+                    value={selectedNode.data.output_key || ""}
+                    onChange={(e) => onNode(selectedNode.id, { output_key: e.target.value })}
+                    placeholder="ocr_result"
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    نتیجه (JSON) در این کلید در Context ذخیره می‌شود.
+                  </p>
+                </div>
               </div>
             )}
 
