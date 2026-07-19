@@ -28,3 +28,4 @@ anthropic>=0.40.0
 httpx>=0.27.0
 jdatetime>=4.1.1
 croniter>=2.0.0
+tenacity>=8.3.0

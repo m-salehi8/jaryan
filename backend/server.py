@@ -48,11 +48,8 @@ from models import (
 from seed import seed as seed_data
 
 # ---------- AI ----------
-from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
+from services.ai_service import ai_service
 
-EMERGENT_LLM_KEY = os.environ["EMERGENT_LLM_KEY"]
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:20128/v1")
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "cf/@cf/moonshotai/kimi-k2.5")
 
 app = FastAPI(title="Raahkar API")
 api = APIRouter(prefix="/api")
@@ -817,36 +814,6 @@ async def add_comment(payload: CommentCreate, user: User = CurrentUser):
 
 
 # ---------- AI Chat-to-Process ----------
-SYSTEM_PROMPT = """تو دستیار هوشمند سامانه راهکار هستی؛ یک پلتفرم فارسی برای طراحی فرایند سازمانی.
-
-وظیفه: کاربر یک درخواست به زبان طبیعی فارسی می‌دهد (مثلاً «فرایند درخواست مرخصی بساز»). تو باید:
-1) یک پاسخ کوتاه و دوستانه فارسی بدهی (۲ تا ۴ جمله) که خلاصه‌ی فرایند پیشنهادی را توضیح دهد.
-2) سپس یک بلوک JSON دقیقاً با فرمت زیر و در یک بلوک ```json ... ``` خروجی بدهی:
-
-{
-  "name": "نام فرایند",
-  "description": "توضیح کوتاه فارسی",
-  "nodes": [
-    {"id": "n1", "type": "trigger", "label": "شروع", "position": {"x": 80, "y": 120}, "data": {}},
-    {"id": "n2", "type": "form", "label": "تکمیل فرم", "position": {"x": 340, "y": 120}, "data": {"assignee_role": "کارمند"}},
-    {"id": "n3", "type": "approval", "label": "تایید مدیر", "position": {"x": 600, "y": 120}, "data": {"assignee_role": "مدیر تیم"}},
-    {"id": "n4", "type": "end", "label": "پایان", "position": {"x": 860, "y": 120}, "data": {}}
-  ],
-  "edges": [
-    {"id": "e1", "source": "n1", "target": "n2"},
-    {"id": "e2", "source": "n2", "target": "n3"},
-    {"id": "e3", "source": "n3", "target": "n4"}
-  ]
-}
-
-قوانین مهم:
-- types فقط می‌تواند یکی از این‌ها باشد: trigger، task، approval، condition، form، end.
-- assignee_role باید یکی از این‌ها باشد: «ادمین سازمان»، «طراح فرایند»، «مدیر تیم»، «کارمند».
-- موقعیت گره‌ها را به‌صورت خطی و با فاصله ۲۶۰ پیکسل افقی قرار بده.
-- همه نام‌ها و برچسب‌ها فارسی باشند.
-- پاسخت دقیقاً شامل متن کوتاه فارسی + یک بلوک JSON باشد. هیچ توضیح اضافه‌ای خارج از این فرمت نده.
-"""
-
 
 @api.post("/ai/generate-workflow")
 async def generate_workflow(payload: ChatGenerateRequest, user: User = CurrentUser):
@@ -861,28 +828,22 @@ async def generate_workflow(payload: ChatGenerateRequest, user: User = CurrentUs
         "generated_workflow": None, "created_at": now_iso(), "updated_at": now_iso(),
     })
 
-    chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=session_id,
-        system_message=SYSTEM_PROMPT,
-        base_url=OPENAI_BASE_URL,
-    ).with_model("custom", OPENAI_MODEL)
-
     async def event_gen():
         full_text = ""
         try:
-            async for ev in chat.stream_message(UserMessage(text=payload.message)):
-                if isinstance(ev, TextDelta):
-                    full_text += ev.content
-                    yield f"data: {_sse_escape(ev.content)}\n\n"
-                elif isinstance(ev, StreamDone):
-                    break
+            async for chunk in ai_service.stream_workflow_generation(session_id, payload.message):
+                full_text += chunk
+                yield f"data: {_sse_escape(chunk)}\n\n"
         except Exception as exc:  # network / api
             logger.exception("ai stream failed")
             yield f"event: error\ndata: {_sse_escape(str(exc))}\n\n"
             return
 
-        wf_json = _extract_json_block(full_text)
+        try:
+            wf_json = ai_service.extract_json_block(full_text)
+        except Exception:
+            wf_json = None
+
         await db.chat_messages.insert_one({
             "id": new_id(), "org_id": user.org_id, "session_id": session_id,
             "user_id": user.id, "role": "assistant", "content": full_text,
@@ -914,19 +875,6 @@ def _sse_escape_json(obj) -> str:
     import json
     return json.dumps(obj, ensure_ascii=False).replace("\n", "\\n")
 
-
-def _extract_json_block(text: str) -> Optional[dict]:
-    import json
-    import re
-    m = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-    if not m:
-        m = re.search(r"(\{[\s\S]*\})", text)
-        if not m:
-            return None
-    try:
-        return json.loads(m.group(1))
-    except Exception:
-        return None
 
 
 async def _activity(user: User, action: str, target_type: str, target_id: str, summary: str) -> None:

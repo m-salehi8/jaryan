@@ -56,7 +56,9 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
         <div key={f.id} className="space-y-3" data-testid={`render-tabs-${f.id}`}>
           <FieldLabel field={f} />
           <div className="inline-flex flex-wrap items-center gap-0 rounded-lg border border-neutral-300 overflow-hidden bg-white">
-            {tabs.map((t, idx) => (
+            {tabs.map((t, idx) => {
+              const hasErr = childrenOfTab(fields, f.id, t.id).some(child => touched[child.id] && errors[child.id]);
+              return (
               <button
                 key={t.id}
                 type="button"
@@ -66,13 +68,14 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
                   setValue(f.id, t.label);
                 }}
                 data-testid={`tab-${f.id}-${t.id}`}
-                className={`px-4 py-2 text-xs transition-colors ${
+                className={`px-4 py-2 text-xs transition-colors flex items-center gap-2 ${
                   activeId === t.id ? "bg-neutral-900 text-white" : "text-neutral-700 hover:bg-neutral-50"
                 } ${idx > 0 ? "border-s border-neutral-200" : ""}`}
               >
                 {t.label}
+                {hasErr && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" title="دارای خطا" />}
               </button>
-            ))}
+            )})}
           </div>
           {children.length > 0 && (
             <div className="space-y-3 ps-3 border-s-2 border-neutral-100 mt-3">

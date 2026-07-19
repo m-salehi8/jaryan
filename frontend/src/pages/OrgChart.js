@@ -16,8 +16,8 @@ export default function OrgChart() {
 
   // Form
   const [name, setName] = useState("");
-  const [parentId, setParentId] = useState("");
-  const [managerId, setManagerId] = useState("");
+  const [parentId, setParentId] = useState("none");
+  const [managerId, setManagerId] = useState("none");
 
   const fetchData = async () => {
     try {
@@ -41,16 +41,16 @@ export default function OrgChart() {
   const openAdd = () => {
     setEditingDept(null);
     setName("");
-    setParentId("");
-    setManagerId("");
+    setParentId("none");
+    setManagerId("none");
     setModalOpen(true);
   };
 
   const openEdit = (d) => {
     setEditingDept(d);
     setName(d.name);
-    setParentId(d.parent_id || "");
-    setManagerId(d.manager_id || "");
+    setParentId(d.parent_id || "none");
+    setManagerId(d.manager_id || "none");
     setModalOpen(true);
   };
 
@@ -70,8 +70,8 @@ export default function OrgChart() {
     try {
       const payload = {
         name,
-        parent_id: parentId || null,
-        manager_id: managerId || null,
+        parent_id: (parentId === "none" || !parentId) ? null : parentId,
+        manager_id: (managerId === "none" || !managerId) ? null : managerId,
       };
       if (editingDept) {
         await api.patch(`/departments/${editingDept.id}`, payload);
@@ -141,7 +141,7 @@ export default function OrgChart() {
               <Select value={parentId} onValueChange={setParentId}>
                 <SelectTrigger><SelectValue placeholder="انتخاب دپارتمان والد" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">بدون والد (دپارتمان اصلی)</SelectItem>
+                  <SelectItem value="none">بدون والد (دپارتمان اصلی)</SelectItem>
                   {departments.filter(d => d.id !== editingDept?.id).map(d => (
                     <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                   ))}
@@ -153,7 +153,7 @@ export default function OrgChart() {
               <Select value={managerId} onValueChange={setManagerId}>
                 <SelectTrigger><SelectValue placeholder="انتخاب مدیر" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">بدون مدیر</SelectItem>
+                  <SelectItem value="none">بدون مدیر</SelectItem>
                   {users.map(u => (
                     <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>
                   ))}
@@ -171,7 +171,10 @@ export default function OrgChart() {
   );
 }
 
-const renderNode = (dept, depth, getChildren, users, openEdit, remove) => {
+const renderNode = (dept, depth, getChildren, users, openEdit, remove, visited = new Set()) => {
+  if (visited.has(dept.id)) return null; // Circular reference protection
+  visited.add(dept.id);
+  
   const children = getChildren(dept.id);
   const manager = users.find(u => u.id === dept.manager_id);
   
@@ -205,7 +208,7 @@ const renderNode = (dept, depth, getChildren, users, openEdit, remove) => {
             className="absolute right-0 top-0 bottom-6 w-[1px] bg-neutral-300"
             style={{ marginRight: (depth * 24) + 24 }}
           />
-          {children.map(c => renderNode(c, depth + 1, getChildren, users, openEdit, remove))}
+          {children.map(c => renderNode(c, depth + 1, getChildren, users, openEdit, remove, new Set(visited)))}
         </div>
       )}
     </div>
