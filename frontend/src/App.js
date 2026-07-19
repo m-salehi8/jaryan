@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import Chat from "@/pages/Chat";
 import WorkflowsList from "@/pages/WorkflowsList";
 import WorkflowBuilder from "@/pages/WorkflowBuilder";
+import SimpleWorkflowBuilder from "@/pages/SimpleWorkflowBuilder";
 import FormsList from "@/pages/FormsList";
 import FormBuilder from "@/pages/FormBuilder";
 import Inbox from "@/pages/Inbox";
@@ -65,6 +66,7 @@ function AppRoutes() {
         <Route path="chat" element={<Chat />} />
         <Route path="workflows" element={<WorkflowsList />} />
         <Route path="workflows/:id" element={<WorkflowBuilder />} />
+        <Route path="workflows/:id/simple" element={<SimpleWorkflowBuilder />} />
         <Route path="forms" element={<FormsList />} />
         <Route path="forms/:id" element={<FormBuilder />} />
         <Route path="users" element={<UserManagement />} />

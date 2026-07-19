@@ -8,7 +8,7 @@ import "reactflow/dist/style.css";
 import {
   PlayCircle, Save, Trash2, Plus, ArrowRight, MessageSquare,
   Zap, FileText, CheckCircle2, GitBranch, Square, Settings2, X, Send, Loader2, Sparkles,
-  Clock, Split, Wand2, Bot, ScanText, Activity, Bug, ChevronDown, ChevronUp, Info,
+  Clock, Split, Wand2, Bot, ScanText, Activity, Bug, ChevronDown, ChevronUp, Info, List,
 } from "lucide-react";
 import dagre from "dagre";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ import { OP_LABELS } from "@/lib/formLogic";
 import AIAgentNode from "@/components/AIAgentNode";
 import OCRNode from "@/components/OCRNode";
 
-const NODE_TYPES_META = {
+export const NODE_TYPES_META = {
   trigger:   { label: "شروع دستی",    icon: Zap,          bar: "#10b981", description: "آغاز فرایند به‌صورت دستی توسط کاربر." },
   cron:      { label: "شروع زمان‌دار", icon: Clock,        bar: "#10b981", description: "اجرای خودکار فرایند در زمان‌های برنامه‌ریزی‌شده." },
   task:      { label: "تسک",          icon: Square,       bar: "#737373", description: "انجام یک وظیفه مشخص توسط شخص یا سیستم." },
@@ -70,7 +70,7 @@ const nodeTypes = { custom: FlowNode, ai_task: AIAgentNode, ocr_task: OCRNode };
 const edgeTypes = {};
 
 // Convert workflow JSON ↔ reactflow nodes/edges
-function toRF(wf) {
+export function toRF(wf) {
   return {
     nodes: (wf.nodes || []).map((n) => ({
       id: n.id,
@@ -97,7 +97,7 @@ function toRF(wf) {
     })),
   };
 }
-function fromRF(nodes, edges) {
+export function fromRF(nodes, edges) {
   return {
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -357,6 +357,9 @@ export default function WorkflowBuilder() {
           }`}>{wf.status === "published" ? "منتشر شده" : "پیش‌نویس"}</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button data-testid="builder-simple-btn" variant="outline" size="sm" onClick={() => nav(`/admin/workflows/${id}/simple`)}>
+            <List className="w-4 h-4 me-1" /> نمای خطی (ساده)
+          </Button>
           <Button data-testid="builder-layout-btn" variant="outline" size="sm" onClick={onLayout}>
             <Wand2 className="w-4 h-4 me-1" /> چیدمان خودکار
           </Button>
@@ -570,7 +573,7 @@ function SimulationPanel({ onClose, mockContextStr, setMockContextStr, runSimula
   );
 }
 
-function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, onEdge, onDeleteNode, onDeleteEdge, workflowId }) {
+export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onNode, onEdge, onDeleteNode, onDeleteEdge, workflowId }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const targetId = selectedNode?.id;
