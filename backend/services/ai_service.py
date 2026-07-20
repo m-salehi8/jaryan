@@ -7,7 +7,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
 
-logger = logging.getLogger("raahkar.ai")
+logger = logging.getLogger("jaryan.ai")
 
 class AIService:
     def __init__(self):

@@ -8,16 +8,16 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Workflow, KeyRound } from "lucide-react";
 
 const DEMOS = [
-  { email: "admin@raahkar.ir", password: "admin1234", role: "ادمین سازمان" },
-  { email: "designer@raahkar.ir", password: "1234", role: "طراح فرایند" },
-  { email: "manager@raahkar.ir", password: "1234", role: "مدیر تیم" },
-  { email: "employee@raahkar.ir", password: "1234", role: "کارمند" },
+  { email: "admin@jaryan.ir", password: "admin1234", role: "ادمین سازمان" },
+  { email: "designer@jaryan.ir", password: "1234", role: "طراح فرایند" },
+  { email: "manager@jaryan.ir", password: "1234", role: "مدیر تیم" },
+  { email: "employee@jaryan.ir", password: "1234", role: "کارمند" },
 ];
 
 export default function Login() {
   const { login } = useAuth();
   const nav = useNavigate();
-  const [email, setEmail] = useState("admin@raahkar.ir");
+  const [email, setEmail] = useState("admin@jaryan.ir");
   const [password, setPassword] = useState("admin1234");
   const [loading, setLoading] = useState(false);
 
@@ -42,9 +42,9 @@ export default function Login() {
       {/* Right (RTL leading) panel - hero */}
       <div className="hidden md:flex flex-col justify-between bg-neutral-50 border-l border-neutral-200 p-12 relative overflow-hidden">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-neutral-900 text-white grid place-items-center font-bold">ر</div>
+          <div className="w-8 h-8 rounded-md bg-neutral-900 text-white grid place-items-center font-bold">ج</div>
           <div>
-            <div className="font-semibold">راهکار</div>
+            <div className="font-semibold">جریان</div>
             <div className="text-xs text-neutral-500">پلتفرم اتوماسیون فرایند</div>
           </div>
         </div>
@@ -59,21 +59,21 @@ export default function Login() {
               <br />با هوش مصنوعی، در چند ثانیه.
             </h1>
             <p className="mt-4 text-neutral-500 max-w-md leading-7 text-sm">
-              راهکار، ترکیب مدرنی از Notion، Linear و n8n برای سازمان‌های ایرانی است؛
+              جریان، ترکیب مدرنی از Notion، Linear و n8n برای سازمان‌های ایرانی است؛
               با تقویم شمسی، رابط راست‌چین فارسی و طراحی بصری فرایند.
             </p>
           </div>
         </div>
 
-        <div className="text-xs text-neutral-400 mono">Raahkar • Workflow OS</div>
+        <div className="text-xs text-neutral-400 mono">Jaryan • Workflow OS</div>
       </div>
 
       {/* Form panel */}
       <div className="flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-sm">
           <div className="md:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-md bg-neutral-900 text-white grid place-items-center font-bold">ر</div>
-            <div className="font-semibold">راهکار</div>
+            <div className="w-8 h-8 rounded-md bg-neutral-900 text-white grid place-items-center font-bold">ج</div>
+            <div className="font-semibold">جریان</div>
           </div>
 
           <h2 className="text-2xl font-semibold text-neutral-900">ورود به حساب</h2>

@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const t = localStorage.getItem("raahkar_token");
+    const t = getToken();
     if (!t) { setLoading(false); return; }
     api.get("/auth/me")
       .then((r) => { setUser(r.data); setCachedUser(r.data); })

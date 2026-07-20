@@ -1,8 +1,8 @@
-# Implementation Plan: Raahkar MVP Enhancements
+# Implementation Plan: Jaryan MVP Enhancements
 
 ## Overview
 
-9 tasks implementing 6 MVP features for the Raahkar workflow platform:
+9 tasks implementing 6 MVP features for the Jaryan workflow platform:
 1. Analytics Dashboard (backend + frontend)
 2. User Management (backend + frontend)
 3. Global Search (backend + frontend)

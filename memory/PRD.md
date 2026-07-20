@@ -1,4 +1,4 @@
-# راهکار (Raahkar) — PRD
+# جریان (Jaryan) — PRD
 
 ## Original Problem Statement
 Bootstrap a next-generation, AI-first "Workflow Automation and Process Builder" platform for the Iranian market.
@@ -18,7 +18,7 @@ Must be Persian/RTL native, use Jalali (Shamsi) calendar, Vazirmatn font, monoch
 - کارمند (employee) — initiates and completes tasks
 
 ## Test Credentials
-See `/app/memory/test_credentials.md`. Sample org "سازمان نمونه راهکار" is seeded on startup.
+See `/app/memory/test_credentials.md`. Sample org "سازمان نمونه جریان" is seeded on startup.
 
 ## Implemented (Initial MVP — Feb 2026)
 - ✅ Multi-tenant data model (org_id scoping on every resource).

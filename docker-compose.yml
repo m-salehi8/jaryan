@@ -6,10 +6,10 @@ services:
   # ─────────────────────────────
   mongo:
     image: mongo:7.0
-    container_name: raahkar_mongo
+    container_name: jaryan_mongo
     restart: unless-stopped
     environment:
-      MONGO_INITDB_DATABASE: raahkar
+      MONGO_INITDB_DATABASE: jaryan
     volumes:
       - mongo_data:/data/db
     ports:
@@ -28,13 +28,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: raahkar_backend
+    container_name: jaryan_backend
     restart: unless-stopped
     env_file:
       - ./backend/.env
     environment:
       MONGO_URL: mongodb://mongo:27017
-      DB_NAME: raahkar
+      DB_NAME: jaryan
     depends_on:
       mongo:
         condition: service_healthy
@@ -57,9 +57,9 @@ services:
       args:
         # Empty string → API_BASE = "/api" — nginx proxies /api/* to the backend service
         # If you expose the app behind a domain, you can also set this to your full domain:
-        # REACT_APP_BACKEND_URL: "https://raahkar.example.com"
+        # REACT_APP_BACKEND_URL: "https://jaryan.example.com"
         REACT_APP_BACKEND_URL: ""
-    container_name: raahkar_frontend
+    container_name: jaryan_frontend
     restart: unless-stopped
     ports:
       - "80:80"

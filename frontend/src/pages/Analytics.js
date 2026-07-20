@@ -7,7 +7,7 @@ import {
   PieChart, Pie, Cell, Legend, BarChart, Bar
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { api, API_BASE } from "@/lib/api";
+import { api, API_BASE, getToken } from "@/lib/api";
 import { toFaNumber } from "@/lib/jalali";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { Button } from "@/components/ui/button";
@@ -336,7 +336,7 @@ export default function Analytics() {
     if (endDate) params.append("end_date", endDate);
     
     // Add token for authentication since we're opening in a new tab/window
-    const token = localStorage.getItem("raahkar_token");
+    const token = getToken();
     if (token) params.append("token", token);
     
     if (params.toString()) url += `?${params.toString()}`;

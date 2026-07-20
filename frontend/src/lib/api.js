@@ -3,14 +3,16 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API_BASE = `${BACKEND_URL}/api`;
 
-const TOKEN_KEY = "raahkar_token";
-const USER_KEY = "raahkar_user";
+const TOKEN_KEY = "jaryan_token";
+const USER_KEY = "jaryan_user";
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
+export const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem("raahkar_token");
 export const setToken = (t) => localStorage.setItem(TOKEN_KEY, t);
 export const clearToken = () => {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("raahkar_token");
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("raahkar_user");
 };
 export const getCachedUser = () => {
   try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); }

@@ -68,7 +68,7 @@ cp .env.production .env
 
 ```env
 MONGO_URL=mongodb://localhost:27017
-DB_NAME=raahkar
+DB_NAME=jaryan
 JWT_SECRET=dev-secret-change-in-prod
 EMERGENT_LLM_KEY=sk-placeholder
 CORS_ORIGINS=*
@@ -101,7 +101,7 @@ curl http://localhost:8000/api/
 باید پاسخی مشابه این دریافت کنید:
 
 ```json
-{"app":"raahkar","ok":true}
+{"app":"jaryan","ok":true}
 ```
 
 ---
@@ -139,10 +139,10 @@ http://localhost:3000
 
 | ایمیل | رمز عبور | نقش |
 |---|---|---|
-| admin@raahkar.ir | admin1234 | ادمین سازمان |
-| designer@raahkar.ir | 1234 | طراح فرایند |
-| manager@raahkar.ir | 1234 | مدیر تیم |
-| employee@raahkar.ir | 1234 | کارمند |
+| admin@jaryan.ir | admin1234 | ادمین سازمان |
+| designer@jaryan.ir | 1234 | طراح فرایند |
+| manager@jaryan.ir | 1234 | مدیر تیم |
+| employee@jaryan.ir | 1234 | کارمند |
 
 ---
 

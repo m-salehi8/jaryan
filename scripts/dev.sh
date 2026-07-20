@@ -19,7 +19,7 @@ set -e
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE_FILE="$ROOT_DIR/docker-compose.dev.yml"
-CONTAINER_NAME="raahkar_mongo"
+CONTAINER_NAME="jaryan_mongo"
 
 # Colors
 GREEN='\033[0;32m'

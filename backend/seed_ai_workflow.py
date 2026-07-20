@@ -4,13 +4,13 @@ from models import Workflow, WorkflowNode, WorkflowEdge
 
 async def seed_ai_workflow():
     # Fetch org
-    org = await db.organizations.find_one({"slug": "raahkar"})
+    org = await db.organizations.find_one({"slug": "jaryan"})
     if not org:
-        print("Default organization 'raahkar' not found. Please run seed.py first.")
+        print("Default organization 'jaryan' not found. Please run seed.py first.")
         return
 
     # Fetch designer user
-    designer = await db.users.find_one({"email": "designer@raahkar.ir"})
+    designer = await db.users.find_one({"email": "designer@jaryan.ir"})
     if not designer:
         print("Designer user not found.")
         return

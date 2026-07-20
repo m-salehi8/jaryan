@@ -24,7 +24,7 @@ from models import (
 async def seed() -> dict:
     # Idempotent + auto-migration: if the latest sample form ("درخواست خدمات")
     # is missing, wipe and reseed so new schema features show up.
-    existing_org = await db.organizations.find_one({"slug": "raahkar"}, {"_id": 0})
+    existing_org = await db.organizations.find_one({"slug": {"$in": ["jaryan", "raahkar"]}}, {"_id": 0})
     if existing_org:
         has_services_form = await db.forms.find_one(
             {"org_id": existing_org["id"], "name": "فرم درخواست خدمات (پشتیبانی)"},
@@ -34,7 +34,7 @@ async def seed() -> dict:
             {"org_id": existing_org["id"], "name": "فرم درخواست استخدام"},
             {"_id": 0},
         )
-        if has_services_form and has_hire_form:
+        if has_services_form and has_hire_form and existing_org.get("name") == "سازمان نمونه جریان":
             return {"status": "exists", "org_id": existing_org["id"]}
         # Wipe and recreate
         for col in ("organizations", "users", "forms", "workflows",
@@ -42,15 +42,15 @@ async def seed() -> dict:
             await db[col].delete_many({"org_id": existing_org["id"]})
         # Org doc itself is in `organizations` and was scoped by org_id=id mismatch above;
         # clean it by direct delete.
-        await db.organizations.delete_one({"slug": "raahkar"})
+        await db.organizations.delete_many({"slug": {"$in": ["jaryan", "raahkar"]}})
 
-    org = Organization(name="سازمان نمونه راهکار", slug="raahkar")
+    org = Organization(name="سازمان نمونه جریان", slug="jaryan")
     await db.organizations.insert_one(org.to_mongo())
 
     users = [
         User(
             org_id=org.id,
-            email="admin@raahkar.ir",
+            email="admin@jaryan.ir",
             full_name="آرش رضایی",
             role="ادمین سازمان",
             password_hash=hash_password("admin1234"),
@@ -58,7 +58,7 @@ async def seed() -> dict:
         ),
         User(
             org_id=org.id,
-            email="designer@raahkar.ir",
+            email="designer@jaryan.ir",
             full_name="نگار محمدی",
             role="طراح فرایند",
             password_hash=hash_password("1234"),
@@ -66,7 +66,7 @@ async def seed() -> dict:
         ),
         User(
             org_id=org.id,
-            email="manager@raahkar.ir",
+            email="manager@jaryan.ir",
             full_name="حسین کریمی",
             role="مدیر تیم",
             password_hash=hash_password("1234"),
@@ -74,7 +74,7 @@ async def seed() -> dict:
         ),
         User(
             org_id=org.id,
-            email="employee@raahkar.ir",
+            email="employee@jaryan.ir",
             full_name="سارا احمدی",
             role="کارمند",
             password_hash=hash_password("1234"),

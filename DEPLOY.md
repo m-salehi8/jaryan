@@ -1,4 +1,4 @@
-# راهنمای استقرار پروژه راهکار (Raahkar) با Docker
+# راهنمای استقرار پروژه جریان (Jaryan) با Docker
 
 این راهنما تمام مراحل لازم برای اجرای پروژه روی سرور را قدم به قدم شرح می‌دهد.
 
@@ -71,7 +71,7 @@ nano .env
 |---|---|---|
 | `JWT_SECRET` | کلید رمزنگاری JWT — یک رشته تصادفی قوی | `openssl rand -hex 32` |
 | `EMERGENT_LLM_KEY` | کلید API هوش مصنوعی Emergent | `sk-...` |
-| `CORS_ORIGINS` | دامنه‌های مجاز برای CORS | `https://raahkar.example.com` |
+| `CORS_ORIGINS` | دامنه‌های مجاز برای CORS | `https://jaryan.example.com` |
 
 ```bash
 # تولید JWT_SECRET تصادفی
@@ -82,7 +82,7 @@ openssl rand -hex 32
 
 ```env
 MONGO_URL=mongodb://mongo:27017
-DB_NAME=raahkar
+DB_NAME=jaryan
 JWT_SECRET=a1b2c3d4e5f6...  ← مقدار تصادفی خودتان
 EMERGENT_LLM_KEY=sk-...       ← کلید واقعی
 CORS_ORIGINS=*
@@ -123,7 +123,7 @@ docker compose logs -f frontend
 ## قدم ۴ — تست صحت عملکرد
 
 ```bash
-# تست بک‌اند (باید {"app":"raahkar","ok":true} برگرداند)
+# تست بک‌اند (باید {"app":"jaryan","ok":true} برگرداند)
 curl http://localhost:8000/api/
 
 # تست فرانت‌اند (باید HTML صفحه login برگرداند)
@@ -143,10 +143,10 @@ curl -I http://localhost:80
 
 | ایمیل | رمز عبور | نقش |
 |---|---|---|
-| `admin@raahkar.ir` | `admin1234` | ادمین سازمان |
-| `designer@raahkar.ir` | `1234` | طراح فرایند |
-| `manager@raahkar.ir` | `1234` | مدیر تیم |
-| `employee@raahkar.ir` | `1234` | کارمند |
+| `admin@jaryan.ir` | `admin1234` | ادمین سازمان |
+| `designer@jaryan.ir` | `1234` | طراح فرایند |
+| `manager@jaryan.ir` | `1234` | مدیر تیم |
+| `employee@jaryan.ir` | `1234` | کارمند |
 
 ---
 
@@ -207,21 +207,21 @@ docker compose up --build -d
 
 ```bash
 # dump از MongoDB
-docker exec raahkar_mongo mongodump \
-  --db raahkar \
-  --out /tmp/raahkar_backup_$(date +%Y%m%d)
+docker exec jaryan_mongo mongodump \
+  --db jaryan \
+  --out /tmp/jaryan_backup_$(date +%Y%m%d)
 
 # کپی backup به host
-docker cp raahkar_mongo:/tmp/raahkar_backup_$(date +%Y%m%d) ./backups/
+docker cp jaryan_mongo:/tmp/jaryan_backup_$(date +%Y%m%d) ./backups/
 ```
 
 ### بازیابی دیتابیس
 
 ```bash
-docker cp ./backups/raahkar_backup_YYYYMMDD raahkar_mongo:/tmp/restore
-docker exec raahkar_mongo mongorestore \
-  --db raahkar \
-  /tmp/restore/raahkar
+docker cp ./backups/jaryan_backup_YYYYMMDD jaryan_mongo:/tmp/restore
+docker exec jaryan_mongo mongorestore \
+  --db jaryan \
+  /tmp/restore/jaryan
 ```
 
 ### پاک کردن کامل (داده‌ها هم حذف می‌شوند!)
@@ -288,7 +288,7 @@ docker compose restart backend
 
 ```bash
 # تست اتصال
-docker exec raahkar_backend python -c "
+docker exec jaryan_backend python -c "
 import asyncio, motor.motor_asyncio
 client = motor.motor_asyncio.AsyncIOMotorClient('mongodb://mongo:27017')
 asyncio.run(client.admin.command('ping'))
@@ -300,7 +300,7 @@ print('MongoDB OK')
 
 ```bash
 # بررسی کن که .env درست لود شده
-docker exec raahkar_backend env | grep EMERGENT
+docker exec jaryan_backend env | grep EMERGENT
 ```
 
 ---

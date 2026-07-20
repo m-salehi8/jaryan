@@ -1,4 +1,4 @@
-"""Raahkar — Persian-first AI workflow automation platform.
+"""Jaryan — Persian-first AI workflow automation platform.
 
 FastAPI entry point. All routes prefixed with /api.
 """
@@ -55,11 +55,11 @@ class SimulatePayload(BaseModel):
 from services.ai_service import ai_service
 
 
-app = FastAPI(title="Raahkar API")
+app = FastAPI(title="Jaryan API")
 api = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("raahkar")
+logger = logging.getLogger("jaryan")
 
 
 # ---------- Lifecycle ----------
@@ -131,7 +131,7 @@ async def _shutdown() -> None:
 # ---------- Health / Root ----------
 @api.get("/")
 async def root():
-    return {"app": "raahkar", "ok": True}
+    return {"app": "jaryan", "ok": True}
 
 
 # ---------- Auth ----------

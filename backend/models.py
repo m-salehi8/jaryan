@@ -1,4 +1,4 @@
-"""Pydantic models for Raahkar workflow platform."""
+"""Pydantic models for Jaryan workflow platform."""
 from __future__ import annotations
 
 from typing import Any, Literal, Optional

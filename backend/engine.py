@@ -1,4 +1,4 @@
-"""Process execution engine for Raahkar.
+"""Process execution engine for Jaryan.
 
 Evaluates outgoing edges from the current node, picks the next node(s),
 creates the corresponding tasks, and updates the process instance.
@@ -373,7 +373,7 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
                         user_message="Execute the task based on the provided context and return JSON."
                     )
                 except Exception as e:
-                    logging.getLogger("raahkar.engine").error(f"AI task failed: {e}")
+                    logging.getLogger("jaryan.engine").error(f"AI task failed: {e}")
                     await db.process_instances.update_one(
                         {"id": process_id},
                         {"$set": {"status": "stuck", "updated_at": now_iso()}}
@@ -413,7 +413,7 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
                         prompt=extraction_prompt
                     )
                 except Exception as e:
-                    logging.getLogger("raahkar.engine").error(f"OCR task failed: {e}")
+                    logging.getLogger("jaryan.engine").error(f"OCR task failed: {e}")
                     await db.process_instances.update_one(
                         {"id": process_id},
                         {"$set": {"status": "stuck", "updated_at": now_iso()}}

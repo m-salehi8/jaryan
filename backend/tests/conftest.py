@@ -35,28 +35,28 @@ def _login(session, email, password):
 
 @pytest.fixture(scope="session")
 def admin_token(session):
-    r = _login(session, "admin@raahkar.ir", "admin1234")
+    r = _login(session, "admin@jaryan.ir", "admin1234")
     assert r.status_code == 200, f"admin login failed: {r.status_code} {r.text}"
     return r.json()["token"]
 
 
 @pytest.fixture(scope="session")
 def designer_token(session):
-    r = _login(session, "designer@raahkar.ir", "1234")
+    r = _login(session, "designer@jaryan.ir", "1234")
     assert r.status_code == 200, f"designer login failed: {r.status_code} {r.text}"
     return r.json()["token"]
 
 
 @pytest.fixture(scope="session")
 def manager_token(session):
-    r = _login(session, "manager@raahkar.ir", "1234")
+    r = _login(session, "manager@jaryan.ir", "1234")
     assert r.status_code == 200, f"manager login failed: {r.status_code} {r.text}"
     return r.json()["token"]
 
 
 @pytest.fixture(scope="session")
 def employee_token(session):
-    r = _login(session, "employee@raahkar.ir", "1234")
+    r = _login(session, "employee@jaryan.ir", "1234")
     assert r.status_code == 200, f"employee login failed: {r.status_code} {r.text}"
     return r.json()["token"]
 

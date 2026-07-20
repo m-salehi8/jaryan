@@ -16,16 +16,16 @@ class TestHealth:
         assert r.status_code == 200
         data = r.json()
         assert data.get("ok") is True
-        assert data.get("app") == "raahkar"
+        assert data.get("app") == "jaryan"
 
 
 # ---------- Auth ----------
 class TestAuth:
     @pytest.mark.parametrize("email,password", [
-        ("admin@raahkar.ir", "admin1234"),
-        ("designer@raahkar.ir", "1234"),
-        ("manager@raahkar.ir", "1234"),
-        ("employee@raahkar.ir", "1234"),
+        ("admin@jaryan.ir", "admin1234"),
+        ("designer@jaryan.ir", "1234"),
+        ("manager@jaryan.ir", "1234"),
+        ("employee@jaryan.ir", "1234"),
     ])
     def test_login_success(self, session, email, password):
         r = session.post(f"{BASE_URL}/api/auth/login", json={"email": email, "password": password})
@@ -37,14 +37,14 @@ class TestAuth:
         assert data["user"]["role"]
 
     def test_login_invalid(self, session):
-        r = session.post(f"{BASE_URL}/api/auth/login", json={"email": "admin@raahkar.ir", "password": "wrong"})
+        r = session.post(f"{BASE_URL}/api/auth/login", json={"email": "admin@jaryan.ir", "password": "wrong"})
         assert r.status_code == 401
 
     def test_me(self, session, admin_token):
         r = session.get(f"{BASE_URL}/api/auth/me", headers=auth_headers(admin_token))
         assert r.status_code == 200
         u = r.json()
-        assert u["email"] == "admin@raahkar.ir"
+        assert u["email"] == "admin@jaryan.ir"
         assert u["role"] == "ادمین سازمان"
 
     def test_me_missing_token(self, session):

@@ -1,4 +1,4 @@
-"""Heavy Data Seed for Raahkar."""
+"""Heavy Data Seed for Jaryan."""
 from __future__ import annotations
 
 import asyncio
@@ -13,36 +13,36 @@ from models import (
 )
 
 async def seed_heavy() -> dict:
-    existing_org = await db.organizations.find_one({"slug": "raahkar"}, {"_id": 0})
+    existing_org = await db.organizations.find_one({"slug": {"$in": ["jaryan", "raahkar"]}}, {"_id": 0})
     if existing_org:
         org_id = existing_org["id"]
         for col in ("organizations", "users", "forms", "workflows",
                     "tasks", "process_instances", "activities", "comments", "chat_messages"):
             await db[col].delete_many({"org_id": org_id})
-        await db.organizations.delete_one({"slug": "raahkar"})
+        await db.organizations.delete_many({"slug": {"$in": ["jaryan", "raahkar"]}})
 
     # 1. Organization
-    org = Organization(name="سازمان نمونه راهکار (داده انبوه)", slug="raahkar")
+    org = Organization(name="سازمان نمونه جریان (داده انبوه)", slug="jaryan")
     await db.organizations.insert_one(org.to_mongo())
     org_id = org.id
 
     # 2. Users (Many users)
     users_data = [
-        ("admin@raahkar.ir", "آرش رضایی", "ادمین سازمان", "#171717"),
-        ("admin2@raahkar.ir", "سارا کمالی", "ادمین سازمان", "#2a2a2a"),
-        ("designer1@raahkar.ir", "نگار محمدی", "طراح فرایند", "#525252"),
-        ("designer2@raahkar.ir", "سینا کرمی", "طراح فرایند", "#4a4a4a"),
-        ("manager1@raahkar.ir", "حسین کریمی", "مدیر تیم", "#737373"),
-        ("manager2@raahkar.ir", "مریم سعیدی", "مدیر تیم", "#6b6b6b"),
-        ("manager3@raahkar.ir", "علی طاهری", "مدیر تیم", "#8a8a8a"),
-        ("emp1@raahkar.ir", "سارا احمدی", "کارمند", "#a3a3a3"),
-        ("emp2@raahkar.ir", "رضا رحمانی", "کارمند", "#b3b3b3"),
-        ("emp3@raahkar.ir", "مینا قاسمی", "کارمند", "#c3c3c3"),
-        ("emp4@raahkar.ir", "پویا نجفی", "کارمند", "#d3d3d3"),
-        ("emp5@raahkar.ir", "زهرا موسوی", "کارمند", "#e3e3e3"),
-        ("emp6@raahkar.ir", "امید راد", "کارمند", "#9a9a9a"),
-        ("emp7@raahkar.ir", "ندا شفیعی", "کارمند", "#8f8f8f"),
-        ("emp8@raahkar.ir", "محمد امین", "کارمند", "#7f7f7f"),
+        ("admin@jaryan.ir", "آرش رضایی", "ادمین سازمان", "#171717"),
+        ("admin2@jaryan.ir", "سارا کمالی", "ادمین سازمان", "#2a2a2a"),
+        ("designer1@jaryan.ir", "نگار محمدی", "طراح فرایند", "#525252"),
+        ("designer2@jaryan.ir", "سینا کرمی", "طراح فرایند", "#4a4a4a"),
+        ("manager1@jaryan.ir", "حسین کریمی", "مدیر تیم", "#737373"),
+        ("manager2@jaryan.ir", "مریم سعیدی", "مدیر تیم", "#6b6b6b"),
+        ("manager3@jaryan.ir", "علی طاهری", "مدیر تیم", "#8a8a8a"),
+        ("emp1@jaryan.ir", "سارا احمدی", "کارمند", "#a3a3a3"),
+        ("emp2@jaryan.ir", "رضا رحمانی", "کارمند", "#b3b3b3"),
+        ("emp3@jaryan.ir", "مینا قاسمی", "کارمند", "#c3c3c3"),
+        ("emp4@jaryan.ir", "پویا نجفی", "کارمند", "#d3d3d3"),
+        ("emp5@jaryan.ir", "زهرا موسوی", "کارمند", "#e3e3e3"),
+        ("emp6@jaryan.ir", "امید راد", "کارمند", "#9a9a9a"),
+        ("emp7@jaryan.ir", "ندا شفیعی", "کارمند", "#8f8f8f"),
+        ("emp8@jaryan.ir", "محمد امین", "کارمند", "#7f7f7f"),
     ]
     users = []
     for email, name, role, color in users_data:

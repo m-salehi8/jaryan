@@ -1,4 +1,4 @@
-"""Lightweight JWT auth for Raahkar (per user choice: very simple)."""
+"""Lightweight JWT auth for Jaryan (per user choice: very simple)."""
 from __future__ import annotations
 
 import hashlib

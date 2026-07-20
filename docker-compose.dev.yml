@@ -19,10 +19,10 @@ services:
   # ─────────────────────────────
   mongo:
     image: mongo:7.0
-    container_name: raahkar_mongo
+    container_name: jaryan_mongo
     restart: unless-stopped
     environment:
-      MONGO_INITDB_DATABASE: raahkar
+      MONGO_INITDB_DATABASE: jaryan
     volumes:
       - mongo_data_dev:/data/db
     ports:
