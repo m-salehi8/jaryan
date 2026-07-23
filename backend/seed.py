@@ -1,4 +1,5 @@
 """Seed default Iran-localised organisation, users, workflows, forms, tasks."""
+
 from __future__ import annotations
 
 import asyncio
@@ -24,7 +25,9 @@ from models import (
 async def seed() -> dict:
     # Idempotent + auto-migration: if the latest sample form ("درخواست خدمات")
     # is missing, wipe and reseed so new schema features show up.
-    existing_org = await db.organizations.find_one({"slug": {"$in": ["jaryan", "raahkar"]}}, {"_id": 0})
+    existing_org = await db.organizations.find_one(
+        {"slug": {"$in": ["jaryan", "raahkar"]}}, {"_id": 0}
+    )
     if existing_org:
         has_services_form = await db.forms.find_one(
             {"org_id": existing_org["id"], "name": "فرم درخواست خدمات (پشتیبانی)"},
@@ -34,11 +37,24 @@ async def seed() -> dict:
             {"org_id": existing_org["id"], "name": "فرم درخواست استخدام"},
             {"_id": 0},
         )
-        if has_services_form and has_hire_form and existing_org.get("name") == "سازمان نمونه جریان":
+        if (
+            has_services_form
+            and has_hire_form
+            and existing_org.get("name") == "سازمان نمونه جریان"
+        ):
             return {"status": "exists", "org_id": existing_org["id"]}
         # Wipe and recreate
-        for col in ("organizations", "users", "forms", "workflows",
-                    "tasks", "process_instances", "activities", "comments", "chat_messages"):
+        for col in (
+            "organizations",
+            "users",
+            "forms",
+            "workflows",
+            "tasks",
+            "process_instances",
+            "activities",
+            "comments",
+            "chat_messages",
+        ):
             await db[col].delete_many({"org_id": existing_org["id"]})
         # Org doc itself is in `organizations` and was scoped by org_id=id mismatch above;
         # clean it by direct delete.
@@ -92,11 +108,21 @@ async def seed() -> dict:
         description="فرم استاندارد برای ثبت درخواست مرخصی کارکنان",
         fields=[
             FormField(id=new_id(), type="heading", label="اطلاعات درخواست مرخصی"),
-            FormField(id=new_id(), type="select", label="نوع مرخصی", required=True,
-                      options=["استحقاقی", "استعلاجی", "بدون حقوق", "ساعتی"]),
+            FormField(
+                id=new_id(),
+                type="select",
+                label="نوع مرخصی",
+                required=True,
+                options=["استحقاقی", "استعلاجی", "بدون حقوق", "ساعتی"],
+            ),
             FormField(id=new_id(), type="date", label="تاریخ شروع", required=True),
             FormField(id=new_id(), type="date", label="تاریخ پایان", required=True),
-            FormField(id=new_id(), type="textarea", label="توضیحات", placeholder="دلیل درخواست را وارد کنید"),
+            FormField(
+                id=new_id(),
+                type="textarea",
+                label="توضیحات",
+                placeholder="دلیل درخواست را وارد کنید",
+            ),
         ],
         created_by=designer.id,
     )
@@ -132,44 +158,117 @@ async def seed() -> dict:
         description="نمونه‌ی پیشرفته: انتخاب نوع خدمات با تب و نمایش فیلدهای وابسته",
         created_by=designer.id,
         fields=[
-            FormField(id=new_id(), type="heading", label="درخواست خدمات (نظافت، نیرو و...)"),
-            FormField(id=tab_field_id, type="tabs", label="سرفصل خدمات",
-                      tab_options=[tab1, tab2, tab3, tab4, tab5]),
-
+            FormField(
+                id=new_id(), type="heading", label="درخواست خدمات (نظافت، نیرو و...)"
+            ),
+            FormField(
+                id=tab_field_id,
+                type="tabs",
+                label="سرفصل خدمات",
+                tab_options=[tab1, tab2, tab3, tab4, tab5],
+            ),
             # Tab 1: نیروی پذیرایی
-            FormField(id=new_id(), type="text", label="محل استفاده", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab1["id"]),
-            FormField(id=new_id(), type="date", label="تاریخ درخواست", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab1["id"]),
-            FormField(id=new_id(), type="number", label="تعداد نیروی مورد نیاز", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab1["id"]),
-            FormField(id=new_id(), type="text", label="از ساعت", placeholder="مثلاً ۸:۰۰",
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab1["id"]),
-            FormField(id=new_id(), type="text", label="تا ساعت", placeholder="مثلاً ۱۷:۰۰",
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab1["id"]),
-
+            FormField(
+                id=new_id(),
+                type="text",
+                label="محل استفاده",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab1["id"],
+            ),
+            FormField(
+                id=new_id(),
+                type="date",
+                label="تاریخ درخواست",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab1["id"],
+            ),
+            FormField(
+                id=new_id(),
+                type="number",
+                label="تعداد نیروی مورد نیاز",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab1["id"],
+            ),
+            FormField(
+                id=new_id(),
+                type="text",
+                label="از ساعت",
+                placeholder="مثلاً ۸:۰۰",
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab1["id"],
+            ),
+            FormField(
+                id=new_id(),
+                type="text",
+                label="تا ساعت",
+                placeholder="مثلاً ۱۷:۰۰",
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab1["id"],
+            ),
             # Tab 2: نظافت
-            FormField(id=new_id(), type="textarea", label="شرح خدمات درخواستی", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab2["id"]),
-            FormField(id=new_id(), type="text", label="محل اجرا", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab2["id"]),
-
+            FormField(
+                id=new_id(),
+                type="textarea",
+                label="شرح خدمات درخواستی",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab2["id"],
+            ),
+            FormField(
+                id=new_id(),
+                type="text",
+                label="محل اجرا",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab2["id"],
+            ),
             # Tab 3: شست و شوی منسوجات
-            FormField(id=new_id(), type="select", label="نوع پارچه",
-                      options=["ملحفه", "روبالشی", "پرده", "پادری", "سایر"], required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab3["id"]),
-            FormField(id=amount_field_id, type="number", label="تعداد اقلام", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab3["id"]),
-
+            FormField(
+                id=new_id(),
+                type="select",
+                label="نوع پارچه",
+                options=["ملحفه", "روبالشی", "پرده", "پادری", "سایر"],
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab3["id"],
+            ),
+            FormField(
+                id=amount_field_id,
+                type="number",
+                label="تعداد اقلام",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab3["id"],
+            ),
             # Tab 4: جابه‌جایی
-            FormField(id=new_id(), type="text", label="مبدا", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab4["id"]),
-            FormField(id=new_id(), type="text", label="مقصد", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab4["id"]),
-
+            FormField(
+                id=new_id(),
+                type="text",
+                label="مبدا",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab4["id"],
+            ),
+            FormField(
+                id=new_id(),
+                type="text",
+                label="مقصد",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab4["id"],
+            ),
             # Tab 5: تخلیه بار
-            FormField(id=new_id(), type="text", label="مشخصات بار", required=True,
-                      parent_tab_field_id=tab_field_id, parent_tab_id=tab5["id"]),
+            FormField(
+                id=new_id(),
+                type="text",
+                label="مشخصات بار",
+                required=True,
+                parent_tab_field_id=tab_field_id,
+                parent_tab_id=tab5["id"],
+            ),
         ],
     )
 
@@ -181,21 +280,36 @@ async def seed() -> dict:
         created_by=designer.id,
         fields=[
             FormField(id=new_id(), type="heading", label="اطلاعات متقاضی"),
-            FormField(id=new_id(), type="text", label="نام و نام خانوادگی", required=True),
-            FormField(id=new_id(), type="text", label="موقعیت شغلی پیشنهادی", required=True),
-            FormField(id=new_id(), type="select", label="دپارتمان", required=True,
-                      options=["فنی و مهندسی", "منابع انسانی", "فروش و بازاریابی", "مالی"]),
-            FormField(id=new_id(), type="number", label="حقوق پیشنهادی (ریال)", required=False),
-            FormField(id=new_id(), type="textarea", label="ارزیابی اولیه", required=True),
+            FormField(
+                id=new_id(), type="text", label="نام و نام خانوادگی", required=True
+            ),
+            FormField(
+                id=new_id(), type="text", label="موقعیت شغلی پیشنهادی", required=True
+            ),
+            FormField(
+                id=new_id(),
+                type="select",
+                label="دپارتمان",
+                required=True,
+                options=["فنی و مهندسی", "منابع انسانی", "فروش و بازاریابی", "مالی"],
+            ),
+            FormField(
+                id=new_id(), type="number", label="حقوق پیشنهادی (ریال)", required=False
+            ),
+            FormField(
+                id=new_id(), type="textarea", label="ارزیابی اولیه", required=True
+            ),
         ],
     )
 
-    await db.forms.insert_many([
-        leave_form.to_mongo(), 
-        petty_form.to_mongo(), 
-        services_form.to_mongo(),
-        hire_form.to_mongo()
-    ])
+    await db.forms.insert_many(
+        [
+            leave_form.to_mongo(),
+            petty_form.to_mongo(),
+            services_form.to_mongo(),
+            hire_form.to_mongo(),
+        ]
+    )
 
     # ---- Workflow: مرخصی
     leave_wf = Workflow(
@@ -205,29 +319,60 @@ async def seed() -> dict:
         status="published",
         created_by=designer.id,
         nodes=[
-            WorkflowNode(id="n1", type="trigger", label="شروع: ثبت درخواست",
-                         position={"x": 80, "y": 120}, data={}),
-            WorkflowNode(id="n2", type="form", label="تکمیل فرم مرخصی",
-                         position={"x": 360, "y": 120},
-                         data={"form_id": leave_form.id, "assignee_role": "کارمند"}),
-            WorkflowNode(id="n3", type="approval", label="تایید مدیر تیم",
-                         position={"x": 640, "y": 120},
-                         data={"assignee_role": "مدیر تیم"}),
-            WorkflowNode(id="n4", type="condition", label="بیش از ۳ روز؟",
-                         position={"x": 920, "y": 120},
-                         data={"expression": "duration > 3"}),
-            WorkflowNode(id="n5", type="approval", label="تایید ادمین سازمان",
-                         position={"x": 1200, "y": 40},
-                         data={"assignee_role": "ادمین سازمان"}),
-            WorkflowNode(id="n6", type="end", label="اعلام نتیجه",
-                         position={"x": 1200, "y": 220}, data={}),
+            WorkflowNode(
+                id="n1",
+                type="trigger",
+                label="شروع: ثبت درخواست",
+                position={"x": 80, "y": 120},
+                data={},
+            ),
+            WorkflowNode(
+                id="n2",
+                type="form",
+                label="تکمیل فرم مرخصی",
+                position={"x": 360, "y": 120},
+                data={"form_id": leave_form.id, "assignee_role": "کارمند"},
+            ),
+            WorkflowNode(
+                id="n3",
+                type="approval",
+                label="تایید مدیر تیم",
+                position={"x": 640, "y": 120},
+                data={"assignee_role": "مدیر تیم"},
+            ),
+            WorkflowNode(
+                id="n4",
+                type="condition",
+                label="بیش از ۳ روز؟",
+                position={"x": 920, "y": 120},
+                data={"expression": "duration > 3"},
+            ),
+            WorkflowNode(
+                id="n5",
+                type="approval",
+                label="تایید ادمین سازمان",
+                position={"x": 1200, "y": 40},
+                data={"assignee_role": "ادمین سازمان"},
+            ),
+            WorkflowNode(
+                id="n6",
+                type="end",
+                label="اعلام نتیجه",
+                position={"x": 1200, "y": 220},
+                data={},
+            ),
         ],
         edges=[
             WorkflowEdge(id="e1", source="n1", target="n2"),
             WorkflowEdge(id="e2", source="n2", target="n3"),
             WorkflowEdge(id="e3", source="n3", target="n4"),
-            WorkflowEdge(id="e4", source="n4", target="n5", label="بله",
-                         condition={"field_id": "_task_status", "op": "=", "value": "approved"}),
+            WorkflowEdge(
+                id="e4",
+                source="n4",
+                target="n5",
+                label="بله",
+                condition={"field_id": "_task_status", "op": "=", "value": "approved"},
+            ),
             WorkflowEdge(id="e5", source="n4", target="n6", label="خیر"),
             WorkflowEdge(id="e6", source="n5", target="n6"),
         ],
@@ -244,29 +389,64 @@ async def seed() -> dict:
         status="published",
         created_by=designer.id,
         nodes=[
-            WorkflowNode(id="n1", type="trigger", label="ثبت درخواست",
-                         position={"x": 80, "y": 180}, data={}),
-            WorkflowNode(id="n2", type="form", label="تکمیل فرم تنخواه",
-                         position={"x": 320, "y": 180},
-                         data={"form_id": petty_form.id, "assignee_role": "کارمند"}),
-            WorkflowNode(id="n3", type="approval", label="تایید مدیر",
-                         position={"x": 580, "y": 180},
-                         data={"assignee_role": "مدیر تیم"}),
-            WorkflowNode(id="n4", type="approval", label="تایید مالی (مبالغ بالا)",
-                         position={"x": 860, "y": 80},
-                         data={"assignee_role": "ادمین سازمان"}),
-            WorkflowNode(id="n5", type="task", label="پرداخت",
-                         position={"x": 1140, "y": 180},
-                         data={"assignee_role": "ادمین سازمان"}),
-            WorkflowNode(id="n6", type="end", label="پایان",
-                         position={"x": 1400, "y": 180}, data={}),
+            WorkflowNode(
+                id="n1",
+                type="trigger",
+                label="ثبت درخواست",
+                position={"x": 80, "y": 180},
+                data={},
+            ),
+            WorkflowNode(
+                id="n2",
+                type="form",
+                label="تکمیل فرم تنخواه",
+                position={"x": 320, "y": 180},
+                data={"form_id": petty_form.id, "assignee_role": "کارمند"},
+            ),
+            WorkflowNode(
+                id="n3",
+                type="approval",
+                label="تایید مدیر",
+                position={"x": 580, "y": 180},
+                data={"assignee_role": "مدیر تیم"},
+            ),
+            WorkflowNode(
+                id="n4",
+                type="approval",
+                label="تایید مالی (مبالغ بالا)",
+                position={"x": 860, "y": 80},
+                data={"assignee_role": "ادمین سازمان"},
+            ),
+            WorkflowNode(
+                id="n5",
+                type="task",
+                label="پرداخت",
+                position={"x": 1140, "y": 180},
+                data={"assignee_role": "ادمین سازمان"},
+            ),
+            WorkflowNode(
+                id="n6",
+                type="end",
+                label="پایان",
+                position={"x": 1400, "y": 180},
+                data={},
+            ),
         ],
         edges=[
             WorkflowEdge(id="e1", source="n1", target="n2"),
             WorkflowEdge(id="e2", source="n2", target="n3"),
             # اگر مبلغ بیش از ۵٬۰۰۰٬۰۰۰ بود → تایید مالی
-            WorkflowEdge(id="e3", source="n3", target="n4", label="مبلغ بالا",
-                         condition={"field_id": petty_amount_field_id or "amount", "op": ">", "value": "5000000"}),
+            WorkflowEdge(
+                id="e3",
+                source="n3",
+                target="n4",
+                label="مبلغ بالا",
+                condition={
+                    "field_id": petty_amount_field_id or "amount",
+                    "op": ">",
+                    "value": "5000000",
+                },
+            ),
             # در غیر این صورت مستقیم به پرداخت
             WorkflowEdge(id="e4", source="n3", target="n5", label="مبلغ عادی"),
             WorkflowEdge(id="e5", source="n4", target="n5"),
@@ -282,34 +462,73 @@ async def seed() -> dict:
         status="published",
         created_by=designer.id,
         nodes=[
-            WorkflowNode(id="n1", type="trigger", label="شروع",
-                         position={"x": 50, "y": 150}, data={}),
-            WorkflowNode(id="n2", type="form", label="تکمیل فرم مصاحبه",
-                         position={"x": 300, "y": 150},
-                         data={"form_id": hire_form.id, "assignee_role": "مدیر تیم"}),
-            WorkflowNode(id="n3", type="approval", label="تایید منابع انسانی",
-                         position={"x": 550, "y": 150},
-                         data={"assignee_role": "ادمین سازمان"}),
-            WorkflowNode(id="n4", type="task", label="تنظیم قرارداد",
-                         position={"x": 800, "y": 50},
-                         data={"assignee_role": "کارمند"}),
-            WorkflowNode(id="n5", type="end", label="رد درخواست",
-                         position={"x": 800, "y": 250}, data={}),
-            WorkflowNode(id="n6", type="end", label="پایان موفقیت‌آمیز",
-                         position={"x": 1050, "y": 50}, data={}),
+            WorkflowNode(
+                id="n1",
+                type="trigger",
+                label="شروع",
+                position={"x": 50, "y": 150},
+                data={},
+            ),
+            WorkflowNode(
+                id="n2",
+                type="form",
+                label="تکمیل فرم مصاحبه",
+                position={"x": 300, "y": 150},
+                data={"form_id": hire_form.id, "assignee_role": "مدیر تیم"},
+            ),
+            WorkflowNode(
+                id="n3",
+                type="approval",
+                label="تایید منابع انسانی",
+                position={"x": 550, "y": 150},
+                data={"assignee_role": "ادمین سازمان"},
+            ),
+            WorkflowNode(
+                id="n4",
+                type="task",
+                label="تنظیم قرارداد",
+                position={"x": 800, "y": 50},
+                data={"assignee_role": "کارمند"},
+            ),
+            WorkflowNode(
+                id="n5",
+                type="end",
+                label="رد درخواست",
+                position={"x": 800, "y": 250},
+                data={},
+            ),
+            WorkflowNode(
+                id="n6",
+                type="end",
+                label="پایان موفقیت‌آمیز",
+                position={"x": 1050, "y": 50},
+                data={},
+            ),
         ],
         edges=[
             WorkflowEdge(id="e1", source="n1", target="n2"),
             WorkflowEdge(id="e2", source="n2", target="n3"),
-            WorkflowEdge(id="e3", source="n3", target="n4", label="تایید",
-                         condition={"field_id": "_task_status", "op": "=", "value": "approved"}),
-            WorkflowEdge(id="e4", source="n3", target="n5", label="رد",
-                         condition={"field_id": "_task_status", "op": "=", "value": "rejected"}),
+            WorkflowEdge(
+                id="e3",
+                source="n3",
+                target="n4",
+                label="تایید",
+                condition={"field_id": "_task_status", "op": "=", "value": "approved"},
+            ),
+            WorkflowEdge(
+                id="e4",
+                source="n3",
+                target="n5",
+                label="رد",
+                condition={"field_id": "_task_status", "op": "=", "value": "rejected"},
+            ),
             WorkflowEdge(id="e5", source="n4", target="n6"),
         ],
     )
 
-    await db.workflows.insert_many([leave_wf.to_mongo(), petty_wf.to_mongo(), hire_wf.to_mongo()])
+    await db.workflows.insert_many(
+        [leave_wf.to_mongo(), petty_wf.to_mongo(), hire_wf.to_mongo()]
+    )
 
     # ---- Sample running process instance + tasks ----
     now = datetime.now(timezone.utc)
@@ -343,7 +562,7 @@ async def seed() -> dict:
         status="rejected",
         context={"requester": employee.full_name},
     )
-    
+
     stuck_instance = ProcessInstance(
         org_id=org.id,
         workflow_id=hire_wf.id,
@@ -354,12 +573,14 @@ async def seed() -> dict:
         context={"requester": designer.full_name, "applicant": "علی رضوی"},
     )
 
-    await db.process_instances.insert_many([
-        instance.to_mongo(), 
-        completed_instance.to_mongo(),
-        rejected_instance.to_mongo(),
-        stuck_instance.to_mongo()
-    ])
+    await db.process_instances.insert_many(
+        [
+            instance.to_mongo(),
+            completed_instance.to_mongo(),
+            rejected_instance.to_mongo(),
+            stuck_instance.to_mongo(),
+        ]
+    )
 
     tasks = [
         # Original tasks
@@ -424,7 +645,6 @@ async def seed() -> dict:
             deadline=(now + timedelta(hours=8)).isoformat(),
             description="پرداخت مالی پس از تایید",
         ),
-        
         # New tasks for completed instance
         Task(
             org_id=org.id,
@@ -441,7 +661,6 @@ async def seed() -> dict:
             deadline=(now - timedelta(days=2)).isoformat(),
             description="مبلغ پرداخت و رسید بایگانی شد.",
         ),
-        
         # New task for rejected instance
         Task(
             org_id=org.id,
@@ -458,7 +677,6 @@ async def seed() -> dict:
             deadline=(now - timedelta(days=1)).isoformat(),
             description="مرخصی به دلیل ترافیک کاری رد شد.",
         ),
-        
         # New task for stuck instance
         Task(
             org_id=org.id,
@@ -480,28 +698,66 @@ async def seed() -> dict:
 
     # ---- Activities
     activities = [
-        {"id": new_id(), "org_id": org.id, "actor_id": employee.id, "actor_name": employee.full_name,
-         "action": "process.started", "target_type": "process", "target_id": instance.id,
-         "summary": "فرایند درخواست مرخصی آغاز شد",
-         "created_at": now_iso(), "updated_at": now_iso()},
-        {"id": new_id(), "org_id": org.id, "actor_id": designer.id, "actor_name": designer.full_name,
-         "action": "workflow.published", "target_type": "workflow", "target_id": leave_wf.id,
-         "summary": "فرایند درخواست مرخصی منتشر شد",
-         "created_at": now_iso(), "updated_at": now_iso()},
-        {"id": new_id(), "org_id": org.id, "actor_id": manager.id, "actor_name": manager.full_name,
-         "action": "task.approved", "target_type": "task", "target_id": new_id(),
-         "summary": "درخواست مرخصی تایید شد",
-         "created_at": now_iso(), "updated_at": now_iso()},
-        
-        {"id": new_id(), "org_id": org.id, "actor_id": manager.id, "actor_name": manager.full_name,
-         "action": "process.completed", "target_type": "process", "target_id": completed_instance.id,
-         "summary": "فرایند تنخواه با موفقیت به پایان رسید",
-         "created_at": now_iso(), "updated_at": now_iso()},
-         
-        {"id": new_id(), "org_id": org.id, "actor_id": manager.id, "actor_name": manager.full_name,
-         "action": "task.rejected", "target_type": "task", "target_id": rejected_instance.id,
-         "summary": "درخواست مرخصی رد شد",
-         "created_at": now_iso(), "updated_at": now_iso()},
+        {
+            "id": new_id(),
+            "org_id": org.id,
+            "actor_id": employee.id,
+            "actor_name": employee.full_name,
+            "action": "process.started",
+            "target_type": "process",
+            "target_id": instance.id,
+            "summary": "فرایند درخواست مرخصی آغاز شد",
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+        },
+        {
+            "id": new_id(),
+            "org_id": org.id,
+            "actor_id": designer.id,
+            "actor_name": designer.full_name,
+            "action": "workflow.published",
+            "target_type": "workflow",
+            "target_id": leave_wf.id,
+            "summary": "فرایند درخواست مرخصی منتشر شد",
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+        },
+        {
+            "id": new_id(),
+            "org_id": org.id,
+            "actor_id": manager.id,
+            "actor_name": manager.full_name,
+            "action": "task.approved",
+            "target_type": "task",
+            "target_id": new_id(),
+            "summary": "درخواست مرخصی تایید شد",
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+        },
+        {
+            "id": new_id(),
+            "org_id": org.id,
+            "actor_id": manager.id,
+            "actor_name": manager.full_name,
+            "action": "process.completed",
+            "target_type": "process",
+            "target_id": completed_instance.id,
+            "summary": "فرایند تنخواه با موفقیت به پایان رسید",
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+        },
+        {
+            "id": new_id(),
+            "org_id": org.id,
+            "actor_id": manager.id,
+            "actor_name": manager.full_name,
+            "action": "task.rejected",
+            "target_type": "task",
+            "target_id": rejected_instance.id,
+            "summary": "درخواست مرخصی رد شد",
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+        },
     ]
     await db.activities.insert_many(activities)
 
@@ -513,7 +769,7 @@ async def seed() -> dict:
             target_id=instance.id,
             author_id=manager.id,
             author_name=manager.full_name,
-            body="لطفا در اسرع وقت بررسی شود. ممنون."
+            body="لطفا در اسرع وقت بررسی شود. ممنون.",
         ),
         Comment(
             org_id=org.id,
@@ -521,11 +777,11 @@ async def seed() -> dict:
             target_id=tasks[0].id,
             author_id=admin.id,
             author_name=admin.full_name,
-            body="نیاز به مستندات بیشتر دارد. فرم را اصلاح کنید."
-        )
+            body="نیاز به مستندات بیشتر دارد. فرم را اصلاح کنید.",
+        ),
     ]
     await db.comments.insert_many([c.to_mongo() for c in comments])
-    
+
     # ---- Chat Messages (AI interaction)
     session_id = new_id()
     chats = [
@@ -534,7 +790,7 @@ async def seed() -> dict:
             session_id=session_id,
             user_id=designer.id,
             role="user",
-            content="یک فرایند برای ثبت‌نام در دوره‌های آموزشی بساز"
+            content="یک فرایند برای ثبت‌نام در دوره‌های آموزشی بساز",
         ),
         ChatMessage(
             org_id=org.id,
@@ -542,8 +798,8 @@ async def seed() -> dict:
             user_id=designer.id,
             role="assistant",
             content="بسیار خب، فرایند پیشنهادی با موفقیت ایجاد شد.",
-            generated_workflow={"name": "ثبت‌نام دوره آموزشی", "nodes": []}
-        )
+            generated_workflow={"name": "ثبت‌نام دوره آموزشی", "nodes": []},
+        ),
     ]
     await db.chat_messages.insert_many([c.to_mongo() for c in chats])
 

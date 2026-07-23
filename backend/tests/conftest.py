@@ -29,7 +29,9 @@ def session():
 
 
 def _login(session, email, password):
-    r = session.post(f"{BASE_URL}/api/auth/login", json={"email": email, "password": password})
+    r = session.post(
+        f"{BASE_URL}/api/auth/login", json={"email": email, "password": password}
+    )
     return r
 
 

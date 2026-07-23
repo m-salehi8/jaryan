@@ -7,6 +7,7 @@ Configure via:
   - base_url → OPENAI_BASE_URL env var (default: http://localhost:20128/v1)
   - model    → set via with_model() or OPENAI_MODEL env var
 """
+
 from __future__ import annotations
 
 import os
@@ -16,8 +17,8 @@ from typing import AsyncIterator
 import httpx
 import json
 
-
 # ── Public data types ─────────────────────────────────────────────────────────
+
 
 @dataclass
 class UserMessage:

@@ -1,4 +1,5 @@
 """Lightweight JWT auth for Jaryan (per user choice: very simple)."""
+
 from __future__ import annotations
 
 import hashlib
@@ -39,27 +40,34 @@ def decode_token(token: str) -> dict:
     try:
         return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
     except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token"
+        ) from exc
 
 
 async def get_current_user(
-    authorization: Optional[str] = Header(default=None),
-    token: Optional[str] = None
+    authorization: Optional[str] = Header(default=None), token: Optional[str] = None
 ) -> User:
     if not authorization and not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing_token")
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="missing_token"
+        )
+
     auth_token = token
     if authorization and authorization.lower().startswith("bearer "):
         auth_token = authorization.split(" ", 1)[1].strip()
-        
+
     if not auth_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token_format")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token_format"
+        )
 
     payload = decode_token(auth_token)
     user_doc = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
     if not user_doc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found"
+        )
     return User(**user_doc)
 
 

@@ -1,4 +1,5 @@
 """Pydantic models for Jaryan workflow platform."""
+
 from __future__ import annotations
 
 from typing import Any, Literal, Optional
@@ -100,9 +101,12 @@ class VisibilityRule(BaseModel):
       - group:  {combinator: "and"|"or", conditions: [VisibilityRule, ...]}
     Both shapes coexist; old single-clause docs remain valid.
     """
+
     # single-clause fields
     field_id: Optional[str] = None
-    op: Optional[Literal["=", "!=", ">", "<", ">=", "<=", "contains", "empty", "not_empty"]] = None
+    op: Optional[
+        Literal["=", "!=", ">", "<", ">=", "<=", "contains", "empty", "not_empty"]
+    ] = None
     value: Optional[str] = ""
     # group fields
     combinator: Optional[Literal["and", "or"]] = None
@@ -111,13 +115,17 @@ class VisibilityRule(BaseModel):
 
 class WorkflowNode(BaseModel):
     id: str
-    type: Literal["trigger", "task", "approval", "condition", "form", "end", "ai_task", "ocr_task"]
+    type: Literal[
+        "trigger", "task", "approval", "condition", "form", "end", "ai_task", "ocr_task"
+    ]
     label: str
     position: dict  # {x, y}
     data: dict = Field(default_factory=dict)  # assignee_role, form_id, condition, etc
     dependencies: list[str] = Field(default_factory=list)
     timeout_seconds: Optional[int] = None
-    timeout_action: Optional[Literal["escalate_to_manager", "auto_reject", "none"]] = "none"
+    timeout_action: Optional[Literal["escalate_to_manager", "auto_reject", "none"]] = (
+        "none"
+    )
     retry_count: Optional[int] = None
     retry_delay: Optional[int] = None
 
@@ -144,7 +152,7 @@ class Workflow(BaseDocument):
     edges: list[WorkflowEdge] = Field(default_factory=list)
     created_by: str  # user id
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_dag_integrity(self):
         if self.status != "published":
             return self
@@ -174,7 +182,9 @@ class Workflow(BaseDocument):
         for node in self.nodes:
             if node.id not in visited:
                 if is_cyclic(node.id):
-                    raise ValueError("Cycle detected: Workflows must be Directed Acyclic Graphs (DAGs).")
+                    raise ValueError(
+                        "Cycle detected: Workflows must be Directed Acyclic Graphs (DAGs)."
+                    )
 
         return self
 
@@ -232,7 +242,7 @@ class FormField(BaseModel):
     parent_tab_id: Optional[str] = None
     # Structured visibility rule; null means always visible
     visible_if: Optional[VisibilityRule] = None
-    
+
     # Validation Rules
     min_length: Optional[int] = None
     max_length: Optional[int] = None
@@ -287,23 +297,29 @@ class Task(BaseDocument):
     assignee_id: Optional[str] = None
     assignee_role: Optional[RoleFa] = None
     type: Literal["task", "approval", "form"] = "task"
-    status: Literal["waiting", "pending", "in_progress", "approved", "rejected", "done"] = "pending"
+    status: Literal[
+        "waiting", "pending", "in_progress", "approved", "rejected", "done"
+    ] = "pending"
     wait_conditions: list[str] = Field(default_factory=list)
     priority: Literal["low", "medium", "high", "urgent"] = "medium"
     deadline: Optional[str] = None  # iso
-    seen_time: Optional[str] = None   # iso — set when status → in_progress
-    done_time: Optional[str] = None   # iso — set when status → done/approved/rejected
+    seen_time: Optional[str] = None  # iso — set when status → in_progress
+    done_time: Optional[str] = None  # iso — set when status → done/approved/rejected
     form_id: Optional[str] = None
     form_data: dict = Field(default_factory=dict)
     draft_data: dict = Field(default_factory=dict)
     description: str = ""
-    field_permissions: dict = Field(default_factory=dict)  # {field_id: "editable"|"readonly"|"hidden"}
+    field_permissions: dict = Field(
+        default_factory=dict
+    )  # {field_id: "editable"|"readonly"|"hidden"}
     escalated: bool = False
     attempt_number: int = 1
 
 
 class TaskUpdate(BaseModel):
-    status: Optional[Literal["waiting", "pending", "in_progress", "approved", "rejected", "done"]] = None
+    status: Optional[
+        Literal["waiting", "pending", "in_progress", "approved", "rejected", "done"]
+    ] = None
     wait_conditions: Optional[list[str]] = None
     form_data: Optional[dict] = None
     note: Optional[str] = None

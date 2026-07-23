@@ -1,0 +1,106 @@
+{% extends "admin/index.html" %}
+{% load i18n unfold %}
+
+{% block content %}
+    <div class="flex flex-col lg:flex-row lg:gap-8 mb-8">
+        <div class="grow">
+            <!-- Custom Dashboard Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">داشبورد جریان</h1>
+                <p class="text-gray-500 dark:text-gray-400">نمای کلی سیستم و فعالیت‌های ثبت شده</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {% for stat in stats %}
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between transition-all hover:shadow-md">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ stat.title }}</p>
+                        <h3 class="text-2xl font-bold text-primary-600 dark:text-primary-500">{{ stat.value }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center text-primary-500">
+                        <span class="material-symbols-outlined text-2xl">{{ stat.icon }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Chart Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">وضعیت فرآیندها</h2>
+                <div class="relative h-72 w-full">
+                    <canvas id="workflowsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Sidebar (Default Django Admin) -->
+        {% include "unfold/helpers/history.html" %}
+    </div>
+
+    <!-- Chart.js Setup -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('workflowsChart').getContext('2d');
+            
+            // Check if dark mode is active (unfold uses .dark on html)
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+            const primaryColor = '#3b82f6'; // Tailwind blue-500
+            const secondaryColor = '#10b981'; // Tailwind emerald-500
+            const tertiaryColor = '#6366f1'; // Tailwind indigo-500
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ workflow_chart.labels|safe }},
+                    datasets: [{
+                        label: 'تعداد فرآیندها',
+                        data: {{ workflow_chart.data|safe }},
+                        backgroundColor: [primaryColor, secondaryColor, tertiaryColor],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 40,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                            titleColor: isDark ? '#f3f4f6' : '#111827',
+                            bodyColor: isDark ? '#d1d5db' : '#4b5563',
+                            borderColor: gridColor,
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 4,
+                            usePointStyle: true,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                color: textColor,
+                                font: { family: 'Vazirmatn, sans-serif' }
+                            },
+                            grid: { color: gridColor, drawBorder: false }
+                        },
+                        x: {
+                            ticks: {
+                                color: textColor,
+                                font: { family: 'Vazirmatn, sans-serif' }
+                            },
+                            grid: { display: false, drawBorder: false }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}
