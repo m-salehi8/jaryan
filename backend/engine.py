@@ -308,12 +308,15 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
 
     # Merge any new context data (form submission for a node)
     ctx = dict(process.get("context") or {})
-    if context_update:
-        ctx.update(context_update)
+    ctx_updates = dict(context_update) if context_update else {}
+    if ctx_updates:
+        ctx.update(ctx_updates)
 
+    new_completed_nodes = []
     completed_nodes = list(process.get("completed_nodes") or [])
     if completed_node_id not in completed_nodes:
         completed_nodes.append(completed_node_id)
+        new_completed_nodes.append(completed_node_id)
 
     next_tasks: list[dict] = []
     new_node_ids: list[str] = []
@@ -374,19 +377,33 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
                     )
                 except Exception as e:
                     logging.getLogger("jaryan.engine").error(f"AI task failed: {e}")
-                    await db.process_instances.update_one(
-                        {"id": process_id},
-                        {"$set": {"status": "stuck", "updated_at": now_iso()}}
-                    )
-                    return {
-                        "ok": False,
-                        "reason": f"ai_task_failed: {e}",
-                        "status": "stuck"
-                    }
+                    fallback_task = await _node_to_task(org=process["org_id"], process=process, workflow=workflow, node=target_node)
+                    if fallback_task:
+                        fallback_task["type"] = "task"
+                        fallback_task["assignee_id"] = None
+                        fallback_task["assignee_role"] = "ادمین سازمان"
+                        fallback_task["title"] = f"نیاز به بررسی دستی: {fallback_task['title']}"
+                        fallback_task["description"] = f"خطای سیستم هوش مصنوعی: {e}"
+                        next_tasks.append(fallback_task)
+                        new_node_ids.append(target_id)
+                        
+                        await db.activities.insert_one({
+                            "id": new_id(),
+                            "org_id": process["org_id"],
+                            "actor_name": "سیستم",
+                            "action": "task.fallback",
+                            "target_type": "process",
+                            "target_id": process_id,
+                            "summary": "Automated node failed. Switched to manual intervention.",
+                            "created_at": now_iso()
+                        })
+                    continue
                 
                 ctx[output_key] = ai_result
+                ctx_updates[output_key] = ai_result
                 if target_id not in completed_nodes:
                     completed_nodes.append(target_id)
+                    new_completed_nodes.append(target_id)
                 frontier.append(target_id)
                 continue
 
@@ -414,19 +431,33 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
                     )
                 except Exception as e:
                     logging.getLogger("jaryan.engine").error(f"OCR task failed: {e}")
-                    await db.process_instances.update_one(
-                        {"id": process_id},
-                        {"$set": {"status": "stuck", "updated_at": now_iso()}}
-                    )
-                    return {
-                        "ok": False,
-                        "reason": f"ocr_task_failed: {e}",
-                        "status": "stuck"
-                    }
+                    fallback_task = await _node_to_task(org=process["org_id"], process=process, workflow=workflow, node=target_node)
+                    if fallback_task:
+                        fallback_task["type"] = "task"
+                        fallback_task["assignee_id"] = None
+                        fallback_task["assignee_role"] = "ادمین سازمان"
+                        fallback_task["title"] = f"نیاز به بررسی دستی: {fallback_task['title']}"
+                        fallback_task["description"] = f"خطای سیستم OCR: {e}"
+                        next_tasks.append(fallback_task)
+                        new_node_ids.append(target_id)
+                        
+                        await db.activities.insert_one({
+                            "id": new_id(),
+                            "org_id": process["org_id"],
+                            "actor_name": "سیستم",
+                            "action": "task.fallback",
+                            "target_type": "process",
+                            "target_id": process_id,
+                            "summary": "Automated node failed. Switched to manual intervention.",
+                            "created_at": now_iso()
+                        })
+                    continue
                 
                 ctx[output_key] = ai_result
+                ctx_updates[output_key] = ai_result
                 if target_id not in completed_nodes:
                     completed_nodes.append(target_id)
+                    new_completed_nodes.append(target_id)
                 frontier.append(target_id)
                 continue
 
@@ -485,15 +516,25 @@ async def advance_process(*, process_id: str, completed_node_id: str, context_up
         new_current = process.get("current_node_id")
         new_status = process.get("status", "running")
 
-    await db.process_instances.update_one(
-        {"id": process_id},
-        {"$set": {
+    update_ops = {
+        "$set": {
             "current_node_id": new_current,
             "status": new_status,
-            "context": ctx,
-            "completed_nodes": completed_nodes,
             "updated_at": now_iso(),
-        }},
+        }
+    }
+    
+    if new_completed_nodes:
+        update_ops["$addToSet"] = {
+            "completed_nodes": {"$each": new_completed_nodes}
+        }
+        
+    for k, v in ctx_updates.items():
+        update_ops["$set"][f"context.{k}"] = v
+
+    await db.process_instances.update_one(
+        {"id": process_id},
+        update_ops,
     )
 
     return {

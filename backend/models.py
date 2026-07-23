@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from db import BaseDocument, new_id, now_iso
 
@@ -143,6 +143,40 @@ class Workflow(BaseDocument):
     nodes: list[WorkflowNode] = Field(default_factory=list)
     edges: list[WorkflowEdge] = Field(default_factory=list)
     created_by: str  # user id
+
+    @model_validator(mode='after')
+    def validate_dag_integrity(self):
+        if self.status != "published":
+            return self
+
+        adj = {node.id: [] for node in self.nodes}
+        for edge in self.edges:
+            if edge.source in adj:
+                adj[edge.source].append(edge.target)
+
+        visited = set()
+        rec_stack = set()
+
+        def is_cyclic(node_id):
+            visited.add(node_id)
+            rec_stack.add(node_id)
+
+            for neighbor in adj.get(node_id, []):
+                if neighbor not in visited:
+                    if is_cyclic(neighbor):
+                        return True
+                elif neighbor in rec_stack:
+                    return True
+
+            rec_stack.remove(node_id)
+            return False
+
+        for node in self.nodes:
+            if node.id not in visited:
+                if is_cyclic(node.id):
+                    raise ValueError("Cycle detected: Workflows must be Directed Acyclic Graphs (DAGs).")
+
+        return self
 
 
 class WorkflowCreate(BaseModel):

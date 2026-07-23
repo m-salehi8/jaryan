@@ -15,6 +15,7 @@ from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from croniter import croniter
 from bson import ObjectId
+from pymongo import ReturnDocument
 
 from auth import (
     CurrentUser,
@@ -434,21 +435,37 @@ async def get_task(task_id: str, user: User = CurrentUser):
 
 @api.patch("/tasks/{task_id}")
 async def update_task(task_id: str, payload: TaskUpdate, user: User = CurrentUser):
-    doc = await db.tasks.find_one({"id": task_id, "org_id": user.org_id}, {"_id": 0})
-    if not doc:
+    doc_initial = await db.tasks.find_one({"id": task_id, "org_id": user.org_id}, {"_id": 0})
+    if not doc_initial:
         raise HTTPException(404, "task_not_found")
+        
     updates: dict = {"updated_at": now_iso()}
+    is_completing = payload.status in ("approved", "rejected", "done")
+    
     if payload.status is not None:
         updates["status"] = payload.status
-        # Stamp seen_time on first transition to in_progress (never overwrite)
-        if payload.status == "in_progress" and not doc.get("seen_time"):
+        if payload.status == "in_progress" and not doc_initial.get("seen_time"):
             updates["seen_time"] = now_iso()
-        # Stamp done_time on terminal transitions
-        if payload.status in ("done", "approved", "rejected"):
+        if is_completing:
             updates["done_time"] = now_iso()
     if payload.form_data is not None:
         updates["form_data"] = payload.form_data
-    await db.tasks.update_one({"id": task_id}, {"$set": updates})
+        
+    query = {"id": task_id, "org_id": user.org_id}
+    if is_completing:
+        query["status"] = {"$in": ["pending", "in_progress"]}
+        
+    doc = await db.tasks.find_one_and_update(
+        query,
+        {"$set": updates},
+        return_document=ReturnDocument.AFTER
+    )
+    
+    if not doc:
+        existing = await db.tasks.find_one({"id": task_id, "org_id": user.org_id}, {"_id": 0})
+        if existing and is_completing and existing["status"] not in ["pending", "in_progress"]:
+            return {"ok": False, "reason": "already_processed", "task": existing}
+        raise HTTPException(404, "task_not_found")
 
     advanced: dict = {}
     if payload.status in ("approved", "done"):
