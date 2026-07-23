@@ -1,4 +1,4 @@
-import { useMemo, useState, forwardRef, useImperativeHandle } from "react";
+import React, { useMemo, useState, forwardRef, useImperativeHandle, useCallback, useRef } from "react";
 import { toJalaliShort } from "@/lib/jalali";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { evaluateRule, childrenOfTab, topLevelFields } from "@/lib/formLogic";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { useFormValidation } from "@/hooks/useFormValidation";
+
+const MemoizedField = React.memo(({ field, value, onChange, onBlur, disabled, hasError }) => {
+  const errClass = hasError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/10" : "";
+  switch (field.type) {
+    case "text":
+      return <Input value={value || ""} onChange={(e) => onChange(field.id, e.target.value)} onBlur={() => onBlur(field.id)} placeholder={field.placeholder} disabled={disabled} className={errClass} />;
+    case "number":
+      return <Input type="number" inputMode="numeric" value={value ?? ""} onChange={(e) => onChange(field.id, e.target.value)} onBlur={() => onBlur(field.id)} placeholder={field.placeholder} disabled={disabled} className={errClass} />;
+    case "textarea":
+      return <Textarea rows={3} value={value || ""} onChange={(e) => onChange(field.id, e.target.value)} onBlur={() => onBlur(field.id)} placeholder={field.placeholder} disabled={disabled} className={errClass} />;
+    case "date":
+      return <div className={hasError ? "rounded-md border border-red-500 shadow-sm" : ""}><JalaliDatePicker value={value || ""} onChange={(v) => onChange(field.id, v)} disabled={disabled} testId={`date-${field.id}`} /></div>;
+    case "select":
+      return (
+        <Select value={value || ""} onValueChange={(v) => onChange(field.id, v)} disabled={disabled}>
+          <SelectTrigger data-testid={`select-${field.id}`} className={errClass}><SelectValue placeholder="انتخاب کنید…" /></SelectTrigger>
+          <SelectContent>
+            {(field.options || []).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      );
+    case "checkbox":
+      return (
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Checkbox checked={!!value} onCheckedChange={(v) => onChange(field.id, !!v)} disabled={disabled} className={hasError ? "border-red-500" : ""} />
+          {field.placeholder || "بله"}
+        </label>
+      );
+    case "user":
+      return <Input value={value || ""} onChange={(e) => onChange(field.id, e.target.value)} onBlur={() => onBlur(field.id)} placeholder="@ کاربر" disabled={disabled} className={errClass} />;
+    case "file":
+      return (
+        <div className={`border border-dashed rounded-md px-3 py-4 text-xs text-center ${hasError ? 'border-red-500 text-red-600 bg-red-50/50' : 'border-border text-muted-foreground bg-muted/50'}`}>
+          فایل را اینجا رها کنید
+        </div>
+      );
+    default:
+      return null;
+  }
+});
 
 /**
  * Renders a form (live) given its schema (list of FormField) and a `values` state.
@@ -28,10 +68,19 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
   const isFieldDisabled = (fieldId) => readOnly || fieldPermissions[fieldId] === "readonly";
   const isFieldHidden = (fieldId) => fieldPermissions[fieldId] === "hidden";
 
-  const setValue = (id, v) => {
+  // Stable callbacks using ref to avoid re-renders when `values` change
+  const valuesRef = useRef(values);
+  valuesRef.current = values;
+
+  const handleChange = useCallback((id, v) => {
     if (readOnly || fieldPermissions[id] === "readonly") return;
-    onChange?.({ ...(values || {}), [id]: v });
-  };
+    onChange?.({ ...(valuesRef.current || {}), [id]: v });
+    markTouched(id);
+  }, [readOnly, fieldPermissions, onChange, markTouched]);
+
+  const handleBlur = useCallback((id) => {
+    markTouched(id);
+  }, [markTouched]);
 
   const renderField = (f) => {
     if (isFieldHidden(f.id)) return null;
@@ -65,7 +114,7 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
                 disabled={readOnly}
                 onClick={() => {
                   setActiveTabs((s) => ({ ...s, [f.id]: t.id }));
-                  setValue(f.id, t.label);
+                  handleChange(f.id, t.label);
                 }}
                 data-testid={`tab-${f.id}-${t.id}`}
                 className={`px-4 py-2 text-xs transition-colors flex items-center gap-2 ${
@@ -86,48 +135,20 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
       );
     }
 
+    const hasError = touched[f.id] && errors[f.id];
+
     return (
       <div key={f.id} className="space-y-1.5 animate-in" data-testid={`render-field-${f.id}`}>
         <FieldLabel field={f} />
-        {(() => {
-          switch (f.type) {
-            case "text":
-              return <Input value={ctx[f.id] || ""} onChange={(e) => setValue(f.id, e.target.value)} onBlur={() => markTouched(f.id)} placeholder={f.placeholder} disabled={isFieldDisabled(f.id)} />;
-            case "number":
-              return <Input type="number" inputMode="numeric" value={ctx[f.id] ?? ""} onChange={(e) => setValue(f.id, e.target.value)} onBlur={() => markTouched(f.id)} placeholder={f.placeholder} disabled={isFieldDisabled(f.id)} />;
-            case "textarea":
-              return <Textarea rows={3} value={ctx[f.id] || ""} onChange={(e) => setValue(f.id, e.target.value)} onBlur={() => markTouched(f.id)} placeholder={f.placeholder} disabled={isFieldDisabled(f.id)} />;
-            case "date":
-              return <JalaliDatePicker value={ctx[f.id] || ""} onChange={(v) => { setValue(f.id, v); markTouched(f.id); }} disabled={isFieldDisabled(f.id)} testId={`date-${f.id}`} />;
-            case "select":
-              return (
-                <Select value={ctx[f.id] || ""} onValueChange={(v) => { setValue(f.id, v); markTouched(f.id); }} disabled={isFieldDisabled(f.id)}>
-                  <SelectTrigger data-testid={`select-${f.id}`}><SelectValue placeholder="انتخاب کنید…" /></SelectTrigger>
-                  <SelectContent>
-                    {(f.options || []).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              );
-            case "checkbox":
-              return (
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Checkbox checked={!!ctx[f.id]} onCheckedChange={(v) => { setValue(f.id, !!v); markTouched(f.id); }} disabled={isFieldDisabled(f.id)} />
-                  {f.placeholder || "بله"}
-                </label>
-              );
-            case "user":
-              return <Input value={ctx[f.id] || ""} onChange={(e) => setValue(f.id, e.target.value)} onBlur={() => markTouched(f.id)} placeholder="@ کاربر" disabled={isFieldDisabled(f.id)} />;
-            case "file":
-              return (
-                <div className="border border-dashed border-border rounded-md px-3 py-4 text-xs text-muted-foreground text-center bg-muted/50">
-                  فایل را اینجا رها کنید
-                </div>
-              );
-            default:
-              return null;
-          }
-        })()}
-        {touched[f.id] && errors[f.id] && (
+        <MemoizedField
+          field={f}
+          value={ctx[f.id]}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          disabled={isFieldDisabled(f.id)}
+          hasError={hasError}
+        />
+        {hasError && (
           <div className="text-[11px] text-red-500 font-medium mt-1 animate-in slide-in-from-top-1">
             {errors[f.id]}
           </div>
@@ -136,9 +157,13 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
     );
   };
 
+  const renderedContent = useMemo(() => {
+    return topLevelFields(fields).map(renderField);
+  }, [fields, ctx, touched, errors, activeTabs, readOnly, fieldPermissions]);
+
   return (
     <div className="space-y-4">
-      {topLevelFields(fields).map(renderField)}
+      {renderedContent}
     </div>
   );
 });

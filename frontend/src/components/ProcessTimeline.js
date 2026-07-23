@@ -367,7 +367,7 @@ function Legend() {
   );
 }
 
-// ─── Main export ─────────────────────────────────────────────────────────────
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /**
  * ProcessTimeline — horizontal Gantt chart for a single process instance.
@@ -416,52 +416,54 @@ export default function ProcessTimeline({ process, tasks, users }) {
   }).length;
 
   return (
-    <div data-testid="process-timeline" className="rounded-xl border border-border bg-card overflow-hidden">
-      {/* Panel header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          تایم‌لاین فرایند
-        </div>
-        {bottleneckCount > 0 && (
-          <div
-            data-testid="bottleneck-summary"
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700"
-          >
-            <AlertTriangle className="w-3 h-3" />
-            {bottleneckCount} گلوگاه تشخیص داده شد
+    <ErrorBoundary>
+      <div data-testid="process-timeline" className="rounded-xl border border-border bg-card overflow-hidden">
+        {/* Panel header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            تایم‌لاین فرایند
           </div>
-        )}
-      </div>
+          {bottleneckCount > 0 && (
+            <div
+              data-testid="bottleneck-summary"
+              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700"
+            >
+              <AlertTriangle className="w-3 h-3" />
+              {bottleneckCount} گلوگاه تشخیص داده شد
+            </div>
+          )}
+        </div>
 
-      <Legend />
+        <Legend />
 
-      {/* Time ruler */}
-      <div className="pt-2">
-        <TimeRuler processStartMs={processStartMs} totalSpanMs={totalSpanMs} />
-      </div>
+        {/* Time ruler */}
+        <div className="pt-2">
+          <TimeRuler processStartMs={processStartMs} totalSpanMs={totalSpanMs} />
+        </div>
 
-      {/* Task rows */}
-      <div>
-        {sorted.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            processStartMs={processStartMs}
-            totalSpanMs={totalSpanMs}
-            usersMap={usersMap}
-          />
-        ))}
-      </div>
+        {/* Task rows */}
+        <div>
+          {sorted.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              processStartMs={processStartMs}
+              totalSpanMs={totalSpanMs}
+              usersMap={usersMap}
+            />
+          ))}
+        </div>
 
-      {/* Footer: time range */}
-      <div className="px-4 py-2.5 border-t border-neutral-100 flex items-center justify-between text-[10px] text-muted-foreground">
-        <span>آغاز: {toJalaliDateTime(process?.created_at)}</span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          اکنون
-        </span>
+        {/* Footer: time range */}
+        <div className="px-4 py-2.5 border-t border-neutral-100 flex items-center justify-between text-[10px] text-muted-foreground">
+          <span>آغاز: {toJalaliDateTime(process?.created_at)}</span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            اکنون
+          </span>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

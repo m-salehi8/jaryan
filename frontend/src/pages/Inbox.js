@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toJalaliDateTime, toJalaliShort, fromNow, toFaNumber } from "@/lib/jalali";
 import FormRenderer from "@/components/FormRenderer";
 import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { evaluateRule } from "@/lib/formLogic";
 
 const FILTERS = [
   { key: "all", label: "همه" },
@@ -49,14 +51,17 @@ export default function Inbox() {
   const [mentions, setMentions] = useState([]);
   const textareaRef = useRef(null);
   const formRef = useRef(null);
+  const [processingId, setProcessingId] = useState(null);
 
-  const load = useCallback(() => {
-    setLoading(true);
+  const load = useCallback((background = false) => {
+    if (!background) setLoading(true);
     const q = assignedToMe ? "?assigned_to_me=true" : "";
     api.get(`/tasks${q}`).then(r => {
       setTasks(r.data);
       setActiveId(prev => (r.data.length && !prev) ? r.data[0].id : prev);
-    }).finally(() => setLoading(false));
+    }).finally(() => {
+      if (!background) setLoading(false);
+    });
   }, [assignedToMe]);
 
   useEffect(() => { load(); }, [load]);
@@ -101,8 +106,10 @@ export default function Inbox() {
 
   const updateStatus = async (status) => {
     if (!active) return;
+    const activeTask = active;
+    
     const body = { status };
-    if (formSchema && active.type === "form") {
+    if (formSchema && activeTask.type === "form") {
       if (status === "done" && formRef.current) {
         const isValid = formRef.current.validateAll();
         if (!isValid) {
@@ -110,11 +117,38 @@ export default function Inbox() {
           return;
         }
       }
-      body.form_data = formValues;
+      
+      const cleanData = {};
+      formSchema.fields.forEach(f => {
+        if (!f.visible_if || evaluateRule(f.visible_if, formValues)) {
+          if (formValues[f.id] !== undefined) {
+            cleanData[f.id] = formValues[f.id];
+          }
+        }
+      });
+      body.form_data = cleanData;
     }
-    await api.patch(`/tasks/${active.id}`, body);
-    toast.success("به‌روزرسانی انجام شد");
-    load();
+
+    const previousTasks = [...tasks];
+    
+    // Optimistic UI Update
+    setTasks(prev => prev.map(t => t.id === activeTask.id ? { ...t, status: "processing" } : t));
+    setProcessingId(activeTask.id);
+
+    try {
+      await api.patch(`/tasks/${activeTask.id}`, body);
+      toast.success("به‌روزرسانی انجام شد");
+      setTasks(prev => prev.filter(t => t.id !== activeTask.id));
+      if (activeId === activeTask.id) {
+        setActiveId(null);
+      }
+      load(true); // reload in background
+    } catch (e) {
+      setTasks(previousTasks);
+      toast.error("خطا در به‌روزرسانی تسک. لطفا دوباره تلاش کنید.");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleCommentChange = (e) => {
@@ -210,6 +244,7 @@ export default function Inbox() {
       </div>
 
       <div className="flex-1 flex min-h-0">
+        <ErrorBoundary>
         {/* List */}
         <div className="w-full md:w-[420px] border-l border-border bg-card overflow-y-auto">
           {loading ? (
@@ -235,10 +270,10 @@ export default function Inbox() {
                   <li
                     key={t.id}
                     data-testid={`task-row-${t.id}`}
-                    onClick={() => setActiveId(t.id)}
+                    onClick={() => processingId !== t.id && setActiveId(t.id)}
                     className={`cursor-pointer border-b border-neutral-100 px-4 py-3 ${
                       activeId === t.id ? "bg-muted" : "hover:bg-muted"
-                    }`}
+                    } ${processingId === t.id ? "opacity-60 pointer-events-none" : ""}`}
                   >
                     <div className="flex items-center gap-2">
                       <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[t.priority]}`} />
@@ -310,18 +345,18 @@ export default function Inbox() {
 
               {active.type === "approval" && active.status === "pending" && (
                 <div className="mt-5 flex gap-2">
-                  <Button data-testid="approve-btn" onClick={() => updateStatus("approved")} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    <CheckCircle2 className="w-4 h-4 me-1" /> تایید
+                  <Button data-testid="approve-btn" disabled={processingId === active.id} onClick={() => updateStatus("approved")} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    {processingId === active.id ? <Loader2 className="w-4 h-4 me-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 me-1" />} تایید
                   </Button>
-                  <Button data-testid="reject-btn" variant="outline" onClick={() => updateStatus("rejected")} className="text-red-600 border-red-200 hover:bg-red-50">
-                    <XCircle className="w-4 h-4 me-1" /> رد
+                  <Button data-testid="reject-btn" disabled={processingId === active.id} variant="outline" onClick={() => updateStatus("rejected")} className="text-red-600 border-red-200 hover:bg-red-50">
+                    {processingId === active.id ? <Loader2 className="w-4 h-4 me-1 animate-spin" /> : <XCircle className="w-4 h-4 me-1" />} رد
                   </Button>
                 </div>
               )}
               {active.type !== "approval" && active.status !== "done" && (
                 <div className="mt-5">
-                  <Button data-testid="done-btn" onClick={() => updateStatus("done")} className="bg-primary text-primary-foreground">
-                    <CheckCircle2 className="w-4 h-4 me-1" /> پایان تسک
+                  <Button data-testid="done-btn" disabled={processingId === active.id} onClick={() => updateStatus("done")} className="bg-primary text-primary-foreground">
+                    {processingId === active.id ? <Loader2 className="w-4 h-4 me-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 me-1" />} پایان تسک
                   </Button>
                 </div>
               )}
@@ -390,6 +425,7 @@ export default function Inbox() {
             </div>
           )}
         </div>
+        </ErrorBoundary>
       </div>
     </div>
   );
