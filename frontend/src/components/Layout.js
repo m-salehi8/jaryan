@@ -20,14 +20,14 @@ function Sidebar() {
   return (
     <aside
       data-testid="sidebar"
-      className="hidden md:flex w-64 shrink-0 border-l border-neutral-200 bg-white flex-col h-screen sticky top-0"
+      className="hidden md:flex w-64 shrink-0 border-l border-border bg-card flex-col h-screen sticky top-0"
     >
       <div className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-sm font-bold shadow-sm">ج</div>
           <div>
-            <div className="text-sm font-bold text-neutral-900 leading-tight">جریان</div>
-            <div className="text-[11px] text-neutral-400">پلتفرم اتوماسیون فرایند</div>
+            <div className="text-sm font-bold text-foreground leading-tight">جریان</div>
+            <div className="text-[11px] text-muted-foreground">پلتفرم اتوماسیون فرایند</div>
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@ function Sidebar() {
                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive
                     ? "bg-brand text-white shadow-[0_4px_14px_rgba(79,70,229,0.25)]"
-                    : "text-neutral-700 hover:bg-neutral-100"
+                    : "text-muted-foreground hover:bg-muted"
                 }`
               }
             >
@@ -68,14 +68,14 @@ function Sidebar() {
           target="_blank"
           rel="noreferrer"
           data-testid="nav-mobile"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-neutral-500 hover:bg-neutral-100 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
         >
           <Smartphone className="w-4 h-4" />
           <span>نمای موبایل</span>
         </a>
       </nav>
 
-      <div className="border-t border-neutral-200 p-3">
+      <div className="border-t border-border p-3">
         <div className="flex items-center gap-3 px-2 py-2">
           <div
             className="w-8 h-8 rounded-full grid place-items-center text-white text-xs font-medium"
@@ -84,12 +84,12 @@ function Sidebar() {
             {user?.full_name?.[0] || "؟"}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-neutral-900 truncate">{user?.full_name}</div>
-            <div className="text-[11px] text-neutral-500 truncate">{user?.role}</div>
+            <div className="text-sm font-medium text-foreground truncate">{user?.full_name}</div>
+            <div className="text-[11px] text-muted-foreground truncate">{user?.role}</div>
           </div>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-md hover:bg-neutral-100 text-neutral-500 transition-colors"
+            className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
             title="تغییر پوسته"
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -97,7 +97,7 @@ function Sidebar() {
           <button
             data-testid="logout-btn"
             onClick={() => { logout(); navigate("/login"); }}
-            className="p-2 rounded-md hover:bg-neutral-100 text-neutral-500"
+            className="p-2 rounded-md hover:bg-muted text-muted-foreground"
             title="خروج"
           >
             <LogOut className="w-4 h-4" />
@@ -113,7 +113,7 @@ function MobileTopbar() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   return (
-    <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white sticky top-0 z-30">
+    <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card sticky top-0 z-30">
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-xs font-bold">ر</div>
         <span className="text-[10px] text-brand font-bold bg-brand/10 px-2 py-1 rounded-md">نسخه کاربری</span>
@@ -121,13 +121,13 @@ function MobileTopbar() {
       <div className="flex items-center gap-1">
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-md text-neutral-500 hover:bg-neutral-100 transition-colors"
+          className="p-2 rounded-md text-muted-foreground hover:bg-muted transition-colors"
         >
           {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
         <button
           onClick={() => { logout(); navigate("/login"); }}
-          className="p-2 rounded-md hover:bg-neutral-100 text-neutral-500 transition-colors"
+          className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
         >
           <LogOut className="w-4 h-4" />
         </button>
@@ -145,7 +145,7 @@ function MobileTopbar() {
 function MobileBottomNav() {
   const { pendingCount } = useBadge();
   return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-neutral-200 grid grid-cols-5">
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border grid grid-cols-5">
       {NAV.slice(0, 5).map((item) => {
         const Icon = item.icon;
         return (
@@ -156,7 +156,7 @@ function MobileBottomNav() {
             data-testid={`m-${item.testId}`}
             className={({ isActive }) =>
               `relative flex flex-col items-center justify-center gap-1 py-2 text-[10px] ${
-                isActive ? "text-neutral-900" : "text-neutral-400"
+                isActive ? "text-foreground" : "text-muted-foreground"
               }`
             }
           >

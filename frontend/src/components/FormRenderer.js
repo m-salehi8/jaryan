@@ -40,12 +40,12 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
     if (f.type === "heading") {
       return (
         <div key={f.id} className="pt-3">
-          <h3 className="text-base font-semibold text-neutral-900">{f.label}</h3>
+          <h3 className="text-base font-semibold text-foreground">{f.label}</h3>
         </div>
       );
     }
     if (f.type === "divider") {
-      return <div key={f.id} className="border-t border-dashed border-neutral-200 my-2" />;
+      return <div key={f.id} className="border-t border-dashed border-border my-2" />;
     }
 
     if (f.type === "tabs") {
@@ -55,7 +55,7 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
       return (
         <div key={f.id} className="space-y-3" data-testid={`render-tabs-${f.id}`}>
           <FieldLabel field={f} />
-          <div className="inline-flex flex-wrap items-center gap-0 rounded-lg border border-neutral-300 overflow-hidden bg-white">
+          <div className="inline-flex flex-wrap items-center gap-0 rounded-lg border border-border overflow-hidden bg-card">
             {tabs.map((t, idx) => {
               const hasErr = childrenOfTab(fields, f.id, t.id).some(child => touched[child.id] && errors[child.id]);
               return (
@@ -69,8 +69,8 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
                 }}
                 data-testid={`tab-${f.id}-${t.id}`}
                 className={`px-4 py-2 text-xs transition-colors flex items-center gap-2 ${
-                  activeId === t.id ? "bg-neutral-900 text-white" : "text-neutral-700 hover:bg-neutral-50"
-                } ${idx > 0 ? "border-s border-neutral-200" : ""}`}
+                  activeId === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                } ${idx > 0 ? "border-s border-border" : ""}`}
               >
                 {t.label}
                 {hasErr && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" title="دارای خطا" />}
@@ -110,7 +110,7 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
               );
             case "checkbox":
               return (
-                <label className="flex items-center gap-2 text-sm text-neutral-700">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Checkbox checked={!!ctx[f.id]} onCheckedChange={(v) => { setValue(f.id, !!v); markTouched(f.id); }} disabled={isFieldDisabled(f.id)} />
                   {f.placeholder || "بله"}
                 </label>
@@ -119,7 +119,7 @@ const FormRenderer = forwardRef(({ fields, values, onChange, readOnly = false, f
               return <Input value={ctx[f.id] || ""} onChange={(e) => setValue(f.id, e.target.value)} onBlur={() => markTouched(f.id)} placeholder="@ کاربر" disabled={isFieldDisabled(f.id)} />;
             case "file":
               return (
-                <div className="border border-dashed border-neutral-300 rounded-md px-3 py-4 text-xs text-neutral-400 text-center bg-neutral-50/50">
+                <div className="border border-dashed border-border rounded-md px-3 py-4 text-xs text-muted-foreground text-center bg-muted/50">
                   فایل را اینجا رها کنید
                 </div>
               );
@@ -147,7 +147,7 @@ export default FormRenderer;
 
 function FieldLabel({ field }) {
   return (
-    <div className="flex items-center gap-1 text-sm font-medium text-neutral-800">
+    <div className="flex items-center gap-1 text-sm font-medium text-foreground">
       {field.label}
       {field.required && <span className="text-red-500">*</span>}
     </div>

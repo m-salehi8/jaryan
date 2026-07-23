@@ -279,21 +279,21 @@ export default function ProductTour({ active, onClose }) {
               zIndex: 9999,
               width: 320,
             }}
-            className="rounded-2xl bg-white border border-neutral-200 shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-5 select-none"
+            className="rounded-2xl bg-card border border-border shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-5 select-none"
           >
             {/* Header row */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-neutral-900 grid place-items-center shrink-0">
+                <div className="w-6 h-6 rounded-md bg-primary grid place-items-center shrink-0">
                   <MapPin className="w-3 h-3 text-white" />
                 </div>
-                <span className="text-[11px] font-medium text-neutral-400 tracking-wide uppercase">
+                <span className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">
                   مرحله {step + 1} از {TOUR_STEPS.length}
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="p-1 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                className="p-1 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
                 aria-label="بستن تور"
               >
                 <X className="w-4 h-4" />
@@ -301,12 +301,12 @@ export default function ProductTour({ active, onClose }) {
             </div>
 
             {/* Title */}
-            <h3 className="text-base font-bold text-neutral-900 mb-2 leading-snug">
+            <h3 className="text-base font-bold text-foreground mb-2 leading-snug">
               {currentStep.title}
             </h3>
 
             {/* Body */}
-            <p className="text-sm text-neutral-600 leading-6 mb-5">
+            <p className="text-sm text-muted-foreground leading-6 mb-5">
               {currentStep.body}
             </p>
 
@@ -318,7 +318,7 @@ export default function ProductTour({ active, onClose }) {
                 {step > 0 && (
                   <button
                     onClick={handlePrev}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
                   >
                     <ArrowRight className="w-3.5 h-3.5" />
                     قبلی
@@ -326,7 +326,7 @@ export default function ProductTour({ active, onClose }) {
                 )}
                 <button
                   onClick={handleNext}
-                  className="flex items-center gap-1 px-4 py-1.5 rounded-lg bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-700 transition-colors"
+                  className="flex items-center gap-1 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-colors"
                 >
                   {step === TOUR_STEPS.length - 1 ? "پایان" : "بعدی"}
                   {step < TOUR_STEPS.length - 1 && (

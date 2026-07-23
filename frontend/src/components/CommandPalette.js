@@ -98,10 +98,10 @@ export default function CommandPalette({ isOpen, onClose }) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-white rounded-xl border border-neutral-200 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-2xl bg-card rounded-xl border border-border shadow-2xl overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-200">
-          <Search className="w-4 h-4 text-neutral-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
             data-testid="search-input"
@@ -110,14 +110,14 @@ export default function CommandPalette({ isOpen, onClose }) {
             placeholder="جستجو در تسک‌ها، فرایندها و فرم‌ها…"
             className="flex-1 bg-transparent text-sm focus:outline-none"
           />
-          {loading && <Loader2 className="w-4 h-4 animate-spin text-neutral-400 shrink-0" />}
-          <kbd className="text-[10px] text-neutral-400 border border-neutral-200 rounded px-1.5 py-0.5 shrink-0">ESC</kbd>
+          {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />}
+          <kbd className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0">ESC</kbd>
         </div>
 
         {/* Results */}
         <div className="max-h-[55vh] overflow-y-auto p-2">
           {!hasQuery ? (
-            <div className="text-sm text-neutral-400 py-10 text-center">
+            <div className="text-sm text-muted-foreground py-10 text-center">
               حداقل ۲ کاراکتر تایپ کنید تا جستجو آغاز شود.
             </div>
           ) : error ? (
@@ -125,7 +125,7 @@ export default function CommandPalette({ isOpen, onClose }) {
               خطا در جستجو. دوباره تلاش کنید.
             </div>
           ) : loading ? null : !hasAnyResult ? (
-            <div className="text-sm text-neutral-400 py-10 text-center">
+            <div className="text-sm text-muted-foreground py-10 text-center">
               نتیجه‌ای یافت نشد
             </div>
           ) : (
@@ -135,7 +135,7 @@ export default function CommandPalette({ isOpen, onClose }) {
               const Icon = meta.icon;
               return (
                 <div key={section} className="mb-2">
-                  <div className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide px-2 py-1.5">
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-2 py-1.5">
                     {meta.title}
                   </div>
                   {items.map((item) => (
@@ -143,15 +143,15 @@ export default function CommandPalette({ isOpen, onClose }) {
                       key={`${section}-${item.id}`}
                       data-testid={`search-result-${section}-${item.id}`}
                       onClick={() => handleNavigate(section, item)}
-                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-neutral-100 transition-colors text-right"
+                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted transition-colors text-right"
                     >
-                      <div className="w-7 h-7 rounded-md bg-neutral-100 grid place-items-center shrink-0">
-                        <Icon className="w-3.5 h-3.5 text-neutral-600" />
+                      <div className="w-7 h-7 rounded-md bg-muted grid place-items-center shrink-0">
+                        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-neutral-900 truncate">{item.title}</div>
+                        <div className="text-sm font-medium text-foreground truncate">{item.title}</div>
                         {item.subtitle && (
-                          <div className="text-[11px] text-neutral-500 truncate">{item.subtitle}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{item.subtitle}</div>
                         )}
                       </div>
                     </button>

@@ -59,7 +59,7 @@ function AdminSidebar() {
         </div>
 
         {/* Admin badge */}
-        <div className="mt-4 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white/10">
+        <div className="mt-4 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-card/10">
           <Shield className="w-3.5 h-3.5 text-indigo-300" />
           <span className="text-[11px] font-medium text-indigo-200">دسترسی مدیریتی</span>
         </div>
@@ -79,8 +79,8 @@ function AdminSidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-white/15 text-white shadow-sm"
-                    : "text-indigo-200 hover:bg-white/10 hover:text-white"
+                    ? "bg-card/15 text-white shadow-sm"
+                    : "text-indigo-200 hover:bg-card/10 hover:text-white"
                 }`
               }
             >
@@ -92,7 +92,7 @@ function AdminSidebar() {
       </nav>
 
       {/* Divider */}
-      <div className="mx-4 h-px bg-white/10" />
+      <div className="mx-4 h-px bg-card/10" />
 
       {/* User info + logout */}
       <div className="p-3">
@@ -109,7 +109,7 @@ function AdminSidebar() {
           </div>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-md text-indigo-300 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-md text-indigo-300 hover:text-white hover:bg-card/10 transition-colors"
             title="تغییر پوسته"
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -117,7 +117,7 @@ function AdminSidebar() {
           <button
             data-testid="admin-logout-btn"
             onClick={() => { logout(); navigate("/login"); }}
-            className="p-2 rounded-md text-indigo-300 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-md text-indigo-300 hover:text-white hover:bg-card/10 transition-colors"
             title="خروج"
           >
             <LogOut className="w-4 h-4" />

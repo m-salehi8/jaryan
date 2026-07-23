@@ -91,17 +91,17 @@ export default function OrgChart() {
   const roots = departments.filter(d => !d.parent_id);
   const getChildren = (pid) => departments.filter(d => d.parent_id === pid);
 
-  if (loading) return <div className="p-10 text-neutral-400 text-sm">در حال بارگذاری...</div>;
+  if (loading) return <div className="p-10 text-muted-foreground text-sm">در حال بارگذاری...</div>;
 
   return (
     <div className="p-6 lg:p-10 max-w-[1200px] mx-auto animate-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2 tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 tracking-tight">
             <Users className="w-6 h-6 text-brand" />
             ساختار سازمانی
           </h1>
-          <p className="text-sm text-neutral-500 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             مدیریت دپارتمان‌ها و سلسله مراتب سازمانی
           </p>
         </div>
@@ -110,14 +110,14 @@ export default function OrgChart() {
         </Button>
       </div>
 
-      <div className="bg-neutral-50/50 border border-neutral-200 rounded-xl p-6 min-h-[400px]">
+      <div className="bg-muted/50 border border-border rounded-xl p-6 min-h-[400px]">
         {roots.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
-            <div className="w-16 h-16 bg-white border border-neutral-200 rounded-2xl grid place-items-center mb-4 shadow-sm">
-              <Users className="w-8 h-8 text-neutral-400" />
+            <div className="w-16 h-16 bg-card border border-border rounded-2xl grid place-items-center mb-4 shadow-sm">
+              <Users className="w-8 h-8 text-muted-foreground" />
             </div>
-            <div className="text-neutral-900 font-medium mb-1">ساختار سازمانی خالی است</div>
-            <div className="text-neutral-500 text-sm max-w-sm">هنوز هیچ دپارتمانی ایجاد نکرده‌اید. برای شروع، دپارتمان اصلی سازمان را بسازید.</div>
+            <div className="text-foreground font-medium mb-1">ساختار سازمانی خالی است</div>
+            <div className="text-muted-foreground text-sm max-w-sm">هنوز هیچ دپارتمانی ایجاد نکرده‌اید. برای شروع، دپارتمان اصلی سازمان را بسازید.</div>
           </div>
         ) : (
           <div className="flex flex-col">
@@ -133,11 +133,11 @@ export default function OrgChart() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700">نام دپارتمان</label>
+              <label className="text-sm font-medium text-muted-foreground">نام دپارتمان</label>
               <Input value={name} onChange={e => setName(e.target.value)} placeholder="مثلا: منابع انسانی" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700">دپارتمان والد (اختیاری)</label>
+              <label className="text-sm font-medium text-muted-foreground">دپارتمان والد (اختیاری)</label>
               <Select value={parentId} onValueChange={setParentId}>
                 <SelectTrigger><SelectValue placeholder="انتخاب دپارتمان والد" /></SelectTrigger>
                 <SelectContent>
@@ -149,7 +149,7 @@ export default function OrgChart() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-neutral-700">مدیر دپارتمان (اختیاری)</label>
+              <label className="text-sm font-medium text-muted-foreground">مدیر دپارتمان (اختیاری)</label>
               <Select value={managerId} onValueChange={setManagerId}>
                 <SelectTrigger><SelectValue placeholder="انتخاب مدیر" /></SelectTrigger>
                 <SelectContent>
@@ -181,7 +181,7 @@ const renderNode = (dept, depth, getChildren, users, openEdit, remove, visited =
   return (
     <div key={dept.id} className="flex flex-col relative">
       <div 
-        className="flex items-center justify-between bg-white border border-neutral-200 p-4 rounded-lg shadow-sm w-full max-w-2xl mb-3 relative z-10 hover:border-brand-soft transition-colors"
+        className="flex items-center justify-between bg-card border border-border p-4 rounded-lg shadow-sm w-full max-w-2xl mb-3 relative z-10 hover:border-brand-soft transition-colors"
         style={{ marginRight: depth * 24 }}
       >
         {/* connector line */}
@@ -190,15 +190,15 @@ const renderNode = (dept, depth, getChildren, users, openEdit, remove, visited =
         )}
 
         <div>
-          <div className="font-semibold text-neutral-900">{dept.name}</div>
-          <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1">
+          <div className="font-semibold text-foreground">{dept.name}</div>
+          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
             <ShieldAlert className="w-3.5 h-3.5" /> 
             مدیر: {manager ? manager.full_name : <span className="text-neutral-300">تعیین نشده</span>}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => openEdit(dept)} className="p-1.5 text-neutral-400 hover:text-brand hover:bg-brand-soft rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
-          <button onClick={() => remove(dept.id)} className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
+          <button onClick={() => openEdit(dept)} className="p-1.5 text-muted-foreground hover:text-brand hover:bg-brand-soft rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
+          <button onClick={() => remove(dept.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
         </div>
       </div>
       

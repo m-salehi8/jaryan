@@ -44,19 +44,19 @@ function FlowNode({ data, selected, id }) {
   return (
     <div
       data-testid={`canvas-node-${id}`}
-      className={`bg-white border ${selected ? "border-neutral-900 shadow-md" : "border-neutral-200 shadow-sm hover:shadow-md"} rounded-xl min-w-[200px] overflow-hidden transition-all`}
+      className={`bg-card border ${selected ? "border-neutral-900 shadow-md" : "border-border shadow-sm hover:shadow-md"} rounded-xl min-w-[200px] overflow-hidden transition-all`}
       style={{ direction: "rtl" }}
     >
       <Handle type="target" position={Position.Left} />
       <div className="h-1" style={{ background: meta.bar }} />
       <div className="px-3 py-2.5">
-        <div className="flex items-center gap-2 text-[10px] text-neutral-400 mono uppercase mb-1">
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mono uppercase mb-1">
           <Icon className="w-3 h-3" />
           {meta.label}
         </div>
-        <div className="text-sm font-medium text-neutral-900 leading-5">{data.label}</div>
+        <div className="text-sm font-medium text-foreground leading-5">{data.label}</div>
         {data.assignee_role && (
-          <div className="text-[10px] text-neutral-500 mt-1.5 inline-flex items-center px-1.5 py-0.5 rounded bg-neutral-50 border border-neutral-100">
+          <div className="text-[10px] text-muted-foreground mt-1.5 inline-flex items-center px-1.5 py-0.5 rounded bg-muted border border-neutral-100">
             {data.assignee_role}
           </div>
         )}
@@ -333,14 +333,14 @@ export default function WorkflowBuilder() {
   const selectedNode = selected?.kind === "node" ? nodes.find(n => n.id === selected.id) : null;
   const selectedEdge = selected?.kind === "edge" ? edges.find(e => e.id === selected.id) : null;
 
-  if (!wf) return <div className="p-10 text-sm text-neutral-400">در حال بارگذاری…</div>;
+  if (!wf) return <div className="p-10 text-sm text-muted-foreground">در حال بارگذاری…</div>;
 
   return (
     <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="builder-root" data-tour-id="tour-workflow-canvas">
       {/* Topbar */}
-      <div className="border-b border-neutral-200 bg-white px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="border-b border-border bg-card px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/admin/workflows" className="text-neutral-400 hover:text-neutral-900">
+          <Link to="/admin/workflows" className="text-muted-foreground hover:text-foreground">
             <ArrowRight className="w-4 h-4" />
           </Link>
           <input
@@ -390,8 +390,8 @@ export default function WorkflowBuilder() {
 
       <div className="flex-1 flex min-h-0">
         {/* Node palette */}
-        <div className="hidden lg:flex w-56 border-l border-neutral-200 bg-white p-3 flex-col gap-2" data-testid="node-palette">
-          <div className="text-[10px] text-neutral-400 uppercase tracking-wider px-1 mono">گره‌ها</div>
+        <div className="hidden lg:flex w-56 border-l border-border bg-card p-3 flex-col gap-2" data-testid="node-palette">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mono">گره‌ها</div>
           {Object.entries(NODE_TYPES_META).map(([k, m]) => {
             const Icon = m.icon;
             return (
@@ -399,11 +399,11 @@ export default function WorkflowBuilder() {
                 key={k}
                 data-testid={`palette-${k}`}
                 onClick={() => addNode(k)}
-                className="flex flex-col gap-1 px-3 py-2 rounded-lg border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 text-right transition-colors"
+                className="flex flex-col gap-1 px-3 py-2 rounded-lg border border-border hover:border-neutral-900 hover:bg-muted text-right transition-colors"
               >
                 <div className="flex items-center gap-2 w-full">
                   <span className="w-1 h-4 rounded-sm flex-shrink-0" style={{ background: m.bar }} />
-                  <Icon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
+                  <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="flex-1 text-sm font-medium">{m.label}</span>
                   <Plus className="w-3.5 h-3.5 text-neutral-300 flex-shrink-0" />
                 </div>
@@ -437,7 +437,7 @@ export default function WorkflowBuilder() {
           >
             <Background gap={24} size={1.2} color="#d4d4d4" />
             <Controls position="bottom-left" />
-            <MiniMap pannable zoomable className="!bg-white !border !border-neutral-200 !rounded-lg" />
+            <MiniMap pannable zoomable className="!bg-card !border !border-border !rounded-lg" />
           </ReactFlow>
 
           {/* Mobile floating palette */}
@@ -447,7 +447,7 @@ export default function WorkflowBuilder() {
                 key={k}
                 data-testid={`m-palette-${k}`}
                 onClick={() => addNode(k)}
-                className="text-xs px-2.5 py-1.5 rounded-md bg-white border border-neutral-200 hover:bg-neutral-50"
+                className="text-xs px-2.5 py-1.5 rounded-md bg-card border border-border hover:bg-muted"
                 style={{ direction: "rtl" }}
               >
                 + {m.label}
@@ -508,20 +508,20 @@ function SimulationPanel({ onClose, mockContextStr, setMockContextStr, runSimula
   const toggle = (i) => setExpanded(p => ({...p, [i]: !p[i]}));
 
   return (
-    <div className="absolute top-14 left-0 w-80 lg:w-96 h-[calc(100%-56px)] bg-white border-r border-neutral-200 z-50 flex flex-col shadow-[10px_0_15px_-3px_rgba(0,0,0,0.1)]">
-      <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/50">
-        <h3 className="font-semibold text-neutral-900 flex items-center gap-2">
+    <div className="absolute top-14 left-0 w-80 lg:w-96 h-[calc(100%-56px)] bg-card border-r border-border z-50 flex flex-col shadow-[10px_0_15px_-3px_rgba(0,0,0,0.1)]">
+      <div className="p-4 border-b border-border flex items-center justify-between bg-muted/50">
+        <h3 className="font-semibold text-foreground flex items-center gap-2">
           <Bug className="w-4 h-4 text-purple-600" /> حالت دیباگ (شبیه‌سازی)
         </h3>
-        <button onClick={onClose} className="p-1 hover:bg-neutral-200 rounded text-neutral-500"><X className="w-4 h-4" /></button>
+        <button onClick={onClose} className="p-1 hover:bg-neutral-200 rounded text-muted-foreground"><X className="w-4 h-4" /></button>
       </div>
       
       <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
         <div>
-          <label className="text-xs font-medium text-neutral-700 block mb-1.5">داده‌های ورودی (Mock Context JSON)</label>
+          <label className="text-xs font-medium text-muted-foreground block mb-1.5">داده‌های ورودی (Mock Context JSON)</label>
           <Textarea 
             dir="ltr"
-            className="text-[11px] font-mono bg-neutral-900 text-teal-400 focus-visible:ring-purple-500 border-0 shadow-inner"
+            className="text-[11px] font-mono bg-primary text-teal-400 focus-visible:ring-purple-500 border-0 shadow-inner"
             rows={6}
             value={mockContextStr}
             onChange={e => setMockContextStr(e.target.value)}
@@ -537,29 +537,29 @@ function SimulationPanel({ onClose, mockContextStr, setMockContextStr, runSimula
           <div className="mt-2 border-t border-neutral-100 pt-4">
             <h4 className="text-sm font-semibold mb-3 flex items-center justify-between">
               لاگ‌های اجرا
-              <span className="text-[10px] bg-neutral-100 px-2 py-0.5 rounded text-neutral-500 font-mono">
+              <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground font-mono">
                 {traces.reduce((acc, t) => acc + (t.time_taken_ms || 0), 0)}ms
               </span>
             </h4>
             <div className="space-y-3">
               {traces.map((t, i) => (
-                <div key={i} className={`border ${t.status === 'success' ? 'border-neutral-200' : 'border-red-200'} rounded-md bg-neutral-50 overflow-hidden`}>
-                  <div className="p-2.5 flex items-center justify-between bg-white cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => toggle(i)}>
+                <div key={i} className={`border ${t.status === 'success' ? 'border-border' : 'border-red-200'} rounded-md bg-muted overflow-hidden`}>
+                  <div className="p-2.5 flex items-center justify-between bg-card cursor-pointer hover:bg-muted transition-colors" onClick={() => toggle(i)}>
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-                      <span className="text-xs font-semibold text-neutral-800 truncate" dir="ltr">{t.node_id?.substring(0,8) || "SYSTEM"}</span>
+                      <span className="text-xs font-semibold text-foreground truncate" dir="ltr">{t.node_id?.substring(0,8) || "SYSTEM"}</span>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-[10px] text-neutral-500 mono bg-neutral-100 px-1.5 py-0.5 rounded">⏱ {t.time_taken_ms}ms</span>
-                      {expanded[i] ? <ChevronUp className="w-3.5 h-3.5 text-neutral-400" /> : <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />}
+                      <span className="text-[10px] text-muted-foreground mono bg-muted px-1.5 py-0.5 rounded">⏱ {t.time_taken_ms}ms</span>
+                      {expanded[i] ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
                     </div>
                   </div>
                   {expanded[i] && (
-                    <div className="p-3 border-t border-neutral-100 bg-neutral-900 overflow-auto max-h-48" dir="ltr">
-                      <div className="text-[10px] text-neutral-400 mb-1">Result:</div>
+                    <div className="p-3 border-t border-neutral-100 bg-primary overflow-auto max-h-48" dir="ltr">
+                      <div className="text-[10px] text-muted-foreground mb-1">Result:</div>
                       <pre className="text-[11px] text-teal-400 font-mono leading-tight">{JSON.stringify(t.result, null, 2)}</pre>
                       
-                      <div className="text-[10px] text-neutral-400 mt-3 mb-1">Context Snapshot:</div>
+                      <div className="text-[10px] text-muted-foreground mt-3 mb-1">Context Snapshot:</div>
                       <pre className="text-[10px] text-purple-300 font-mono leading-tight">{JSON.stringify(t.context_snapshot, null, 2)}</pre>
                     </div>
                   )}
@@ -612,7 +612,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
   if (!selectedNode && !selectedEdge) {
     return (
-      <aside className="hidden md:flex w-72 border-r border-neutral-200 bg-white p-5 text-sm text-neutral-400 flex-col items-center justify-center text-center">
+      <aside className="hidden md:flex w-72 border-r border-border bg-card p-5 text-sm text-muted-foreground flex-col items-center justify-center text-center">
         <Settings2 className="w-6 h-6 mb-2" />
         برای ویرایش، روی یک گره یا اتصال کلیک کن.
       </aside>
@@ -620,12 +620,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
   }
 
   return (
-    <aside className="w-80 lg:w-96 border-r border-neutral-200 bg-white overflow-auto" data-testid="inspector">
+    <aside className="w-80 lg:w-96 border-r border-border bg-card overflow-auto" data-testid="inspector">
       {selectedNode && (
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-[10px] text-neutral-400 uppercase mono">{NODE_TYPES_META[selectedNode.data.nodeType]?.label || "گره"}</div>
+              <div className="text-[10px] text-muted-foreground uppercase mono">{NODE_TYPES_META[selectedNode.data.nodeType]?.label || "گره"}</div>
               <div className="text-sm font-semibold mt-0.5">پیکربندی گره</div>
             </div>
             <button
@@ -651,7 +651,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-neutral-500 mb-1.5 block">عنوان</label>
+              <label className="text-xs text-muted-foreground mb-1.5 block">عنوان</label>
               <Input
                 data-testid="node-label"
                 value={selectedNode.data.label}
@@ -660,14 +660,14 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
             </div>
 
             {["task", "approval", "form"].includes(selectedNode.data.nodeType) && (
-              <div className="space-y-3 border border-neutral-100 rounded-lg p-3 bg-neutral-50/50">
+              <div className="space-y-3 border border-neutral-100 rounded-lg p-3 bg-muted/50">
                 <div>
-                  <label className="text-xs font-medium text-neutral-700 mb-1.5 block">نحوه ارجاع تسک</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">نحوه ارجاع تسک</label>
                   <Select
                     value={selectedNode.data.assignee_type || "role"}
                     onValueChange={(v) => onNode(selectedNode.id, { assignee_type: v, assignee_role: undefined, assignee_id: undefined })}
                   >
-                    <SelectTrigger className="bg-white"><SelectValue placeholder="نحوه ارجاع" /></SelectTrigger>
+                    <SelectTrigger className="bg-card"><SelectValue placeholder="نحوه ارجاع" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="role">بر اساس نقش (گروهی)</SelectItem>
                       <SelectItem value="specific_user">کاربر مشخص</SelectItem>
@@ -679,12 +679,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
                 {(!selectedNode.data.assignee_type || selectedNode.data.assignee_type === "role") && (
                   <div>
-                    <label className="text-xs text-neutral-500 mb-1.5 block">انتخاب نقش مجری</label>
+                    <label className="text-xs text-muted-foreground mb-1.5 block">انتخاب نقش مجری</label>
                     <Select
                       value={selectedNode.data.assignee_role || ""}
                       onValueChange={(v) => onNode(selectedNode.id, { assignee_role: v })}
                     >
-                      <SelectTrigger className="bg-white"><SelectValue placeholder="انتخاب نقش" /></SelectTrigger>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="انتخاب نقش" /></SelectTrigger>
                       <SelectContent>
                         {ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                       </SelectContent>
@@ -694,12 +694,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
                 {selectedNode.data.assignee_type === "specific_user" && (
                   <div>
-                    <label className="text-xs text-neutral-500 mb-1.5 block">انتخاب کاربر</label>
+                    <label className="text-xs text-muted-foreground mb-1.5 block">انتخاب کاربر</label>
                     <Select
                       value={selectedNode.data.assignee_id || ""}
                       onValueChange={(v) => onNode(selectedNode.id, { assignee_id: v })}
                     >
-                      <SelectTrigger className="bg-white"><SelectValue placeholder="انتخاب کاربر" /></SelectTrigger>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="انتخاب کاربر" /></SelectTrigger>
                       <SelectContent>
                         {users.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name} ({u.role})</SelectItem>)}
                       </SelectContent>
@@ -717,7 +717,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
             {selectedNode.data.nodeType === "form" && (
               <div>
-                <label className="text-xs text-neutral-500 mb-1.5 block">فرم</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">فرم</label>
                 <Select
                   value={selectedNode.data.form_id || ""}
                   onValueChange={(v) => onNode(selectedNode.id, { form_id: v })}
@@ -738,18 +738,18 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
               const perms = selectedNode.data.field_permissions || {};
               return (
                 <div data-testid="field-permissions-section">
-                  <label className="text-xs text-neutral-500 mb-2 block">سطح دسترسی فیلدها</label>
+                  <label className="text-xs text-muted-foreground mb-2 block">سطح دسترسی فیلدها</label>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {formFields.map(ff => (
-                      <div key={ff.id} className="flex items-center gap-2 text-xs bg-neutral-50 border border-neutral-100 rounded-md px-2.5 py-1.5">
-                        <span className="flex-1 truncate text-neutral-700">{ff.label}</span>
+                      <div key={ff.id} className="flex items-center gap-2 text-xs bg-muted border border-neutral-100 rounded-md px-2.5 py-1.5">
+                        <span className="flex-1 truncate text-muted-foreground">{ff.label}</span>
                         <select
                           value={perms[ff.id] || "editable"}
                           onChange={(e) => {
                             const newPerms = { ...perms, [ff.id]: e.target.value };
                             onNode(selectedNode.id, { field_permissions: newPerms });
                           }}
-                          className="text-[11px] bg-white border border-neutral-200 rounded px-1.5 py-0.5 focus:outline-none"
+                          className="text-[11px] bg-card border border-border rounded px-1.5 py-0.5 focus:outline-none"
                         >
                           <option value="editable">قابل ویرایش</option>
                           <option value="readonly">فقط‌خواندنی</option>
@@ -764,7 +764,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
             {selectedNode.data.nodeType === "condition" && (
               <div>
-                <label className="text-xs text-neutral-500 mb-1.5 block">عبارت شرطی</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">عبارت شرطی</label>
                 <Input
                   data-testid="node-expression"
                   dir="ltr"
@@ -778,7 +778,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
             {selectedNode.data.nodeType === "ai_task" && (
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-neutral-500 mb-1.5 block">پرامپت سیستم (System Prompt)</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">پرامپت سیستم (System Prompt)</label>
                   <Textarea
                     data-testid="node-ai-prompt"
                     dir="ltr"
@@ -787,12 +787,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                     placeholder="You are an AI assistant. Use context: {{form_id.field_name}}"
                     rows={6}
                   />
-                  <p className="text-[10px] text-neutral-400 mt-1">
-                    شما می‌توانید از مقادیر فرم‌های قبلی با استفاده از سینتکس <code className="bg-neutral-100 text-purple-600 px-1 py-0.5 rounded">{"{{form_name.field_name}}"}</code> استفاده کنید.
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    شما می‌توانید از مقادیر فرم‌های قبلی با استفاده از سینتکس <code className="bg-muted text-purple-600 px-1 py-0.5 rounded">{"{{form_name.field_name}}"}</code> استفاده کنید.
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs text-neutral-500 mb-1.5 block">کلید خروجی (Output Key)</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">کلید خروجی (Output Key)</label>
                   <Input
                     data-testid="node-ai-output"
                     dir="ltr"
@@ -800,7 +800,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                     onChange={(e) => onNode(selectedNode.id, { output_key: e.target.value })}
                     placeholder="ai_evaluation"
                   />
-                  <p className="text-[10px] text-neutral-400 mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     نتیجه (JSON) در این کلید در Context ذخیره می‌شود.
                   </p>
                 </div>
@@ -810,7 +810,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
             {selectedNode.data.nodeType === "ocr_task" && (
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-neutral-500 mb-1.5 block">متغیر فایل منبع (Source File)</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">متغیر فایل منبع (Source File)</label>
                   <Input
                     data-testid="node-ocr-source"
                     dir="ltr"
@@ -818,12 +818,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                     onChange={(e) => onNode(selectedNode.id, { source_file_variable: e.target.value })}
                     placeholder="{{form1.receipt_image}}"
                   />
-                  <p className="text-[10px] text-neutral-400 mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     آدرس تصویر یا فایل در Context.
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs text-neutral-500 mb-1.5 block">پرامپت استخراج (Extraction Prompt)</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">پرامپت استخراج (Extraction Prompt)</label>
                   <Textarea
                     data-testid="node-ocr-prompt"
                     dir="ltr"
@@ -832,12 +832,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                     placeholder="Extract total amount and vendor name..."
                     rows={4}
                   />
-                  <p className="text-[10px] text-neutral-400 mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     دقیقاً چه اطلاعاتی از تصویر استخراج شود؟ (JSON خروجی بر این اساس است)
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs text-neutral-500 mb-1.5 block">کلید خروجی (Output Key)</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">کلید خروجی (Output Key)</label>
                   <Input
                     data-testid="node-ocr-output"
                     dir="ltr"
@@ -845,7 +845,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                     onChange={(e) => onNode(selectedNode.id, { output_key: e.target.value })}
                     placeholder="ocr_result"
                   />
-                  <p className="text-[10px] text-neutral-400 mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     نتیجه (JSON) در این کلید در Context ذخیره می‌شود.
                   </p>
                 </div>
@@ -854,27 +854,27 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
             {selectedNode.data.nodeType === "cron" && (
               <div>
-                <label className="text-xs text-neutral-500 mb-1.5 block">عبارت کران (Cron Expression)</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">عبارت کران (Cron Expression)</label>
                 <Input
                   dir="ltr"
                   value={selectedNode.data.cron_expression || ""}
                   onChange={(e) => onNode(selectedNode.id, { cron_expression: e.target.value })}
                   placeholder="* * * * *"
                 />
-                <p className="text-[10px] text-neutral-400 mt-1">فرمت استاندارد (دقیقه، ساعت، روز، ماه، روز هفته)</p>
+                <p className="text-[10px] text-muted-foreground mt-1">فرمت استاندارد (دقیقه، ساعت، روز، ماه، روز هفته)</p>
               </div>
             )}
 
             {selectedNode.data.nodeType === "parallel" && (
               <div>
-                <label className="text-xs text-neutral-500 mb-1.5 block">گره‌های پیش‌نیاز (Wait Conditions)</label>
+                <label className="text-xs text-muted-foreground mb-1.5 block">گره‌های پیش‌نیاز (Wait Conditions)</label>
                 <div className="space-y-2 mt-2">
                   {edges.filter(e => e.target === selectedNode.id).map(edge => {
                     const src = nodes.find(n => n.id === edge.source);
                     if (!src) return null;
                     const isChecked = (selectedNode.data.dependencies || []).includes(src.id);
                     return (
-                      <label key={src.id} className="flex items-center gap-2 text-sm text-neutral-700 bg-neutral-50 border border-neutral-100 p-2 rounded cursor-pointer">
+                      <label key={src.id} className="flex items-center gap-2 text-sm text-muted-foreground bg-muted border border-neutral-100 p-2 rounded cursor-pointer">
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -885,12 +885,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                             onNode(selectedNode.id, { dependencies: deps });
                           }}
                         />
-                        <span className="mono text-[10px] text-neutral-400">[{src.data.nodeType}]</span> {src.data.label}
+                        <span className="mono text-[10px] text-muted-foreground">[{src.data.nodeType}]</span> {src.data.label}
                       </label>
                     );
                   })}
                   {edges.filter(e => e.target === selectedNode.id).length === 0 && (
-                    <div className="text-xs text-neutral-400">هیچ گره ورودی به این گره متصل نیست.</div>
+                    <div className="text-xs text-muted-foreground">هیچ گره ورودی به این گره متصل نیست.</div>
                   )}
                 </div>
               </div>
@@ -899,29 +899,29 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
             {/* Timeout & Retry Settings */}
             {["task", "approval", "form"].includes(selectedNode.data.nodeType) && (
               <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <div className="text-sm font-semibold text-neutral-900">تنظیمات پیشرفته (اختیاری)</div>
+                <div className="text-sm font-semibold text-foreground">تنظیمات پیشرفته (اختیاری)</div>
                 
-                <div className="space-y-3 bg-neutral-50/50 border border-neutral-100 p-3 rounded-lg">
+                <div className="space-y-3 bg-muted/50 border border-neutral-100 p-3 rounded-lg">
                   <div>
-                    <label className="text-xs font-medium text-neutral-700 mb-1.5 block">زمان انقضا (ثانیه)</label>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">زمان انقضا (ثانیه)</label>
                     <Input
                       type="number"
                       placeholder="مثلاً: 3600 (یک ساعت)"
                       value={selectedNode.data.timeout_seconds || ""}
                       onChange={(e) => onNode(selectedNode.id, { timeout_seconds: e.target.value ? parseInt(e.target.value, 10) : undefined })}
-                      className="bg-white text-xs"
+                      className="bg-card text-xs"
                     />
-                    <div className="text-[10px] text-neutral-400 mt-1">در صورت خالی بودن، زمان انقضا پیش‌فرض سیستم (۳ روز) در نظر گرفته می‌شود.</div>
+                    <div className="text-[10px] text-muted-foreground mt-1">در صورت خالی بودن، زمان انقضا پیش‌فرض سیستم (۳ روز) در نظر گرفته می‌شود.</div>
                   </div>
                   
                   {selectedNode.data.timeout_seconds > 0 && (
                     <div>
-                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">واکنش پس از انقضا (Escalation)</label>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">واکنش پس از انقضا (Escalation)</label>
                       <Select
                         value={selectedNode.data.timeout_action || "none"}
                         onValueChange={(v) => onNode(selectedNode.id, { timeout_action: v })}
                       >
-                        <SelectTrigger className="bg-white text-xs"><SelectValue placeholder="انتخاب واکنش" /></SelectTrigger>
+                        <SelectTrigger className="bg-card text-xs"><SelectValue placeholder="انتخاب واکنش" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none" className="text-xs">هیچ کاری نکن</SelectItem>
                           <SelectItem value="escalate_to_manager" className="text-xs">ارجاع به مدیر شخص (تشدید)</SelectItem>
@@ -932,26 +932,26 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                   )}
                 </div>
 
-                <div className="space-y-3 bg-neutral-50/50 border border-neutral-100 p-3 rounded-lg">
+                <div className="space-y-3 bg-muted/50 border border-neutral-100 p-3 rounded-lg">
                   <div>
-                    <label className="text-xs font-medium text-neutral-700 mb-1.5 block">تعداد تلاش مجدد (Retry)</label>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">تعداد تلاش مجدد (Retry)</label>
                     <Input
                       type="number"
                       placeholder="مثلاً: 3"
                       value={selectedNode.data.retry_count || ""}
                       onChange={(e) => onNode(selectedNode.id, { retry_count: e.target.value ? parseInt(e.target.value, 10) : undefined })}
-                      className="bg-white text-xs"
+                      className="bg-card text-xs"
                     />
                   </div>
                   {selectedNode.data.retry_count > 0 && (
                     <div>
-                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">تاخیر بین تلاش‌ها (ثانیه)</label>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">تاخیر بین تلاش‌ها (ثانیه)</label>
                       <Input
                         type="number"
                         placeholder="مثلاً: 60"
                         value={selectedNode.data.retry_delay || ""}
                         onChange={(e) => onNode(selectedNode.id, { retry_delay: e.target.value ? parseInt(e.target.value, 10) : undefined })}
-                        className="bg-white text-xs"
+                        className="bg-card text-xs"
                       />
                     </div>
                   )}
@@ -962,19 +962,19 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
 
           {/* Inline comments */}
           <div className="mt-6 pt-5 border-t border-neutral-100">
-            <div className="flex items-center gap-2 text-xs text-neutral-500 mb-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               <MessageSquare className="w-3.5 h-3.5" />
               نظرات روی گره
               <span className="fa-nums">({comments.length})</span>
             </div>
             <ul className="space-y-3 mb-3">
               {comments.map(c => (
-                <li key={c.id} className="text-xs bg-neutral-50 border border-neutral-100 rounded-lg p-2.5">
+                <li key={c.id} className="text-xs bg-muted border border-neutral-100 rounded-lg p-2.5">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-neutral-900">{c.author_name}</span>
-                    <span className="text-neutral-400 text-[10px]">{fromNow(c.created_at)}</span>
+                    <span className="font-medium text-foreground">{c.author_name}</span>
+                    <span className="text-muted-foreground text-[10px]">{fromNow(c.created_at)}</span>
                   </div>
-                  <div className="text-neutral-700 leading-6">{c.body}</div>
+                  <div className="text-muted-foreground leading-6">{c.body}</div>
                 </li>
               ))}
             </ul>
@@ -985,7 +985,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="نظری اضافه کن…"
               />
-              <Button data-testid="node-comment-send" size="sm" onClick={addComment} className="bg-neutral-900 text-white">
+              <Button data-testid="node-comment-send" size="sm" onClick={addComment} className="bg-primary text-primary-foreground">
                 <Send className="w-3.5 h-3.5 rotate-180" />
               </Button>
             </div>
@@ -997,7 +997,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-[10px] text-neutral-400 uppercase mono">اتصال</div>
+              <div className="text-[10px] text-muted-foreground uppercase mono">اتصال</div>
               <div className="text-sm font-semibold mt-0.5">پیکربندی شرط</div>
             </div>
             <button data-testid="delete-edge-btn" onClick={() => onDeleteEdge(selectedEdge.id)} className="p-1.5 rounded-md hover:bg-red-50 text-red-600">
@@ -1006,7 +1006,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-neutral-500 mb-1.5 block">برچسب نمایشی</label>
+              <label className="text-xs text-muted-foreground mb-1.5 block">برچسب نمایشی</label>
               <Input
                 data-testid="edge-label"
                 value={selectedEdge.label || ""}
@@ -1016,12 +1016,12 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs text-neutral-500">قاعده شرط</label>
+                <label className="text-xs text-muted-foreground">قاعده شرط</label>
                 {selectedEdge.data?.condition && (
                   <button
                     data-testid="edge-rule-clear"
                     onClick={() => onEdge(selectedEdge.id, { data: { ...(selectedEdge.data || {}), condition: null } })}
-                    className="text-[11px] text-neutral-400 hover:text-red-600"
+                    className="text-[11px] text-muted-foreground hover:text-red-600"
                   >پاک‌سازی</button>
                 )}
               </div>
@@ -1030,7 +1030,7 @@ export function Inspector({ selectedNode, selectedEdge, forms, nodes, edges, onN
                 sourceFormFields={sourceFormFields}
                 onChange={(r) => onEdge(selectedEdge.id, { data: { ...(selectedEdge.data || {}), condition: r } })}
               />
-              <p className="text-[11px] text-neutral-400 leading-5">
+              <p className="text-[11px] text-muted-foreground leading-5">
                 اگر شرط برقرار باشد، فرایند از این مسیر ادامه پیدا می‌کند. مسیرهای بدون شرط به‌عنوان «پیش‌فرض» وقتی استفاده می‌شوند که هیچ شرطی مطابقت ندهد.
               </p>
             </div>
@@ -1064,13 +1064,13 @@ function AIPanel({ onClose, onApply }) {
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" data-testid="ai-panel">
-      <div className="bg-white rounded-xl border border-neutral-200 w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-200">
+      <div className="bg-card rounded-xl border border-border w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
             <div className="text-sm font-semibold">ساخت با هوش مصنوعی</div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-neutral-100"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 flex-1 overflow-auto">
           <div className="space-y-3">
@@ -1081,27 +1081,27 @@ function AIPanel({ onClose, onApply }) {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="مثلاً: فرایند درخواست خرید با تایید دو سطحه طراحی کن"
             />
-            <Button data-testid="ai-panel-send" disabled={streaming} onClick={send} className="bg-neutral-900 text-white">
+            <Button data-testid="ai-panel-send" disabled={streaming} onClick={send} className="bg-primary text-primary-foreground">
               {streaming ? (<><Loader2 className="w-4 h-4 me-1 animate-spin" /> در حال تولید…</>) : "تولید فرایند"}
             </Button>
           </div>
           {text && (
-            <div className="mt-5 bg-neutral-50 border border-neutral-100 rounded-lg p-3 text-sm leading-7 text-neutral-700 whitespace-pre-wrap">
+            <div className="mt-5 bg-muted border border-neutral-100 rounded-lg p-3 text-sm leading-7 text-muted-foreground whitespace-pre-wrap">
               {text.replace(/```json[\s\S]*?```/g, "").trim()}
             </div>
           )}
           {wf?.nodes && (
-            <div className="mt-3 border border-neutral-200 rounded-lg p-3">
-              <div className="text-xs text-neutral-500 mb-2">پیش‌نمایش گره‌ها: <span className="fa-nums">{wf.nodes.length}</span></div>
+            <div className="mt-3 border border-border rounded-lg p-3">
+              <div className="text-xs text-muted-foreground mb-2">پیش‌نمایش گره‌ها: <span className="fa-nums">{wf.nodes.length}</span></div>
               <div className="flex flex-wrap gap-2">
                 {wf.nodes.map((n) => (
-                  <div key={n.id} className="text-[11px] border border-neutral-200 rounded-md px-2 py-1">
-                    <span className="text-neutral-400 mono me-1">{n.type}</span> {n.label}
+                  <div key={n.id} className="text-[11px] border border-border rounded-md px-2 py-1">
+                    <span className="text-muted-foreground mono me-1">{n.type}</span> {n.label}
                   </div>
                 ))}
               </div>
               <div className="mt-3 flex justify-end">
-                <Button data-testid="ai-panel-apply" onClick={() => onApply(wf)} className="bg-neutral-900 text-white">
+                <Button data-testid="ai-panel-apply" onClick={() => onApply(wf)} className="bg-primary text-primary-foreground">
                   جایگزینی روی بوم
                 </Button>
               </div>
@@ -1127,7 +1127,7 @@ function EdgeRuleBuilder({ rule, sourceFormFields, onChange }) {
       <button
         data-testid="add-edge-rule"
         onClick={() => onChange({ field_id: choices[0]?.id || "_task_status", op: "=", value: "" })}
-        className="w-full text-sm py-2 px-3 border border-dashed border-neutral-300 rounded-lg hover:border-neutral-900 hover:bg-neutral-50 text-neutral-600"
+        className="w-full text-sm py-2 px-3 border border-dashed border-border rounded-lg hover:border-neutral-900 hover:bg-muted text-muted-foreground"
       >
         + افزودن قاعده شرطی
       </button>
@@ -1138,9 +1138,9 @@ function EdgeRuleBuilder({ rule, sourceFormFields, onChange }) {
   const opNeedsValue = !["empty", "not_empty"].includes(rule.op);
 
   return (
-    <div className="bg-neutral-50/60 border border-neutral-200 rounded-lg p-3 space-y-2">
+    <div className="bg-muted/60 border border-border rounded-lg p-3 space-y-2">
       <div className="space-y-1.5">
-        <div className="text-[10px] text-neutral-400">فیلد</div>
+        <div className="text-[10px] text-muted-foreground">فیلد</div>
         <Select value={rule.field_id} onValueChange={(v) => onChange({ ...rule, field_id: v })}>
           <SelectTrigger data-testid="edge-rule-field"><SelectValue placeholder="انتخاب فیلد" /></SelectTrigger>
           <SelectContent>
@@ -1153,7 +1153,7 @@ function EdgeRuleBuilder({ rule, sourceFormFields, onChange }) {
         </Select>
       </div>
       <div className="space-y-1.5">
-        <div className="text-[10px] text-neutral-400">عملگر</div>
+        <div className="text-[10px] text-muted-foreground">عملگر</div>
         <Select value={rule.op} onValueChange={(v) => onChange({ ...rule, op: v })}>
           <SelectTrigger data-testid="edge-rule-op"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -1163,7 +1163,7 @@ function EdgeRuleBuilder({ rule, sourceFormFields, onChange }) {
       </div>
       {opNeedsValue && (
         <div className="space-y-1.5">
-          <div className="text-[10px] text-neutral-400">مقدار</div>
+          <div className="text-[10px] text-muted-foreground">مقدار</div>
           {(ctl?.type === "select" || ctl?.type === "tabs" || ctl?.options) ? (
             <Select value={rule.value || ""} onValueChange={(v) => onChange({ ...rule, value: v })}>
               <SelectTrigger data-testid="edge-rule-value-select"><SelectValue placeholder="انتخاب…" /></SelectTrigger>

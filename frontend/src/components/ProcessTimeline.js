@@ -46,16 +46,16 @@ function Tooltip({ task, assigneeName, pendingMs, activeMs, totalMs, slaBreached
   return (
     <div
       data-testid="timeline-tooltip"
-      className="pointer-events-none absolute z-50 w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-4 text-right"
+      className="pointer-events-none absolute z-50 w-72 rounded-xl border border-border bg-card shadow-xl p-4 text-right"
       style={style}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex flex-col gap-1 text-right flex-1">
-          <div className="text-xs text-neutral-400 uppercase tracking-wide">
+          <div className="text-xs text-muted-foreground uppercase tracking-wide">
             {TASK_TYPE_LABEL[task.type] || task.type}
           </div>
-          <div className="text-sm font-semibold text-neutral-900 leading-snug">{task.title}</div>
+          <div className="text-sm font-semibold text-foreground leading-snug">{task.title}</div>
         </div>
         {slaBreached && (
           <div className="shrink-0 w-6 h-6 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
@@ -66,8 +66,8 @@ function Tooltip({ task, assigneeName, pendingMs, activeMs, totalMs, slaBreached
 
       {/* Status */}
       <div className="flex items-center justify-between text-xs mb-3">
-        <span className="text-neutral-400">وضعیت</span>
-        <span className="font-medium text-neutral-800">
+        <span className="text-muted-foreground">وضعیت</span>
+        <span className="font-medium text-foreground">
           {TASK_STATUS_LABEL[task.status] || task.status}
         </span>
       </div>
@@ -75,10 +75,10 @@ function Tooltip({ task, assigneeName, pendingMs, activeMs, totalMs, slaBreached
       {/* Assignee */}
       {assigneeName && (
         <div className="flex items-center justify-between text-xs mb-3">
-          <span className="text-neutral-400 flex items-center gap-1">
+          <span className="text-muted-foreground flex items-center gap-1">
             <User className="w-3 h-3" /> مسئول
           </span>
-          <span className="font-medium text-neutral-800">{assigneeName}</span>
+          <span className="font-medium text-foreground">{assigneeName}</span>
         </div>
       )}
 
@@ -92,10 +92,10 @@ function Tooltip({ task, assigneeName, pendingMs, activeMs, totalMs, slaBreached
       {/* Deadline */}
       {task.deadline && (
         <div className="border-t border-neutral-100 mt-3 pt-3 text-xs flex items-center justify-between">
-          <span className="text-neutral-400 flex items-center gap-1">
+          <span className="text-muted-foreground flex items-center gap-1">
             <Timer className="w-3 h-3" /> مهلت
           </span>
-          <span className={slaBreached ? "text-red-600 font-semibold" : "text-neutral-700"}>
+          <span className={slaBreached ? "text-red-600 font-semibold" : "text-muted-foreground"}>
             {toJalaliDateTime(task.deadline)}
           </span>
         </div>
@@ -107,11 +107,11 @@ function Tooltip({ task, assigneeName, pendingMs, activeMs, totalMs, slaBreached
 function DurationRow({ label, color, duration, bold }) {
   return (
     <div className="flex items-center justify-between text-xs">
-      <div className="flex items-center gap-1.5 text-neutral-500">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
         <span className={`inline-block w-2 h-2 rounded-full ${color}`} />
         {label}
       </div>
-      <span className={bold ? "font-semibold text-neutral-900" : "text-neutral-700"}>
+      <span className={bold ? "font-semibold text-foreground" : "text-muted-foreground"}>
         {fmtDuration(duration)}
       </span>
     </div>
@@ -189,7 +189,7 @@ function TaskRow({ task, processStartMs, totalSpanMs, usersMap }) {
       ref={rowRef}
       data-testid={`timeline-row-${task.id}`}
       className={`relative flex items-center gap-3 px-4 py-2.5 border-b border-neutral-100 last:border-0 group transition-colors duration-150 ${
-        slaBreached ? "bg-red-50/60 hover:bg-red-50" : "hover:bg-neutral-50/60"
+        slaBreached ? "bg-red-50/60 hover:bg-red-50" : "hover:bg-muted/60"
       }`}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setTooltip(null)}
@@ -203,8 +203,8 @@ function TaskRow({ task, processStartMs, totalSpanMs, usersMap }) {
           />
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-medium text-neutral-800 truncate">{task.title}</div>
-          <div className="text-[10px] text-neutral-400 mt-0.5">
+          <div className="text-xs font-medium text-foreground truncate">{task.title}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
             {TASK_TYPE_LABEL[task.type] || task.type} ·{" "}
             {TASK_STATUS_LABEL[task.status] || task.status}
           </div>
@@ -212,7 +212,7 @@ function TaskRow({ task, processStartMs, totalSpanMs, usersMap }) {
       </div>
 
       {/* Gantt bar track */}
-      <div className="flex-1 relative h-6 rounded-full bg-neutral-100 overflow-hidden">
+      <div className="flex-1 relative h-6 rounded-full bg-muted overflow-hidden">
         {/* Pending segment (gray) */}
         {pendingWidth > 0 && (
           <div
@@ -271,9 +271,9 @@ function TaskRow({ task, processStartMs, totalSpanMs, usersMap }) {
       {/* Status dot (right side) */}
       <div className="shrink-0">
         {isTerminal ? (
-          <CheckCircle2 className="w-4 h-4 text-neutral-400" />
+          <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
         ) : (
-          <Clock className="w-4 h-4 text-neutral-400 animate-spin" style={{ animationDuration: "4s" }} />
+          <Clock className="w-4 h-4 text-muted-foreground animate-spin" style={{ animationDuration: "4s" }} />
         )}
       </div>
 
@@ -326,7 +326,7 @@ function TimeRuler({ processStartMs, totalSpanMs }) {
             style={{ left: `${tick.pct}%`, transform: "translateX(-50%)" }}
           >
             <div className="w-px h-2 bg-neutral-300" />
-            <span className="text-[9px] text-neutral-400 mt-0.5 whitespace-nowrap mono">
+            <span className="text-[9px] text-muted-foreground mt-0.5 whitespace-nowrap mono">
               {tick.label}
             </span>
           </div>
@@ -346,7 +346,7 @@ function TimeRuler({ processStartMs, totalSpanMs }) {
 
 function Legend() {
   return (
-    <div className="flex flex-wrap items-center gap-4 px-4 py-2.5 border-b border-neutral-100 bg-neutral-50/50 text-[11px] text-neutral-500">
+    <div className="flex flex-wrap items-center gap-4 px-4 py-2.5 border-b border-neutral-100 bg-muted/50 text-[11px] text-muted-foreground">
       <div className="flex items-center gap-1.5">
         <span className="inline-block w-3 h-2 rounded-sm bg-neutral-300" />
         در انتظار دیده شدن
@@ -384,7 +384,7 @@ export default function ProcessTimeline({ process, tasks, users }) {
     return (
       <div
         data-testid="timeline-empty"
-        className="py-16 text-center text-sm text-neutral-400"
+        className="py-16 text-center text-sm text-muted-foreground"
       >
         هیچ تسکی برای نمایش در تایم‌لاین وجود ندارد.
       </div>
@@ -416,11 +416,11 @@ export default function ProcessTimeline({ process, tasks, users }) {
   }).length;
 
   return (
-    <div data-testid="process-timeline" className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+    <div data-testid="process-timeline" className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Panel header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
-        <div className="flex items-center gap-2 text-sm font-medium text-neutral-800">
-          <Clock className="w-4 h-4 text-neutral-500" />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Clock className="w-4 h-4 text-muted-foreground" />
           تایم‌لاین فرایند
         </div>
         {bottleneckCount > 0 && (
@@ -455,7 +455,7 @@ export default function ProcessTimeline({ process, tasks, users }) {
       </div>
 
       {/* Footer: time range */}
-      <div className="px-4 py-2.5 border-t border-neutral-100 flex items-center justify-between text-[10px] text-neutral-400">
+      <div className="px-4 py-2.5 border-t border-neutral-100 flex items-center justify-between text-[10px] text-muted-foreground">
         <span>آغاز: {toJalaliDateTime(process?.created_at)}</span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

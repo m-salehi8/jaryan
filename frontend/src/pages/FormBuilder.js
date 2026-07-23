@@ -123,7 +123,7 @@ export default function FormBuilder() {
 
   const selectedField = form?.fields.find(f => f.id === selectedFieldId);
 
-  if (!form) return <div className="p-10 text-sm text-neutral-400">در حال بارگذاری…</div>;
+  if (!form) return <div className="p-10 text-sm text-muted-foreground">در حال بارگذاری…</div>;
 
   // Group top-level + per-tab structure for display
   const topFields = form.fields.filter(f => !f.parent_tab_field_id);
@@ -131,9 +131,9 @@ export default function FormBuilder() {
   return (
     <div className="min-h-screen pb-24" data-testid="formbuilder-root">
       {/* Topbar */}
-      <div className="border-b border-neutral-200 bg-white px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+      <div className="border-b border-border bg-card px-6 py-3 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/admin/forms" className="text-neutral-400 hover:text-neutral-900"><ArrowRight className="w-4 h-4" /></Link>
+          <Link to="/admin/forms" className="text-muted-foreground hover:text-foreground"><ArrowRight className="w-4 h-4" /></Link>
           <input
             data-testid="form-name"
             value={form.name}
@@ -154,8 +154,8 @@ export default function FormBuilder() {
 
       <div className={`grid gap-6 p-6 lg:p-8 max-w-[1400px] mx-auto ${previewOpen ? "lg:grid-cols-[260px_1fr_380px]" : "lg:grid-cols-[260px_1fr]"}`}>
         {/* Palette */}
-        <aside className="bg-white border border-neutral-200 rounded-xl p-3 h-fit lg:sticky lg:top-20" data-testid="form-palette">
-          <div className="text-[10px] text-neutral-400 uppercase tracking-wider px-1 mono mb-2">بلاک‌ها</div>
+        <aside className="bg-card border border-border rounded-xl p-3 h-fit lg:sticky lg:top-20" data-testid="form-palette">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mono mb-2">بلاک‌ها</div>
           <div className="grid grid-cols-2 gap-2">
             {FIELD_TYPES.map((t) => {
               const Icon = t.icon;
@@ -165,7 +165,7 @@ export default function FormBuilder() {
                   data-testid={`palette-${t.key}`}
                   onClick={() => addField(t.key)}
                   className={`flex flex-col items-center gap-1 px-2 py-3 rounded-lg border ${
-                    t.accent ? "border-brand text-brand bg-brand-soft" : "border-neutral-200"
+                    t.accent ? "border-brand text-brand bg-brand-soft" : "border-border"
                   } hover:border-brand hover:bg-brand-soft hover:text-brand transition-colors text-xs`}
                 >
                   <Icon className="w-4 h-4" />
@@ -178,18 +178,18 @@ export default function FormBuilder() {
 
         {/* Editor */}
         <div className="space-y-3">
-          <div className="bg-white border border-neutral-200 rounded-xl p-5">
+          <div className="bg-card border border-border rounded-xl p-5">
             <Textarea
               rows={2}
               placeholder="توضیح کوتاه فرم…"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="border-0 focus-visible:ring-0 resize-none p-0 text-sm text-neutral-500"
+              className="border-0 focus-visible:ring-0 resize-none p-0 text-sm text-muted-foreground"
             />
           </div>
 
           {topFields.length === 0 && (
-            <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center text-sm text-neutral-400">
+            <div className="border border-dashed border-border rounded-xl p-10 text-center text-sm text-muted-foreground">
               یک فیلد از سمت راست اضافه کن.
             </div>
           )}
@@ -219,26 +219,26 @@ export default function FormBuilder() {
         {/* Preview */}
         {previewOpen && (
           <aside className="lg:sticky lg:top-20 h-fit" data-testid="form-preview">
-            <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
-              <div className="border-b border-neutral-200 px-4 py-2.5 flex items-center justify-between bg-neutral-50">
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="border-b border-border px-4 py-2.5 flex items-center justify-between bg-muted">
                 <div className="flex items-center gap-2 text-xs font-medium">
                   <Sparkles className="w-3.5 h-3.5" /> پیش‌نمایش زنده
                 </div>
-                <button onClick={() => setPreviewValues({})} className="text-[11px] text-neutral-500 hover:text-neutral-900">
+                <button onClick={() => setPreviewValues({})} className="text-[11px] text-muted-foreground hover:text-foreground">
                   پاک‌سازی
                 </button>
               </div>
               <div className="p-5 max-h-[70vh] overflow-y-auto">
                 {form.fields.length === 0 ? (
-                  <div className="text-xs text-neutral-400 text-center py-8">پیش‌نمایش فرم اینجا نشان داده می‌شود.</div>
+                  <div className="text-xs text-muted-foreground text-center py-8">پیش‌نمایش فرم اینجا نشان داده می‌شود.</div>
                 ) : (
                   <FormRenderer fields={form.fields} values={previewValues} onChange={setPreviewValues} />
                 )}
               </div>
               {Object.keys(previewValues).length > 0 && (
-                <div className="border-t border-neutral-100 bg-neutral-50/50 p-3">
-                  <div className="text-[10px] text-neutral-400 mb-1.5 mono uppercase">payload</div>
-                  <pre className="text-[10px] text-neutral-600 leading-relaxed whitespace-pre-wrap" dir="ltr">{JSON.stringify(previewValues, null, 2)}</pre>
+                <div className="border-t border-neutral-100 bg-muted/50 p-3">
+                  <div className="text-[10px] text-muted-foreground mb-1.5 mono uppercase">payload</div>
+                  <pre className="text-[10px] text-muted-foreground leading-relaxed whitespace-pre-wrap" dir="ltr">{JSON.stringify(previewValues, null, 2)}</pre>
                 </div>
               )}
             </div>
@@ -271,13 +271,13 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
 
   return (
     <div className="h-full flex flex-col" data-testid="field-inspector">
-      <SheetHeader className="px-5 py-4 border-b border-neutral-200">
+      <SheetHeader className="px-5 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <SheetTitle className="text-sm font-semibold flex items-center gap-2">
             <Settings2 className="w-4 h-4" />
             تنظیمات فیلد — {f.label}
           </SheetTitle>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-neutral-100"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="w-4 h-4" /></button>
         </div>
       </SheetHeader>
 
@@ -292,7 +292,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
             </Labeled>
           )}
           {!["heading", "divider"].includes(f.type) && (
-            <label className="flex items-center justify-between text-sm text-neutral-700">
+            <label className="flex items-center justify-between text-sm text-muted-foreground">
               <span>اجباری</span>
               <Switch data-testid="ins-required" checked={f.required} onCheckedChange={(v) => onChange({ required: v })} />
             </label>
@@ -314,7 +314,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
               tabs={f.tab_options || []}
               onChange={(t) => onChange({ tab_options: t })}
             />
-            <div className="text-[11px] text-neutral-400 mt-2 leading-5">
+            <div className="text-[11px] text-muted-foreground mt-2 leading-5">
               برای هر تب از کارت فیلد در ویرایشگر، گزینه «+ افزودن فیلد به این تب» را بزنید.
             </div>
           </Section>
@@ -323,7 +323,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
         {/* Validation rules */}
         {!["heading", "divider", "tabs", "checkbox", "file"].includes(f.type) && (
           <Section title="اعتبارسنجی (Validation)">
-            <div className="space-y-3 p-3 bg-neutral-50/50 border border-neutral-100 rounded-lg">
+            <div className="space-y-3 p-3 bg-muted/50 border border-neutral-100 rounded-lg">
               {(f.type === "text" || f.type === "textarea") && (
                 <div className="grid grid-cols-2 gap-2">
                   <Labeled label="حداقل طول">
@@ -331,7 +331,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
                       type="number"
                       value={f.min_length || ""}
                       onChange={(e) => onChange({ min_length: e.target.value ? parseInt(e.target.value, 10) : null })}
-                      className="text-xs bg-white"
+                      className="text-xs bg-card"
                     />
                   </Labeled>
                   <Labeled label="حداکثر طول">
@@ -339,7 +339,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
                       type="number"
                       value={f.max_length || ""}
                       onChange={(e) => onChange({ max_length: e.target.value ? parseInt(e.target.value, 10) : null })}
-                      className="text-xs bg-white"
+                      className="text-xs bg-card"
                     />
                   </Labeled>
                 </div>
@@ -351,7 +351,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
                       type="number"
                       value={f.min_value || ""}
                       onChange={(e) => onChange({ min_value: e.target.value ? parseFloat(e.target.value) : null })}
-                      className="text-xs bg-white"
+                      className="text-xs bg-card"
                     />
                   </Labeled>
                   <Labeled label="حداکثر مقدار">
@@ -359,7 +359,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
                       type="number"
                       value={f.max_value || ""}
                       onChange={(e) => onChange({ max_value: e.target.value ? parseFloat(e.target.value) : null })}
-                      className="text-xs bg-white"
+                      className="text-xs bg-card"
                     />
                   </Labeled>
                 </div>
@@ -370,7 +370,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
                     value={f.pattern || ""}
                     onChange={(e) => onChange({ pattern: e.target.value })}
                     placeholder="مثلاً: ^\d{10}$ برای کد ملی"
-                    className="text-xs bg-white"
+                    className="text-xs bg-card"
                     dir="ltr"
                   />
                 </Labeled>
@@ -380,7 +380,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
                   value={f.error_message || ""}
                   onChange={(e) => onChange({ error_message: e.target.value })}
                   placeholder="مثلاً: مقدار وارد شده نامعتبر است"
-                  className="text-xs bg-white"
+                  className="text-xs bg-card"
                 />
               </Labeled>
             </div>
@@ -413,7 +413,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
 function Section({ title, children }) {
   return (
     <div className="space-y-3">
-      <div className="text-[10px] text-neutral-400 uppercase tracking-wider mono">{title}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mono">{title}</div>
       {children}
     </div>
   );
@@ -421,7 +421,7 @@ function Section({ title, children }) {
 function Labeled({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <div className="text-xs text-neutral-500">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       {children}
     </div>
   );
@@ -433,7 +433,7 @@ function OptionsEditor({ options, onChange }) {
       {options.map((o, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <Input value={o} onChange={(e) => { const n = [...options]; n[i] = e.target.value; onChange(n); }} />
-          <button onClick={() => onChange(options.filter((_, idx) => idx !== i))} className="p-1.5 text-neutral-400 hover:text-red-600">
+          <button onClick={() => onChange(options.filter((_, idx) => idx !== i))} className="p-1.5 text-muted-foreground hover:text-red-600">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -450,12 +450,12 @@ function TabsEditor({ tabs, onChange }) {
     <div className="space-y-1.5">
       {tabs.map((t, i) => (
         <div key={t.id} className="flex items-center gap-1.5" data-testid={`edit-tab-${t.id}`}>
-          <span className="text-[10px] text-neutral-400 mono">#{i + 1}</span>
+          <span className="text-[10px] text-muted-foreground mono">#{i + 1}</span>
           <Input
             value={t.label}
             onChange={(e) => onChange(tabs.map(x => x.id === t.id ? { ...x, label: e.target.value } : x))}
           />
-          <button onClick={() => onChange(tabs.filter(x => x.id !== t.id))} className="p-1.5 text-neutral-400 hover:text-red-600">
+          <button onClick={() => onChange(tabs.filter(x => x.id !== t.id))} className="p-1.5 text-muted-foreground hover:text-red-600">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -481,7 +481,7 @@ function RuleEditor({ rule, controllers, onChange }) {
         data-testid="add-rule"
         onClick={() => onChange({ field_id: controllers[0]?.id || "", op: "=", value: "" })}
         disabled={controllers.length === 0}
-        className="w-full text-sm py-2 px-3 border border-dashed border-neutral-300 rounded-lg hover:border-brand hover:bg-brand-soft disabled:opacity-50 disabled:cursor-not-allowed text-neutral-600 hover:text-brand transition-colors"
+        className="w-full text-sm py-2 px-3 border border-dashed border-border rounded-lg hover:border-brand hover:bg-brand-soft disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-brand transition-colors"
       >
         {controllers.length === 0 ? "ابتدا فیلدی بالاتر اضافه کن" : "+ افزودن قاعده شرطی"}
       </button>
@@ -506,7 +506,7 @@ function RuleEditor({ rule, controllers, onChange }) {
         <button
           data-testid="add-and-clause"
           onClick={promoteToGroup}
-          className="w-full text-xs py-1.5 rounded-md border border-dashed border-neutral-300 hover:border-brand hover:text-brand text-neutral-500 transition-colors"
+          className="w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground transition-colors"
         >
           + افزودن شرط ترکیبی (و / یا)
         </button>
@@ -516,24 +516,24 @@ function RuleEditor({ rule, controllers, onChange }) {
 
   // Group rule
   return (
-    <div className="bg-neutral-50/60 border border-neutral-200 rounded-lg p-3 space-y-2">
+    <div className="bg-muted/60 border border-border rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between mb-1">
-        <div className="inline-flex rounded-md border border-neutral-200 overflow-hidden">
+        <div className="inline-flex rounded-md border border-border overflow-hidden">
           <button
             data-testid="combinator-and"
             onClick={() => onChange({ ...rule, combinator: "and" })}
-            className={`px-2.5 py-1 text-[11px] font-medium ${rule.combinator === "and" ? "bg-brand text-white" : "text-neutral-600 bg-white"}`}
+            className={`px-2.5 py-1 text-[11px] font-medium ${rule.combinator === "and" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
           >و (همه)</button>
           <button
             data-testid="combinator-or"
             onClick={() => onChange({ ...rule, combinator: "or" })}
-            className={`px-2.5 py-1 text-[11px] font-medium border-s border-neutral-200 ${rule.combinator === "or" ? "bg-brand text-white" : "text-neutral-600 bg-white"}`}
+            className={`px-2.5 py-1 text-[11px] font-medium border-s border-border ${rule.combinator === "or" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
           >یا (یکی)</button>
         </div>
         <button
           data-testid="remove-rule"
           onClick={() => onChange(null)}
-          className="text-[11px] text-neutral-400 hover:text-red-600"
+          className="text-[11px] text-muted-foreground hover:text-red-600"
         >پاک‌سازی همه</button>
       </div>
 
@@ -562,7 +562,7 @@ function RuleEditor({ rule, controllers, onChange }) {
           ...rule,
           conditions: [...rule.conditions, { field_id: controllers[0]?.id || "", op: "=", value: "" }],
         })}
-        className="w-full text-xs py-1.5 rounded-md border border-dashed border-neutral-300 hover:border-brand hover:text-brand text-neutral-500 transition-colors"
+        className="w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground transition-colors"
       >
         + افزودن شرط دیگر
       </button>
@@ -575,14 +575,14 @@ function ClauseEditor({ clause, controllers, onChange, onRemove, index, combinat
   const opNeedsValue = !["empty", "not_empty"].includes(clause.op);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-md p-2.5 space-y-2 relative">
+    <div className="bg-card border border-border rounded-md p-2.5 space-y-2 relative">
       {index !== undefined && index > 0 && (
-        <div className="absolute -top-2.5 right-3 bg-white px-1.5 text-[9px] font-bold text-brand">
+        <div className="absolute -top-2.5 right-3 bg-card px-1.5 text-[9px] font-bold text-brand">
           {combinator === "or" ? "یا" : "و"}
         </div>
       )}
       <div className="flex items-center justify-between">
-        <div className="text-[10px] text-neutral-400">وقتی…</div>
+        <div className="text-[10px] text-muted-foreground">وقتی…</div>
         <button onClick={onRemove} className="text-neutral-300 hover:text-red-600">
           <X className="w-3 h-3" />
         </button>
@@ -634,24 +634,24 @@ function FieldCard({
   return (
     <li
       data-testid={`field-${f.id}`}
-      className={`bg-white border rounded-xl transition-colors ${selected ? "border-neutral-900" : "border-neutral-200"}`}
+      className={`bg-card border rounded-xl transition-colors ${selected ? "border-neutral-900" : "border-border"}`}
     >
       <div className="p-3 flex items-start gap-2 group" onClick={onSelect}>
         <div className="flex flex-col items-center gap-0.5 text-neutral-300 pt-1">
-          <button onClick={(e) => { e.stopPropagation(); onMove(-1); }} className="hover:text-neutral-700"><ChevronUp className="w-3 h-3" /></button>
-          <button onClick={(e) => { e.stopPropagation(); onMove(1); }} className="hover:text-neutral-700"><ChevronDown className="w-3 h-3" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onMove(-1); }} className="hover:text-muted-foreground"><ChevronUp className="w-3 h-3" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onMove(1); }} className="hover:text-muted-foreground"><ChevronDown className="w-3 h-3" /></button>
         </div>
         <div className="flex-1 min-w-0 space-y-1.5 cursor-pointer">
           <div className="flex items-center gap-2">
             <span className={`text-[10px] mono uppercase px-1.5 py-0.5 rounded ${
-              f.type === "tabs" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"
+              f.type === "tabs" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             }`}>{f.type}</span>
             <input
               data-testid={`field-${f.id}-label`}
               value={f.label}
               onChange={(e) => onUpdate({ label: e.target.value })}
               onClick={(e) => e.stopPropagation()}
-              className="flex-1 bg-transparent border-0 focus:outline-none text-sm font-medium text-neutral-900"
+              className="flex-1 bg-transparent border-0 focus:outline-none text-sm font-medium text-foreground"
             />
             {f.required && <span className="text-[10px] text-red-500">اجباری</span>}
             {f.visible_if && (
@@ -660,7 +660,7 @@ function FieldCard({
           </div>
           {/* Field mini preview */}
           {f.type !== "tabs" && f.type !== "heading" && f.type !== "divider" && (
-            <div className="text-[11px] text-neutral-400">{f.placeholder || "نمونه ورودی…"}</div>
+            <div className="text-[11px] text-muted-foreground">{f.placeholder || "نمونه ورودی…"}</div>
           )}
         </div>
         <button
@@ -673,34 +673,34 @@ function FieldCard({
       </div>
 
       {f.type === "tabs" && (
-        <div className="border-t border-neutral-100 bg-neutral-50/40">
+        <div className="border-t border-neutral-100 bg-muted/40">
           {childGroups.map((g) => (
             <div key={g.tab.id} className="p-3 border-b border-neutral-100 last:border-0">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-3.5 h-3.5 text-neutral-500" />
-                  <div className="text-xs font-medium text-neutral-800">تب «{g.tab.label}»</div>
-                  <span className="text-[10px] text-neutral-400 fa-nums">({g.fields.length})</span>
+                  <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                  <div className="text-xs font-medium text-foreground">تب «{g.tab.label}»</div>
+                  <span className="text-[10px] text-muted-foreground fa-nums">({g.fields.length})</span>
                 </div>
               </div>
 
               {g.fields.length === 0 && (
-                <div className="text-[11px] text-neutral-400 px-2 py-1.5">برای این تب فیلدی اضافه نشده.</div>
+                <div className="text-[11px] text-muted-foreground px-2 py-1.5">برای این تب فیلدی اضافه نشده.</div>
               )}
 
               <ul className="space-y-1.5">
                 {g.fields.map((cf) => (
                   <li
                     key={cf.id}
-                    className={`bg-white border rounded-lg p-2 flex items-center gap-2 cursor-pointer ${selectedFieldId === cf.id ? "border-neutral-900" : "border-neutral-200"}`}
+                    className={`bg-card border rounded-lg p-2 flex items-center gap-2 cursor-pointer ${selectedFieldId === cf.id ? "border-neutral-900" : "border-border"}`}
                     onClick={() => onSelectChild(cf.id)}
                     data-testid={`child-${cf.id}`}
                   >
                     <div className="flex flex-col items-center gap-0.5 text-neutral-300">
-                      <button onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, -1); }}><ChevronUp className="w-3 h-3 hover:text-neutral-700" /></button>
-                      <button onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, 1); }}><ChevronDown className="w-3 h-3 hover:text-neutral-700" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, -1); }}><ChevronUp className="w-3 h-3 hover:text-muted-foreground" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, 1); }}><ChevronDown className="w-3 h-3 hover:text-muted-foreground" /></button>
                     </div>
-                    <span className="text-[10px] mono uppercase px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">{cf.type}</span>
+                    <span className="text-[10px] mono uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{cf.type}</span>
                     <input
                       value={cf.label}
                       onChange={(e) => onUpdateChild(cf.id, { label: e.target.value })}
@@ -735,7 +735,7 @@ function ChildAdder({ onAdd }) {
       <button
         onClick={() => setOpen(true)}
         data-testid="add-child-field"
-        className="mt-2 w-full text-xs py-1.5 rounded-md border border-dashed border-neutral-300 hover:border-neutral-900 hover:bg-white text-neutral-500"
+        className="mt-2 w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-neutral-900 hover:bg-card text-muted-foreground"
       >
         + افزودن فیلد به این تب
       </button>
@@ -750,14 +750,14 @@ function ChildAdder({ onAdd }) {
             key={t.key}
             onClick={() => { onAdd(t.key); setOpen(false); }}
             data-testid={`add-child-${t.key}`}
-            className="flex flex-col items-center gap-1 py-2 rounded-md border border-neutral-200 hover:border-neutral-900 hover:bg-white text-[10px] text-neutral-700"
+            className="flex flex-col items-center gap-1 py-2 rounded-md border border-border hover:border-neutral-900 hover:bg-card text-[10px] text-muted-foreground"
           >
             <Icon className="w-3.5 h-3.5" />
             {t.label}
           </button>
         );
       })}
-      <button onClick={() => setOpen(false)} className="text-[10px] text-neutral-400 col-span-4 py-1">انصراف</button>
+      <button onClick={() => setOpen(false)} className="text-[10px] text-muted-foreground col-span-4 py-1">انصراف</button>
     </div>
   );
 }

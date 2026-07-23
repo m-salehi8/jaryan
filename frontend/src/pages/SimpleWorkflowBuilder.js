@@ -262,14 +262,14 @@ export default function SimpleWorkflowBuilder() {
   const selectedNode = selected?.kind === "node" ? nodes.find(n => n.id === selected.id) : null;
   const selectedEdge = selected?.kind === "edge" ? edges.find(e => e.id === selected.id) : null;
 
-  if (!wf) return <div className="p-10 text-sm text-neutral-400">در حال بارگذاری…</div>;
+  if (!wf) return <div className="p-10 text-sm text-muted-foreground">در حال بارگذاری…</div>;
 
   return (
-    <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col bg-neutral-50" data-testid="simple-builder-root" dir="rtl">
+    <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col bg-muted" data-testid="simple-builder-root" dir="rtl">
       {/* Topbar */}
-      <div className="border-b border-neutral-200 bg-white px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="border-b border-border bg-card px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/admin/workflows" className="text-neutral-400 hover:text-neutral-900">
+          <Link to="/admin/workflows" className="text-muted-foreground hover:text-foreground">
             <ArrowRight className="w-4 h-4" />
           </Link>
           <input
@@ -311,8 +311,8 @@ export default function SimpleWorkflowBuilder() {
         <div className="flex-1 overflow-y-auto p-8 flex justify-center">
           <div className="w-full max-w-2xl flex flex-col items-center">
             {sortedNodes.length === 0 ? (
-              <div className="text-center p-12 bg-white border border-neutral-200 border-dashed rounded-xl w-full">
-                <div className="text-neutral-500 mb-4">هیچ گره‌ای وجود ندارد. برای شروع یک گره آغازین اضافه کنید.</div>
+              <div className="text-center p-12 bg-card border border-border border-dashed rounded-xl w-full">
+                <div className="text-muted-foreground mb-4">هیچ گره‌ای وجود ندارد. برای شروع یک گره آغازین اضافه کنید.</div>
                 <div className="flex justify-center gap-2">
                   <Button onClick={() => addStartNode("trigger")} variant="outline"><Zap className="w-4 h-4 me-2"/> شروع دستی</Button>
                   <Button onClick={() => addStartNode("cron")} variant="outline"><Clock className="w-4 h-4 me-2"/> شروع زمان‌دار</Button>
@@ -328,30 +328,30 @@ export default function SimpleWorkflowBuilder() {
                   <React.Fragment key={node.id}>
                     {/* Node Card */}
                     <div 
-                      className={`w-full bg-white rounded-xl border-2 transition-all cursor-pointer overflow-hidden ${isSelected ? "border-brand shadow-md" : "border-neutral-200 shadow-sm hover:border-neutral-300"}`}
+                      className={`w-full bg-card rounded-xl border-2 transition-all cursor-pointer overflow-hidden ${isSelected ? "border-brand shadow-md" : "border-border shadow-sm hover:border-border"}`}
                       onClick={() => setSelected({ kind: "node", id: node.id })}
                     >
                       <div className="h-1.5 w-full" style={{ background: meta.bar }} />
                       <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center flex-shrink-0">
-                            <Icon className="w-5 h-5 text-neutral-600" />
+                          <div className="w-10 h-10 rounded-full bg-muted border border-neutral-100 flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] text-neutral-400 mono uppercase px-1.5 py-0.5 rounded bg-neutral-100">{meta.label}</span>
+                              <span className="text-[10px] text-muted-foreground mono uppercase px-1.5 py-0.5 rounded bg-muted">{meta.label}</span>
                               {node.data.assignee_role && (
                                 <span className="text-[10px] text-brand-strong bg-brand-light px-1.5 py-0.5 rounded">{node.data.assignee_role}</span>
                               )}
                             </div>
-                            <div className="font-semibold text-neutral-900">{node.data.label}</div>
-                            {node.data.system_prompt && <div className="text-xs text-neutral-500 mt-1 truncate max-w-sm" dir="ltr">Prompt: {node.data.system_prompt}</div>}
-                            {node.data.output_key && <div className="text-xs text-neutral-500 truncate max-w-sm" dir="ltr">Output Key: {node.data.output_key}</div>}
+                            <div className="font-semibold text-foreground">{node.data.label}</div>
+                            {node.data.system_prompt && <div className="text-xs text-muted-foreground mt-1 truncate max-w-sm" dir="ltr">Prompt: {node.data.system_prompt}</div>}
+                            {node.data.output_key && <div className="text-xs text-muted-foreground truncate max-w-sm" dir="ltr">Output Key: {node.data.output_key}</div>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
-                            className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                             onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -365,12 +365,12 @@ export default function SimpleWorkflowBuilder() {
                       <div className="absolute top-0 bottom-0 w-px bg-neutral-300" />
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="relative z-10 w-6 h-6 rounded-full bg-white border border-neutral-300 shadow-sm flex items-center justify-center text-neutral-500 hover:text-brand hover:border-brand hover:scale-110 transition-all">
+                          <button className="relative z-10 w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-brand hover:border-brand hover:scale-110 transition-all">
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-64 p-2 bg-white" side="right" align="center">
-                          <div className="text-[10px] text-neutral-400 uppercase tracking-wider px-2 mb-2 mono">افزودن گره جدید</div>
+                        <PopoverContent className="w-64 p-2 bg-card" side="right" align="center">
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-wider px-2 mb-2 mono">افزودن گره جدید</div>
                           <div className="grid grid-cols-1 gap-1">
                             {Object.entries(NODE_TYPES_META).filter(([k]) => !['trigger', 'cron'].includes(k)).map(([k, m]) => {
                               const MIcon = m.icon;
@@ -380,9 +380,9 @@ export default function SimpleWorkflowBuilder() {
                                   onClick={() => {
                                     insertNodeAfter(node.id, k);
                                   }}
-                                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-50 text-right transition-colors"
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted text-right transition-colors"
                                 >
-                                  <MIcon className="w-4 h-4 text-neutral-500" />
+                                  <MIcon className="w-4 h-4 text-muted-foreground" />
                                   <span className="text-sm font-medium">{m.label}</span>
                                 </button>
                               );

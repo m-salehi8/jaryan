@@ -15,7 +15,7 @@ export default function AdminRoute({ children }) {
   if (loading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center text-neutral-400 text-sm"
+        className="min-h-screen flex items-center justify-center text-muted-foreground text-sm"
         data-testid="auth-loading"
       >
         در حال بارگذاری…

@@ -23,7 +23,7 @@ const STATUS_META = {
   in_progress: { label: "در حال انجام", cls: "bg-blue-50 text-blue-700 border-blue-100" },
   approved:    { label: "تایید شده",   cls: "bg-emerald-50 text-emerald-700 border-emerald-100" },
   rejected:    { label: "رد شده",      cls: "bg-red-50 text-red-700 border-red-100" },
-  done:        { label: "انجام شده",   cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  done:        { label: "انجام شده",   cls: "bg-muted text-muted-foreground border-border" },
 };
 
 const PRIORITY_DOT = {
@@ -165,22 +165,22 @@ export default function Inbox() {
 
   return (
     <div className="h-[calc(100vh-56px)] md:h-screen flex flex-col" data-testid="inbox-root" data-tour-id="tour-inbox-root">
-      <div className="border-b border-neutral-200 bg-white px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="border-b border-border bg-card px-6 py-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <InboxIcon className="w-4 h-4" />
           <h1 className="text-base font-semibold">کارتابل تسک‌ها</h1>
-          <span className="text-xs text-neutral-400 fa-nums">({toFaNumber(filtered.length)})</span>
+          <span className="text-xs text-muted-foreground fa-nums">({toFaNumber(filtered.length)})</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             data-testid="toggle-mine"
             onClick={() => setAssignedToMe(v => !v)}
-            className={`text-xs px-2.5 py-1 rounded-md border ${assignedToMe ? "bg-neutral-900 text-white border-neutral-900" : "bg-white border-neutral-200 text-neutral-600"}`}
+            className={`text-xs px-2.5 py-1 rounded-md border ${assignedToMe ? "bg-primary text-primary-foreground border-neutral-900" : "bg-card border-border text-muted-foreground"}`}
           >
             {assignedToMe ? "تسک‌های من" : "همه تسک‌ها"}
           </button>
-          <div className="flex items-center gap-2 border border-neutral-200 rounded-md px-2 bg-white">
-            <Search className="w-3.5 h-3.5 text-neutral-400" />
+          <div className="flex items-center gap-2 border border-border rounded-md px-2 bg-card">
+            <Search className="w-3.5 h-3.5 text-muted-foreground" />
             <input
               data-testid="inbox-search"
               value={q}
@@ -193,15 +193,15 @@ export default function Inbox() {
       </div>
 
       {/* Filter strip */}
-      <div className="border-b border-neutral-200 bg-white px-6 py-2 flex items-center gap-1 overflow-x-auto">
-        <Filter className="w-3.5 h-3.5 text-neutral-400 ms-2 shrink-0" />
+      <div className="border-b border-border bg-card px-6 py-2 flex items-center gap-1 overflow-x-auto">
+        <Filter className="w-3.5 h-3.5 text-muted-foreground ms-2 shrink-0" />
         {FILTERS.map((f) => (
           <button
             key={f.key}
             data-testid={`filter-${f.key}`}
             onClick={() => setFilter(f.key)}
             className={`text-xs px-2.5 py-1 rounded-md shrink-0 ${
-              filter === f.key ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"
+              filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             }`}
           >
             {f.label}
@@ -211,7 +211,7 @@ export default function Inbox() {
 
       <div className="flex-1 flex min-h-0">
         {/* List */}
-        <div className="w-full md:w-[420px] border-l border-neutral-200 bg-white overflow-y-auto">
+        <div className="w-full md:w-[420px] border-l border-border bg-card overflow-y-auto">
           {loading ? (
             <div className="p-4 space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -226,7 +226,7 @@ export default function Inbox() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-10 text-sm text-neutral-400 text-center">تسکی یافت نشد.</div>
+            <div className="p-10 text-sm text-muted-foreground text-center">تسکی یافت نشد.</div>
           ) : (
             <ul>
               {filtered.map((t) => {
@@ -237,16 +237,16 @@ export default function Inbox() {
                     data-testid={`task-row-${t.id}`}
                     onClick={() => setActiveId(t.id)}
                     className={`cursor-pointer border-b border-neutral-100 px-4 py-3 ${
-                      activeId === t.id ? "bg-neutral-100" : "hover:bg-neutral-50"
+                      activeId === t.id ? "bg-muted" : "hover:bg-muted"
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[t.priority]}`} />
-                      <div className="text-sm font-medium text-neutral-900 truncate flex-1">{t.title}</div>
+                      <div className="text-sm font-medium text-foreground truncate flex-1">{t.title}</div>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-md border ${s.cls}`}>{s.label}</span>
                       {(() => { const sla = getSLAStatus(t.deadline, t.status); return sla ? <span data-testid={`sla-${sla}-${t.id}`} className={`text-[10px] px-1.5 py-0.5 rounded-md ${SLA_BADGE[sla].cls}`}>{SLA_BADGE[sla].label}</span> : null; })()}
                     </div>
-                    <div className="flex items-center gap-2 mt-1.5 text-[11px] text-neutral-500">
+                    <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
                       <span className="truncate">{t.workflow_name}</span>
                       {t.deadline && (
                         <>
@@ -267,12 +267,12 @@ export default function Inbox() {
         {/* Detail */}
         <div className="hidden md:flex flex-1 min-w-0 bg-[#fafafa]">
           {!active ? (
-            <div className="flex-1 grid place-items-center text-sm text-neutral-400">یک تسک از فهرست انتخاب کن.</div>
+            <div className="flex-1 grid place-items-center text-sm text-muted-foreground">یک تسک از فهرست انتخاب کن.</div>
           ) : (
             <div className="flex-1 overflow-auto p-8 max-w-3xl">
-              <div className="text-[11px] text-neutral-400 mb-1">{active.workflow_name}</div>
-              <h2 className="text-2xl font-bold text-neutral-900">{active.title}</h2>
-              <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500">
+              <div className="text-[11px] text-muted-foreground mb-1">{active.workflow_name}</div>
+              <h2 className="text-2xl font-bold text-foreground">{active.title}</h2>
+              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                 <span className={`px-1.5 py-0.5 rounded-md border ${STATUS_META[active.status].cls}`}>{STATUS_META[active.status].label}</span>
                 <span>اولویت: {active.priority === "urgent" ? "فوری" : active.priority === "high" ? "بالا" : active.priority === "medium" ? "متوسط" : "پایین"}</span>
                 {active.assignee_role && <span>نقش: {active.assignee_role}</span>}
@@ -280,18 +280,18 @@ export default function Inbox() {
               </div>
 
               {active.description && (
-                <div className="mt-5 bg-white border border-neutral-200 rounded-xl p-4 text-sm leading-7 text-neutral-700">
+                <div className="mt-5 bg-card border border-border rounded-xl p-4 text-sm leading-7 text-muted-foreground">
                   {active.description}
                 </div>
               )}
 
               {/* Form Rendering */}
               {active.type === "form" && formSchema && (
-                <div className="mt-6 border border-neutral-200 bg-white rounded-xl p-6 relative">
+                <div className="mt-6 border border-border bg-card rounded-xl p-6 relative">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-semibold text-neutral-800">تکمیل فرم</h3>
+                    <h3 className="text-sm font-semibold text-foreground">تکمیل فرم</h3>
                     {saveStatus && (
-                      <span className="text-[10px] text-neutral-400 flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                         {saveStatus === "در حال ذخیره..." && <Loader2 className="w-3 h-3 animate-spin" />}
                         {saveStatus}
                       </span>
@@ -320,7 +320,7 @@ export default function Inbox() {
               )}
               {active.type !== "approval" && active.status !== "done" && (
                 <div className="mt-5">
-                  <Button data-testid="done-btn" onClick={() => updateStatus("done")} className="bg-neutral-900 text-white">
+                  <Button data-testid="done-btn" onClick={() => updateStatus("done")} className="bg-primary text-primary-foreground">
                     <CheckCircle2 className="w-4 h-4 me-1" /> پایان تسک
                   </Button>
                 </div>
@@ -328,15 +328,15 @@ export default function Inbox() {
 
               {/* Comments */}
               <div className="mt-8">
-                <div className="text-xs text-neutral-500 mb-3">گفتگو</div>
+                <div className="text-xs text-muted-foreground mb-3">گفتگو</div>
                 <ul className="space-y-3">
                   {comments.map((c) => (
-                    <li key={c.id} className="bg-white border border-neutral-200 rounded-xl p-3">
+                    <li key={c.id} className="bg-card border border-border rounded-xl p-3">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-sm font-medium">{c.author_name}</span>
-                        <span className="text-[10px] text-neutral-400">{fromNow(c.created_at)}</span>
+                        <span className="text-[10px] text-muted-foreground">{fromNow(c.created_at)}</span>
                       </div>
-                      <div className="text-sm text-neutral-700 leading-6 whitespace-pre-wrap">
+                      <div className="text-sm text-muted-foreground leading-6 whitespace-pre-wrap">
                         {/* Highlight mentions in comment body */}
                         {c.body.split(/(@\S+)/).map((word, i) => 
                           word.startsWith('@') ? <span key={i} className="text-blue-600 font-medium">{word}</span> : word
@@ -358,22 +358,22 @@ export default function Inbox() {
                     
                     {/* Mentions Dropdown */}
                     {mentionQuery !== null && (
-                      <div className="absolute z-10 bottom-full mb-1 left-0 w-64 bg-white border border-neutral-200 shadow-xl rounded-lg overflow-hidden">
+                      <div className="absolute z-10 bottom-full mb-1 left-0 w-64 bg-card border border-border shadow-xl rounded-lg overflow-hidden">
                         {filteredUsers.length === 0 ? (
-                          <div className="text-xs text-neutral-400 p-3 text-center">کاربری یافت نشد</div>
+                          <div className="text-xs text-muted-foreground p-3 text-center">کاربری یافت نشد</div>
                         ) : (
                           <ul className="max-h-48 overflow-y-auto py-1">
                             {filteredUsers.map(u => (
                               <li 
                                 key={u.id}
-                                className="px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 cursor-pointer flex items-center gap-2"
+                                className="px-3 py-2 text-sm text-muted-foreground hover:bg-muted cursor-pointer flex items-center gap-2"
                                 onClick={() => selectMention(u)}
                               >
                                 <span className="w-5 h-5 rounded-full bg-neutral-200 flex items-center justify-center text-[10px] shrink-0">
                                   {u.full_name[0]}
                                </span>
                                 <span className="truncate">{u.full_name}</span>
-                                <span className="text-[10px] text-neutral-400 shrink-0">{u.role}</span>
+                                <span className="text-[10px] text-muted-foreground shrink-0">{u.role}</span>
                               </li>
                             ))}
                           </ul>
@@ -382,7 +382,7 @@ export default function Inbox() {
                     )}
                   </div>
 
-                  <Button data-testid="comment-send" onClick={addComment} className="bg-neutral-900 text-white shrink-0">
+                  <Button data-testid="comment-send" onClick={addComment} className="bg-primary text-primary-foreground shrink-0">
                     ارسال <ArrowLeft className="w-3.5 h-3.5 ms-1" />
                   </Button>
                 </div>

@@ -60,7 +60,7 @@ function GeneralAnalytics({ startDate, endDate }) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-8">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className="h-64 animate-pulse bg-neutral-100 rounded-xl" />
+          <div key={i} className="h-64 animate-pulse bg-muted rounded-xl" />
         ))}
       </div>
     );
@@ -87,9 +87,9 @@ function GeneralAnalytics({ startDate, endDate }) {
     <div className="mt-6 space-y-4">
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white border border-neutral-200 rounded-xl p-5">
-          <div className="text-sm font-semibold text-neutral-900 mb-1">فرایندهای راه‌اندازی‌شده</div>
-          <div className="text-[11px] text-neutral-400 mb-4">به تفکیک روز شمسی</div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-sm font-semibold text-foreground mb-1">فرایندهای راه‌اندازی‌شده</div>
+          <div className="text-[11px] text-muted-foreground mb-4">به تفکیک روز شمسی</div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={data.daily_processes} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -113,11 +113,11 @@ function GeneralAnalytics({ startDate, endDate }) {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-neutral-200 rounded-xl p-5">
-          <div className="text-sm font-semibold text-neutral-900 mb-1">توزیع وضعیت تسک‌ها</div>
-          <div className="text-[11px] text-neutral-400 mb-4">کل تسک‌های سازمان</div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-sm font-semibold text-foreground mb-1">توزیع وضعیت تسک‌ها</div>
+          <div className="text-[11px] text-muted-foreground mb-4">کل تسک‌های سازمان</div>
           {pieTotal === 0 ? (
-            <div className="h-[220px] grid place-items-center text-sm text-neutral-400">داده‌ای موجود نیست</div>
+            <div className="h-[220px] grid place-items-center text-sm text-muted-foreground">داده‌ای موجود نیست</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -137,10 +137,10 @@ function GeneralAnalytics({ startDate, endDate }) {
 
       {/* Cards row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white border border-neutral-200 rounded-xl p-5">
-          <div className="text-sm font-semibold text-neutral-900 mb-4">پرکارترین کاربران</div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-sm font-semibold text-foreground mb-4">پرکارترین کاربران</div>
           {(!data.top_users || data.top_users.length === 0) ? (
-            <div className="text-sm text-neutral-400 py-4 text-center">داده‌ای موجود نیست</div>
+            <div className="text-sm text-muted-foreground py-4 text-center">داده‌ای موجود نیست</div>
           ) : (
             <ul className="space-y-3">
               {data.top_users.map((u) => (
@@ -149,25 +149,25 @@ function GeneralAnalytics({ startDate, endDate }) {
                     {(u.full_name || "؟")[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-neutral-900 truncate">{u.full_name}</div>
-                    <div className="text-[11px] text-neutral-500">{u.role || "—"}</div>
+                    <div className="text-sm font-medium text-foreground truncate">{u.full_name}</div>
+                    <div className="text-[11px] text-muted-foreground">{u.role || "—"}</div>
                   </div>
-                  <div className="text-sm font-bold text-neutral-900 fa-nums">{toFaNumber(u.task_count)} تسک</div>
+                  <div className="text-sm font-bold text-foreground fa-nums">{toFaNumber(u.task_count)} تسک</div>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 flex flex-col justify-center">
-          <div className="flex items-center gap-2 text-neutral-500">
+        <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-center">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span className="text-[11px]">میانگین زمان تکمیل فرایند</span>
           </div>
-          <div className="mt-3 text-3xl font-bold text-neutral-900">
+          <div className="mt-3 text-3xl font-bold text-foreground">
             {formatDuration(data.avg_completion_minutes)}
           </div>
-          <div className="mt-1 text-[11px] text-neutral-400">بر اساس فرایندهای تکمیل‌شده در ۳۰ روز گذشته</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">بر اساس فرایندهای تکمیل‌شده در ۳۰ روز گذشته</div>
         </div>
       </div>
     </div>
@@ -190,7 +190,7 @@ function PersonnelAnalytics() {
   }, []);
 
   if (loading) {
-    return <div className="h-64 animate-pulse bg-neutral-100 rounded-xl mt-6" />;
+    return <div className="h-64 animate-pulse bg-muted rounded-xl mt-6" />;
   }
 
   if (error) {
@@ -205,12 +205,12 @@ function PersonnelAnalytics() {
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="bg-white border border-neutral-200 rounded-xl p-5">
-        <div className="text-sm font-semibold text-neutral-900 mb-1">میانگین زمان انجام تسک (Lead Time)</div>
-        <div className="text-[11px] text-neutral-400 mb-6">۱۰ کاربر با طولانی‌ترین زمان انجام تسک (دقیقه)</div>
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="text-sm font-semibold text-foreground mb-1">میانگین زمان انجام تسک (Lead Time)</div>
+        <div className="text-[11px] text-muted-foreground mb-6">۱۰ کاربر با طولانی‌ترین زمان انجام تسک (دقیقه)</div>
         
         {sortedByTime.length === 0 ? (
-          <div className="py-10 text-center text-neutral-400 text-sm">داده‌ای برای نمایش وجود ندارد.</div>
+          <div className="py-10 text-center text-muted-foreground text-sm">داده‌ای برای نمایش وجود ندارد.</div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={sortedByTime} layout="vertical" margin={{ top: 5, right: 10, left: 20, bottom: 5 }}>
@@ -232,9 +232,9 @@ function PersonnelAnalytics() {
         )}
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-xl p-0 overflow-hidden">
+      <div className="bg-card border border-border rounded-xl p-0 overflow-hidden">
         <table className="w-full text-sm text-right">
-          <thead className="bg-neutral-50 text-neutral-500 border-b border-neutral-200">
+          <thead className="bg-muted text-muted-foreground border-b border-border">
             <tr>
               <th className="px-5 py-3 font-medium">نام کاربر</th>
               <th className="px-5 py-3 font-medium">نقش سازمانی</th>
@@ -244,11 +244,11 @@ function PersonnelAnalytics() {
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {data.map(user => (
-              <tr key={user.user_id} className="hover:bg-neutral-50/50">
-                <td className="px-5 py-3 font-medium text-neutral-900">{user.full_name}</td>
-                <td className="px-5 py-3 text-neutral-500">{user.role}</td>
-                <td className="px-5 py-3 text-neutral-900 fa-nums">{toFaNumber(user.task_count)}</td>
-                <td className="px-5 py-3 text-neutral-500 fa-nums">{formatDuration(user.avg_lead_time)}</td>
+              <tr key={user.user_id} className="hover:bg-muted/50">
+                <td className="px-5 py-3 font-medium text-foreground">{user.full_name}</td>
+                <td className="px-5 py-3 text-muted-foreground">{user.role}</td>
+                <td className="px-5 py-3 text-foreground fa-nums">{toFaNumber(user.task_count)}</td>
+                <td className="px-5 py-3 text-muted-foreground fa-nums">{formatDuration(user.avg_lead_time)}</td>
               </tr>
             ))}
           </tbody>
@@ -274,7 +274,7 @@ function FormDataAnalytics() {
   }, []);
 
   if (loading) {
-    return <div className="h-64 animate-pulse bg-neutral-100 rounded-xl mt-6" />;
+    return <div className="h-64 animate-pulse bg-muted rounded-xl mt-6" />;
   }
 
   if (error) {
@@ -287,12 +287,12 @@ function FormDataAnalytics() {
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="bg-white border border-neutral-200 rounded-xl p-5">
-        <div className="text-sm font-semibold text-neutral-900 mb-1">تعداد نمونه‌های اجرا شده از هر فرایند</div>
-        <div className="text-[11px] text-neutral-400 mb-6">این بخش در آینده می‌تواند برای استخراج دیتای دقیق فیلدها استفاده شود.</div>
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="text-sm font-semibold text-foreground mb-1">تعداد نمونه‌های اجرا شده از هر فرایند</div>
+        <div className="text-[11px] text-muted-foreground mb-6">این بخش در آینده می‌تواند برای استخراج دیتای دقیق فیلدها استفاده شود.</div>
         
         {data.length === 0 ? (
-          <div className="py-10 text-center text-neutral-400 text-sm">داده‌ای برای نمایش وجود ندارد.</div>
+          <div className="py-10 text-center text-muted-foreground text-sm">داده‌ای برای نمایش وجود ندارد.</div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 25 }}>
@@ -347,22 +347,22 @@ export default function Analytics() {
   return (
     <div className="p-6 lg:p-10 max-w-[1400px] mx-auto animate-in">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2 tracking-tight">
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 tracking-tight">
           <BarChart2 className="w-6 h-6 text-brand" />
           گزارش‌ها و تحلیل‌ها
         </h1>
-        <p className="text-sm text-neutral-500 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           تحلیل عملکرد سازمان، گلوگاه‌ها و دیتای فرایندها
         </p>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-end gap-4 bg-white p-4 rounded-xl border border-neutral-200 shadow-sm">
+      <div className="mb-6 flex flex-wrap items-end gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
         <div className="space-y-1.5 w-full sm:w-48">
-          <label className="text-xs font-medium text-neutral-700">از تاریخ</label>
+          <label className="text-xs font-medium text-muted-foreground">از تاریخ</label>
           <JalaliDatePicker value={startDate} onChange={setStartDate} placeholder="انتخاب تاریخ شروع..." />
         </div>
         <div className="space-y-1.5 w-full sm:w-48">
-          <label className="text-xs font-medium text-neutral-700">تا تاریخ</label>
+          <label className="text-xs font-medium text-muted-foreground">تا تاریخ</label>
           <JalaliDatePicker value={endDate} onChange={setEndDate} placeholder="انتخاب تاریخ پایان..." />
         </div>
         <div className="ms-auto flex gap-2 w-full sm:w-auto">
@@ -373,7 +373,7 @@ export default function Analytics() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-white border border-neutral-200 h-auto p-1 rounded-lg inline-flex">
+        <TabsList className="bg-card border border-border h-auto p-1 rounded-lg inline-flex">
           <TabsTrigger value="overview" className="flex items-center gap-2 py-2 px-4 rounded-md data-[state=active]:bg-brand data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4" />
             <span className="text-sm font-medium">گزارش‌های عمومی</span>

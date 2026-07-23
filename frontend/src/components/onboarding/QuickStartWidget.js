@@ -61,7 +61,7 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
         exit={{ opacity: 0, y: -12, height: 0, marginBottom: 0 }}
         transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
         data-testid="quick-start-widget"
-        className="mb-8 relative overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        className="mb-8 relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
       >
         {/* Subtle shimmer gradient strip at top */}
         <div
@@ -78,10 +78,10 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
           {/* Header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-bold text-neutral-900 leading-tight">
+              <h2 className="text-lg font-bold text-foreground leading-tight">
                 آشنایی با جریان و شروع سریع
               </h2>
-              <p className="text-sm text-neutral-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 سه قدم ساده تا راه‌اندازی کامل سازمان شما
               </p>
             </div>
@@ -91,7 +91,7 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
               <button
                 onClick={onStartTour}
                 data-testid="quickstart-start-tour"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-neutral-200 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-muted hover:border-border transition-all"
               >
                 <Play className="w-3.5 h-3.5 fill-neutral-700" />
                 شروع تور راهنما
@@ -101,7 +101,7 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
               <button
                 onClick={onDismiss}
                 data-testid="quickstart-dismiss"
-                className="p-2 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
                 aria-label="بستن"
               >
                 <X className="w-4 h-4" />
@@ -118,10 +118,10 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
                   key={step.id}
                   to={step.to}
                   data-testid={step.testId}
-                  className="group flex items-center gap-4 p-4 rounded-xl border border-neutral-150 hover:border-neutral-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] bg-neutral-50 hover:bg-white transition-all duration-200"
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-neutral-150 hover:border-border hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] bg-muted hover:bg-card transition-all duration-200"
                 >
                   {/* Step number */}
-                  <div className="shrink-0 w-5 h-5 rounded-full bg-neutral-200 group-hover:bg-neutral-900 text-neutral-500 group-hover:text-white text-[11px] font-bold grid place-items-center transition-colors">
+                  <div className="shrink-0 w-5 h-5 rounded-full bg-neutral-200 group-hover:bg-primary text-muted-foreground group-hover:text-white text-[11px] font-bold grid place-items-center transition-colors">
                     {idx + 1}
                   </div>
 
@@ -135,16 +135,16 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
 
                   {/* Text */}
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-neutral-900 leading-snug">
+                    <div className="text-sm font-semibold text-foreground leading-snug">
                       {step.label}
                     </div>
-                    <div className="text-[11px] text-neutral-500 mt-0.5 truncate">
+                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
                       {step.sublabel}
                     </div>
                   </div>
 
                   {/* Arrow */}
-                  <ChevronLeft className="w-4 h-4 text-neutral-300 group-hover:text-neutral-600 transition-colors shrink-0" />
+                  <ChevronLeft className="w-4 h-4 text-neutral-300 group-hover:text-muted-foreground transition-colors shrink-0" />
                 </Link>
               );
             })}

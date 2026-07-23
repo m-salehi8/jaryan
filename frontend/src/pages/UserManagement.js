@@ -24,7 +24,7 @@ const ROLE_BADGE = {
   "ادمین سازمان": "bg-brand-soft text-brand border-brand/20",
   "طراح فرایند": "bg-blue-50 text-blue-700 border-blue-200",
   "مدیر تیم": "bg-amber-50 text-amber-700 border-amber-200",
-  "کارمند": "bg-neutral-100 text-neutral-600 border-neutral-200",
+  "کارمند": "bg-muted text-muted-foreground border-border",
 };
 
 const emptyForm = { full_name: "", email: "", role: "کارمند", password: "", department_id: "", manager_id: "" };
@@ -165,11 +165,11 @@ export default function UserManagement() {
     <div className="p-6 lg:p-10 max-w-[1100px] mx-auto" data-testid="users-root">
       <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
         <div>
-          <div className="text-xs text-neutral-400">مدیریت سازمان</div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+          <div className="text-xs text-muted-foreground">مدیریت سازمان</div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Users className="w-5 h-5" /> مدیریت کاربران
           </h1>
-          <p className="text-sm text-neutral-500 mt-1">کاربران سازمان را اضافه، ویرایش یا حذف کنید.</p>
+          <p className="text-sm text-muted-foreground mt-1">کاربران سازمان را اضافه، ویرایش یا حذف کنید.</p>
         </div>
         <Button
           data-testid="add-user-btn"
@@ -180,11 +180,11 @@ export default function UserManagement() {
         </Button>
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-sm text-neutral-400">در حال بارگذاری…</div>
+          <div className="p-10 text-center text-sm text-muted-foreground">در حال بارگذاری…</div>
         ) : users.length === 0 ? (
-          <div className="p-12 text-center text-sm text-neutral-400">هیچ کاربری یافت نشد.</div>
+          <div className="p-12 text-center text-sm text-muted-foreground">هیچ کاربری یافت نشد.</div>
         ) : (
           <ul>
             {users.map((u) => {
@@ -203,11 +203,11 @@ export default function UserManagement() {
                     {u.full_name?.[0] || "؟"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-neutral-900 truncate">
+                    <div className="text-sm font-medium text-foreground truncate">
                       {u.full_name}
-                      {u.id === user.id && <span className="text-[10px] text-neutral-400 ms-2">(شما)</span>}
+                      {u.id === user.id && <span className="text-[10px] text-muted-foreground ms-2">(شما)</span>}
                     </div>
-                    <div className="text-[11px] text-neutral-500 truncate">{u.email}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{u.email}</div>
                   </div>
 
                   {/* Role badge + edit */}
@@ -240,7 +240,7 @@ export default function UserManagement() {
                         <SelectValue placeholder="دپارتمان" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none" className="text-xs text-neutral-400">بدون دپارتمان</SelectItem>
+                        <SelectItem value="none" className="text-xs text-muted-foreground">بدون دپارتمان</SelectItem>
                         {departments.map((d) => (
                           <SelectItem key={d.id} value={d.id} className="text-xs">{d.name}</SelectItem>
                         ))}
