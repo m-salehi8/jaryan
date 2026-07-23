@@ -265,7 +265,7 @@ export default function Inbox() {
         </div>
 
         {/* Detail */}
-        <div className="hidden md:flex flex-1 min-w-0 bg-[#fafafa]">
+        <div className="hidden md:flex flex-1 min-w-0 bg-[#fafafa] dark:bg-background">
           {!active ? (
             <div className="flex-1 grid place-items-center text-sm text-muted-foreground">یک تسک از فهرست انتخاب کن.</div>
           ) : (

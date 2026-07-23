@@ -220,7 +220,7 @@ export default function AdminLayout() {
   }, [restartTour]);
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5ff]">
+    <div className="flex min-h-screen bg-[#f5f5ff] dark:bg-background">
       <AdminSidebar />
       <main className="flex-1 min-w-0 flex flex-col">
         <AdminMobileTopbar />
