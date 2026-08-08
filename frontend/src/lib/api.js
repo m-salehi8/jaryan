@@ -22,16 +22,6 @@ export const setCachedUser = (u) => localStorage.setItem(USER_KEY, JSON.stringif
 
 export const api = axios.create({ baseURL: API_BASE });
 api.interceptors.request.use((config) => {
-  // Append trailing slash to URLs if missing (required by Django)
-  if (config.url && !config.url.includes("?") && !config.url.endsWith("/")) {
-    config.url += "/";
-  } else if (config.url && config.url.includes("?")) {
-    const [path, query] = config.url.split("?");
-    if (!path.endsWith("/")) {
-      config.url = `${path}/?${query}`;
-    }
-  }
-
   const t = getToken();
   if (t) config.headers.Authorization = `Bearer ${t}`;
   return config;

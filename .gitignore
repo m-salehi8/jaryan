@@ -78,8 +78,6 @@ lib/
 # Build caches
 .cache/
 
-memory/test_credentials.md
-
 # Mobile development
 android-sdk/
 .env
@@ -102,3 +100,8 @@ dataset/
 # Temp directories
 tmp_deps/
 test_reports/
+test_result.md
+
+# Internal scratchpad (keep .gitkeep)
+memory/*
+!memory/.gitkeep

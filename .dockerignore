@@ -3,12 +3,9 @@
 .gitconfig
 .gitignore
 
-# Docs
-README.md
-*.md
+# Docker files themselves (don't nest)
+docker-compose.yml
+docker-compose.dev.yml
 
 # Emergent
 .emergent
-
-# Docker files themselves (don't nest)
-docker-compose.yml
