@@ -1,110 +1,79 @@
 # ۶. مدل‌های داده
 
-## BaseDocument
+با مهاجرت به معماری هیبریدی، مدل‌های داده به دو بخش اصلی تقسیم شده‌اند:
+۱. **مدل‌های رابطه‌ای (Django/PostgreSQL):** برای موجودیت‌های پایه‌ای مانند حساب‌ها، ساختار فرایندها، فرم‌ها و تسک‌ها.
+۲. **مدل‌های سندی (MongoDB):** برای ProcessInstance و رویدادها که ماهیت حجیم و ساختار پویا دارند.
 
-پایه همه document‌های MongoDB:
+---
+
+## بخش اول: مدل‌های رابطه‌ای (Django Models)
+
+بیشتر این مدل‌ها از `TenantBaseModel` ارث می‌برند که فیلد `id` و `org` (سازمان) را فراهم می‌کند و فیلتر خودکار در سطح دیتابیس را تضمین می‌کند.
+
+### Organization
 
 ```python
-class BaseDocument(BaseModel):
-    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+class Organization(models.Model):
+    id = models.CharField(primary_key=True, default=uuid.uuid4, max_length=100)
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+```
+
+**Table:** `core_organization`
+
+---
+
+### User
+
+```python
+class User(AbstractBaseUser, PermissionsMixin, TenantBaseModel):
+    email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    avatar_color = models.CharField(max_length=7, default="#737373")
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+```
+
+**RoleFa Enum:** "ادمین سازمان", "طراح فرایند", "مدیر تیم", "کارمند"
+
+**Table:** `core_user`
+
+---
+
+### Department
+
+```python
+class Department(TenantBaseModel):
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='sub_departments')
+    manager = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_departments')
+```
+
+**Table:** `core_department`
+
+---
+
+### Workflow
+
+```python
+class Workflow(TenantBaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    trigger_type = models.CharField(max_length=50, default='manual')
+    cron_expression = models.CharField(max_length=100, null=True, blank=True)
+    last_triggered_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
-    id: str = Field(default_factory=new_id)          # UUID4 string
-    created_at: str = Field(default_factory=now_iso) # ISO datetime UTC
-    updated_at: str = Field(default_factory=now_iso) # ISO datetime UTC
-    
-    def to_mongo(self) -> dict[str, Any]
-    def from_mongo(cls, doc) -> Optional[BaseDocument]
+    # داده‌های ساختاری گراف به صورت JSON
+    nodes = models.JSONField(default=list)
+    edges = models.JSONField(default=list)
 ```
 
-> **نکته:** همه document‌ها از `id` (string UUID) به جای `_id` (ObjectId) MongoDB استفاده می‌کنند.
+**Table:** `core_workflow`
 
----
-
-## Organization
-
-```python
-class Organization(BaseDocument):
-    name: str      # "سازمان نمونه جریان"
-    slug: str      # "jaryan-demo"
-```
-
-**Collection:** `organizations`
-
----
-
-## User
-
-```python
-class User(BaseDocument):
-    org_id: str              # شناسه سازمان
-    email: EmailStr          # آدرس ایمیل
-    full_name: str           # نام و نام خانوادگی
-    role: RoleFa             # نقش (یکی از ۴ مقدار)
-    password_hash: str       # SHA256 رمز عبور
-    avatar_color: str = "#737373"        # رنگ hex
-    department_id: Optional[str] = None  # شناسه دپارتمان
-    manager_id: Optional[str] = None     # شناسه مدیر مستقیم
-```
-
-**RoleFa Enum:**
-```python
-RoleFa = Literal[
-    "ادمین سازمان",
-    "طراح فرایند",
-    "مدیر تیم",
-    "کارمند",
-]
-```
-
-**Collection:** `users`  
-**Index توصیه‌شده:** `{email: 1}`, `{org_id: 1}`
-
-### UserPublic (DTO بدون password_hash)
-```python
-class UserPublic(BaseModel):
-    id: str
-    org_id: str
-    email: EmailStr
-    full_name: str
-    role: RoleFa
-    avatar_color: str
-    department_id: Optional[str] = None
-    manager_id: Optional[str] = None
-```
-
----
-
-## Department
-
-```python
-class Department(BaseDocument):
-    org_id: str
-    name: str                           # "واحد فناوری اطلاعات"
-    parent_id: Optional[str] = None     # شناسه دپارتمان والد
-    manager_id: Optional[str] = None    # شناسه مدیر
-```
-
-**Collection:** `departments`
-
----
-
-## Workflow
-
-```python
-class Workflow(BaseDocument):
-    org_id: str
-    name: str
-    description: str = ""
-    status: Literal["draft", "published", "archived"] = "draft"
-    trigger_type: Literal["manual", "cron"] = "manual"
-    cron_expression: Optional[str] = None    # e.g. "0 9 * * 1-5"
-    last_triggered_at: Optional[str] = None  # آخرین بار trigger شده
-    nodes: list[WorkflowNode] = []
-    edges: list[WorkflowEdge] = []
-    created_by: str                          # user_id
-```
-
-**Collection:** `workflows`
+ساختار `nodes` و `edges` درون JSONField همچنان از شمای زیر پیروی می‌کنند:
 
 ### WorkflowNode
 
@@ -183,18 +152,17 @@ class VisibilityRule(BaseModel):
 
 ---
 
-## Form
+### Form
 
 ```python
-class Form(BaseDocument):
-    org_id: str
-    name: str
-    description: str = ""
-    fields: list[FormField] = []
-    created_by: str
+class Form(TenantBaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    fields = models.JSONField(default=list)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 ```
 
-**Collection:** `forms`
+**Table:** `core_form`
 
 ### FormField
 
@@ -223,7 +191,37 @@ class FormField(BaseModel):
 
 ---
 
-## ProcessInstance
+### Task
+
+```python
+class Task(TenantBaseModel):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('done', 'Done'),
+    )
+    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
+    process_instance_id = models.CharField(max_length=255, help_text="MongoDB ProcessInstance ID")
+    node_id = models.CharField(max_length=100)
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # داده‌های پویا
+    form_data = models.JSONField(default=dict, blank=True)
+    draft_data = models.JSONField(default=dict, blank=True)
+    field_permissions = models.JSONField(default=dict, blank=True)
+```
+
+**Table:** `core_task`
+
+---
+
+## بخش دوم: مدل‌های سندی (MongoDB)
+
+این مدل‌ها برای داده‌های بدون ساختار دقیق (مثل لاگ‌ها و Instance‌ها) استفاده می‌شوند:
+
+### ProcessInstance
 
 ```python
 class ProcessInstance(BaseDocument):
@@ -248,44 +246,7 @@ class ProcessInstance(BaseDocument):
 | `rejected` | یک تسک رد شد |
 | `stuck` | خطای AI/OCR غیرقابل برگشت |
 
----
 
-## Task
-
-```python
-class Task(BaseDocument):
-    org_id: str
-    process_id: str
-    workflow_id: str
-    workflow_name: str
-    node_id: str
-    title: str                          # "نام نود — نام فرایند"
-    assignee_id: Optional[str] = None   # user_id مشخص
-    assignee_role: Optional[RoleFa] = None  # نقش (اگر assignee_id نداریم)
-    type: Literal["task", "approval", "form"] = "task"
-    status: Literal["waiting", "pending", "in_progress", "approved", "rejected", "done"] = "pending"
-    wait_conditions: list[str] = []     # node_id هایی که باید تکمیل شوند
-    priority: Literal["low", "medium", "high", "urgent"] = "medium"
-    deadline: Optional[str] = None      # ISO datetime
-    seen_time: Optional[str] = None     # اولین بار in_progress
-    done_time: Optional[str] = None     # زمان تکمیل/تایید/رد
-    form_id: Optional[str] = None
-    form_data: dict = {}                # داده‌های فرم submit شده
-    draft_data: dict = {}               # پیش‌نویس
-    description: str = ""
-    field_permissions: dict = {}        # {field_id: "editable"|"readonly"|"hidden"}
-    escalated: bool = False             # آیا به مدیر escalate شده
-    attempt_number: int = 1
-```
-
-**Collection:** `tasks`
-
-**چرخه وضعیت:**
-```
-waiting → pending → in_progress → approved
-                               → rejected
-                               → done
-```
 
 ---
 

@@ -85,7 +85,7 @@ async def advance_process(
 ### الگوریتم BFS (Breadth-First Search)
 
 ```
-1. بارگذاری process_instance از DB (یا snapshot)
+1. بارگذاری process_instance از MongoDB
 2. merge کردن context_update با context موجود
 3. BFS از completed_node_id:
    
@@ -102,10 +102,10 @@ async def advance_process(
        → اگر type == "ocr_task": extract_data_from_image() → ctx[output_key]
        → اگر type در (task, approval, form):
            → بررسی dependencies (wait conditions)
-           → ایجاد Task document
+           → ایجاد شیء Task در PostgreSQL (Django ORM)
            
-4. insert_many برای تسک‌های جدید
-5. بروزرسانی process_instance (status, context, completed_nodes)
+4. ذخیره تسک‌های جدید (ORM) و لاگ در MongoDB
+5. بروزرسانی process_instance در MongoDB (status, context, completed_nodes)
 6. برگرداندن خلاصه تغییرات
 ```
 
@@ -141,21 +141,21 @@ async def check_timeouts() -> None
 ### منطق
 
 ```
-جستجو: tasks با status in (pending, in_progress) و deadline < now و escalated != True
+جستجو: تسک‌های منقضی شده با وضعیت pending با استفاده از Django ORM:
+ORMTask.objects.filter(status="pending", created_at__lt=deadline)
 
 برای هر تسک منقضی:
   → پیدا کردن workflow.nodes[task.node_id].timeout_action
   
   اگر "auto_reject":
-    → status = "rejected"
+    → ORMTask.objects.aupdate(status="rejected")
+    → ثبت activity_log در MongoDB
     → advance_process(...)
-    → فعالیت: "تسک به صورت خودکار رد شد (پایان مهلت)"
   
   اگر "escalate_to_manager":
     → پیدا کردن manager_id از شروع‌کننده فرایند
-    → task.assignee_id = manager_id
-    → task.escalated = True
-    → فعالیت: "تسک به دلیل پایان مهلت به مدیر ارجاع شد"
+    → ORMTask.objects.aupdate(assigned_to=new_assignee)
+    → ثبت activity_log در MongoDB
   
   اگر "none":
     → هیچ کاری انجام نده
@@ -236,11 +236,11 @@ async def simulate_workflow(workflow: dict, mock_context: dict) -> list[dict]
 
 **منطق wait_conditions:**
 ```python
-# وقتی n3 تکمیل شود:
-existing_task = db.tasks.find_one({"node_id": "n5", "status": "waiting"})
-new_wait = [d for d in existing_task["wait_conditions"] if d != "n3"]
-# اگر ["n4"] باقی ماند → status = "waiting"
-# اگر [] شد → status = "pending" (اکنون قابل اجرا)
+# وضعیت wait_conditions با استفاده از بررسی dependencies از process.completed_nodes انجام می‌شود
+existing_task = await ORMTask.objects.filter(
+    process_instance_id=process_id, node_id=target_id, status__in=["pending", "waiting"]
+).afirst()
+# اگر missing_deps خالی شود، status تسک به pending تغییر می‌کند.
 ```
 
 ---
@@ -321,11 +321,11 @@ PATCH /tasks/{id} (status=approved/done)
   │    ocr_task? → extract_image  │
   │    task/approval/form?        │
   │      → check dependencies     │
-  │      → create Task doc        │
+  │      → create ORMTask object  │
   └────────────────────────────────┘
           │
           ▼
-  insert_many(next_tasks)
+  ORMTask.objects.acreate(...)
           │
           ▼
   update process_instance (status, context, completed_nodes)

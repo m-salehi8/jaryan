@@ -59,7 +59,7 @@ services:
       retries: 5
 
   # ─────────────────────────────
-  # Backend (FastAPI)
+  # Backend (Django + Gunicorn)
   # ─────────────────────────────
   backend:
     build:
@@ -70,6 +70,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      DJANGO_SETTINGS_MODULE: jaryan.settings
       MONGO_URL: mongodb://mongo:27017
       MONGO_DB_NAME: jaryan
       DB_HOST: db
@@ -88,11 +89,11 @@ services:
     ports:
       - "8000:8000"     # optional: remove if backend is only accessed via nginx
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/')"]
+      test: ["CMD", "python", "/app/healthcheck.py"]
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   # ─────────────────────────────
   # Celery Worker
@@ -103,10 +104,11 @@ services:
       dockerfile: Dockerfile
     container_name: jaryan_celery_worker
     restart: unless-stopped
-    command: celery -A jaryan worker -l info
+    command: ["celery", "-A", "jaryan", "worker", "-l", "info"]
     env_file:
       - ./backend/.env
     environment:
+      DJANGO_SETTINGS_MODULE: jaryan.settings
       MONGO_URL: mongodb://mongo:27017
       MONGO_DB_NAME: jaryan
       DB_HOST: db
@@ -132,10 +134,11 @@ services:
       dockerfile: Dockerfile
     container_name: jaryan_celery_beat
     restart: unless-stopped
-    command: celery -A jaryan beat -l info
+    command: ["celery", "-A", "jaryan", "beat", "-l", "info"]
     env_file:
       - ./backend/.env
     environment:
+      DJANGO_SETTINGS_MODULE: jaryan.settings
       MONGO_URL: mongodb://mongo:27017
       MONGO_DB_NAME: jaryan
       DB_HOST: db

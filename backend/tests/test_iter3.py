@@ -230,14 +230,14 @@ class TestGroupRuleRoundTrip:
                     "type": "approval",
                     "label": "تایید",
                     "position": {"x": 200, "y": 0},
-                    "data": {"assignee_role": "مدیر تیم"},
+                    "data": {"assignee_role": "مدیر"},
                 },
                 {
                     "id": "n3",
                     "type": "task",
                     "label": "مالی",
                     "position": {"x": 400, "y": 0},
-                    "data": {"assignee_role": "ادمین سازمان"},
+                    "data": {"assignee_role": "مدیر"},
                 },
                 {
                     "id": "n4",
@@ -338,7 +338,7 @@ def _build_petty_with_group(combinator: str):
                 "type": "approval",
                 "label": "تایید مدیر",
                 "position": {"x": 400, "y": 0},
-                "data": {"assignee_role": "مدیر تیم"},
+                "data": {"assignee_role": "مدیر"},
             },
             # Branch A: conditional (group). If taken -> admin task
             {
@@ -346,7 +346,7 @@ def _build_petty_with_group(combinator: str):
                 "type": "approval",
                 "label": "تایید ادمین",
                 "position": {"x": 600, "y": 100},
-                "data": {"assignee_role": "ادمین سازمان"},
+                "data": {"assignee_role": "مدیر"},
             },
             # Branch B: default fallthrough -> payment then end
             {
@@ -354,7 +354,7 @@ def _build_petty_with_group(combinator: str):
                 "type": "task",
                 "label": "پرداخت",
                 "position": {"x": 600, "y": -100},
-                "data": {"assignee_role": "ادمین سازمان"},
+                "data": {"assignee_role": "مدیر"},
             },
             {
                 "id": "n6",

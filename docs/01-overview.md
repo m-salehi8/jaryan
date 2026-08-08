@@ -35,14 +35,15 @@
 | فناوری | نسخه | کاربرد |
 |--------|-------|--------|
 | Python | 3.10+ | زبان اصلی |
-| FastAPI | 0.110.1 | فریم‌ورک API |
-| MongoDB | 7.0 | پایگاه داده |
-| Motor | 3.3.1 | MongoDB async driver |
+| Django | 6.0+ | فریم‌ورک وب (هسته اصلی) |
+| Django REST Framework | 3.15+ | فریم‌ورک API |
+| PostgreSQL | 15+ | پایگاه داده رابطه‌ای (مدل‌های پایه) |
+| MongoDB | 7.0 | پایگاه داده اسنادی (فرایندها) |
+| Celery + Redis | 5.3+ | زمان‌بندی و Background Tasks |
 | PyJWT | 2.10+ | احراز هویت JWT |
-| Croniter | 2.0+ | زمان‌بندی cron |
 | jdatetime | 4.1+ | تبدیل تاریخ شمسی |
 | Tenacity | 8.3+ | Retry logic برای AI |
-| Uvicorn | 0.25.0 | ASGI Server |
+| Gunicorn | 21.0+ | WSGI Server |
 
 ### Frontend
 | فناوری | نسخه | کاربرد |

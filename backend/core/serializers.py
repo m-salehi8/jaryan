@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Workflow, Task, User, Department, Organization
+from .models import Workflow, Task, User, Department, Organization, Form
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,6 +15,13 @@ class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = '__all__'
+
+class FormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Form
+        fields = '__all__'
+        read_only_fields = ['created_by']
+
 
 class WorkflowSerializer(serializers.ModelSerializer):
     class Meta:

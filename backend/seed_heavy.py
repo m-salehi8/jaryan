@@ -51,13 +51,13 @@ async def seed_heavy() -> dict:
 
     # 2. Users (Many users)
     users_data = [
-        ("admin@jaryan.ir", "آرش رضایی", "ادمین سازمان", "#171717"),
-        ("admin2@jaryan.ir", "سارا کمالی", "ادمین سازمان", "#2a2a2a"),
-        ("designer1@jaryan.ir", "نگار محمدی", "طراح فرایند", "#525252"),
-        ("designer2@jaryan.ir", "سینا کرمی", "طراح فرایند", "#4a4a4a"),
-        ("manager1@jaryan.ir", "حسین کریمی", "مدیر تیم", "#737373"),
-        ("manager2@jaryan.ir", "مریم سعیدی", "مدیر تیم", "#6b6b6b"),
-        ("manager3@jaryan.ir", "علی طاهری", "مدیر تیم", "#8a8a8a"),
+        ("admin@jaryan.ir", "آرش رضایی", "مدیر", "#171717"),
+        ("admin2@jaryan.ir", "سارا کمالی", "مدیر", "#2a2a2a"),
+        ("designer1@jaryan.ir", "نگار محمدی", "مدیر", "#525252"),
+        ("designer2@jaryan.ir", "سینا کرمی", "مدیر", "#4a4a4a"),
+        ("manager1@jaryan.ir", "حسین کریمی", "مدیر", "#737373"),
+        ("manager2@jaryan.ir", "مریم سعیدی", "مدیر", "#6b6b6b"),
+        ("manager3@jaryan.ir", "علی طاهری", "مدیر", "#8a8a8a"),
         ("emp1@jaryan.ir", "سارا احمدی", "کارمند", "#a3a3a3"),
         ("emp2@jaryan.ir", "رضا رحمانی", "کارمند", "#b3b3b3"),
         ("emp3@jaryan.ir", "مینا قاسمی", "کارمند", "#c3c3c3"),
@@ -189,7 +189,7 @@ async def seed_heavy() -> dict:
                 type="task",
                 label="بررسی و رفع مشکل",
                 position={"x": 400, "y": 150},
-                data={"assignee_role": "ادمین سازمان"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="n4",
@@ -233,7 +233,7 @@ async def seed_heavy() -> dict:
                 type="approval",
                 label="تایید مدیر",
                 position={"x": 350, "y": 200},
-                data={"assignee_role": "مدیر تیم"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="n4",
@@ -246,14 +246,14 @@ async def seed_heavy() -> dict:
                 type="approval",
                 label="تایید مالی",
                 position={"x": 700, "y": 100},
-                data={"assignee_role": "ادمین سازمان"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="n6",
                 type="task",
                 label="اقدام به خرید",
                 position={"x": 900, "y": 200},
-                data={"assignee_role": "مدیر تیم"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="n7", type="end", label="پایان موفق", position={"x": 1100, "y": 200}
@@ -332,7 +332,7 @@ async def seed_heavy() -> dict:
                 type="approval",
                 label="بررسی حقوقی",
                 position={"x": 400, "y": 200},
-                data={"assignee_role": "طراح فرایند"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="legal_cond",
@@ -345,7 +345,7 @@ async def seed_heavy() -> dict:
                 type="approval",
                 label="بررسی مالی",
                 position={"x": 800, "y": 100},
-                data={"assignee_role": "مدیر تیم"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="finance_cond",
@@ -365,7 +365,7 @@ async def seed_heavy() -> dict:
                 type="approval",
                 label="تایید نهایی",
                 position={"x": 1200, "y": 100},
-                data={"assignee_role": "ادمین سازمان"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="dir_cond",

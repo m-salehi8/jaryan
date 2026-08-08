@@ -35,11 +35,20 @@ nano .env
 
 **محتوای `.env` نهایی:**
 ```env
-MONGO_URL=mongodb://mongo:27017
+DB_HOST=db
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=postgres
 DB_NAME=jaryan
-JWT_SECRET=<کلید تصادفی قوی>
+
+MONGO_URL=mongodb://mongo:27017
+MONGO_DB_NAME=jaryan
+
+REDIS_URL=redis://redis:6379/0
+
+SECRET_KEY=<کلید تصادفی قوی برای جنگو>
 EMERGENT_LLM_KEY=<کلید API هوش مصنوعی>
-CORS_ORIGINS=*
+CORS_ALLOW_ALL_ORIGINS=True
 ```
 
 **تولید JWT_SECRET:**
@@ -77,21 +86,24 @@ Browser
 frontend:80 (Nginx)
    │ /api/* → proxy
    ▼
-backend:8000 (FastAPI + Uvicorn)
-   │ motor async
-   ▼
-mongo:27017 (MongoDB 7.0)
-   │
-mongo_data volume (ماندگار)
+backend:8000 (Django + Gunicorn)
+   ├── PostgreSQL:5432 (داده‌های اصلی و مدل‌های پایه)
+   ├── MongoDB:27017 (لاگ‌ها و Process Instances)
+   └── Redis:6379 (Broker برای Celery)
+       └── Celery Worker / Beat (تسک‌های پس‌زمینه)
 ```
 
 ### سرویس‌های docker-compose.yml
 
-| سرویس | Port | Image |
+| سرویس | Port | Image / توضیح |
 |-------|------|-------|
+| `db` | 5432 | postgres:15-alpine |
 | `mongo` | 27017 | mongo:7.0 |
-| `backend` | 8000 | Dockerfile |
-| `frontend` | 80 | Dockerfile (multi-stage) |
+| `redis` | 6379 | redis:alpine |
+| `backend` | 8000 | Dockerfile (gunicorn jaryan.wsgi) |
+| `celery_worker`| — | Dockerfile (celery -A jaryan worker) |
+| `celery_beat`  | — | Dockerfile (celery -A jaryan beat) |
+| `frontend` | 80 | Dockerfile (Nginx + React build) |
 
 ---
 
@@ -205,17 +217,12 @@ docker compose restart backend
 
 ### MongoDB متصل نمی‌شود
 ```bash
-docker exec jaryan_backend python -c "
-import asyncio, motor.motor_asyncio
-client = motor.motor_asyncio.AsyncIOMotorClient('mongodb://mongo:27017')
-asyncio.run(client.admin.command('ping'))
-print('MongoDB OK')
-"
+docker exec jaryan_mongo mongosh --eval "db.adminCommand('ping')"
 ```
 
 ### بررسی متغیرهای محیطی
 ```bash
-docker exec jaryan_backend env | grep -E "(JWT|EMERGENT|MONGO)"
+docker exec jaryan_backend env | grep -E "(DB_|MONGO|REDIS|SECRET)"
 ```
 
 ### پاک کردن کامل (⚠️ داده از دست می‌رود)
@@ -255,9 +262,14 @@ pip install -r requirements.txt
 
 # تنظیم .env:
 cp .env.production .env
-# ویرایش: MONGO_URL=mongodb://localhost:27017
+# ویرایش: MONGO_URL=mongodb://localhost:27017, REDIS_URL=... و تنظیمات دیتابیس
 
-uvicorn server:app --reload --host 0.0.0.0 --port 8000
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000
+
+# در یک ترمینال دیگر برای تسک‌های پس‌زمینه:
+celery -A jaryan worker -l INFO
+celery -A jaryan beat -l INFO
 ```
 
 ### Frontend

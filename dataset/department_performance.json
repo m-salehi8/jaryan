@@ -1,0 +1,38 @@
+[
+  {
+    "department_id": "dept_hr",
+    "department_name": "منابع انسانی",
+    "total_tasks": 367,
+    "tasks_completed": 297,
+    "tasks_rejected": 54,
+    "completion_rate_pct": 80.9,
+    "avg_active_users": 3
+  },
+  {
+    "department_id": "dept_it",
+    "department_name": "فناوری اطلاعات",
+    "total_tasks": 1036,
+    "tasks_completed": 890,
+    "tasks_rejected": 103,
+    "completion_rate_pct": 85.9,
+    "avg_active_users": 5
+  },
+  {
+    "department_id": "dept_finance",
+    "department_name": "مالی",
+    "total_tasks": 381,
+    "tasks_completed": 322,
+    "tasks_rejected": 44,
+    "completion_rate_pct": 84.5,
+    "avg_active_users": 6
+  },
+  {
+    "department_id": "dept_ops",
+    "department_name": "عملیات",
+    "total_tasks": 317,
+    "tasks_completed": 277,
+    "tasks_rejected": 31,
+    "completion_rate_pct": 87.4,
+    "avg_active_users": 5
+  }
+]

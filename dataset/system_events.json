@@ -1,0 +1,272 @@
+[
+  {
+    "id": "24def720-6238-470b-8a5b-5ae10e666a35",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-05-19T02:34:00+00:00"
+  },
+  {
+    "id": "45c44640-306d-4131-89e2-eed5db902d44",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "celery",
+    "message": "Deadline exceeded for approval task, auto-escalated to manager",
+    "metadata": {},
+    "created_at": "2026-06-01T10:13:00+00:00"
+  },
+  {
+    "id": "5a500dd2-9b2a-4e27-a492-2f7bbc8e56d5",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "engine",
+    "message": "Celery worker queue depth > 100",
+    "metadata": {},
+    "created_at": "2026-06-03T07:45:00+00:00"
+  },
+  {
+    "id": "3ce24468-fe5e-4fb9-9ee8-15fe12ec67d4",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "api",
+    "message": "Celery worker queue depth > 100",
+    "metadata": {},
+    "created_at": "2026-06-07T23:13:00+00:00"
+  },
+  {
+    "id": "89325341-2712-4a56-9b45-5a904945127d",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "celery",
+    "message": "Task timeout triggered for overdue task",
+    "metadata": {},
+    "created_at": "2026-06-09T08:36:00+00:00"
+  },
+  {
+    "id": "4b4788ba-92be-40b7-865b-4d4b37728f53",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "engine",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-06-08T19:38:00+00:00"
+  },
+  {
+    "id": "27e3b738-bf81-42c3-901c-9de96d0b5f3c",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "Deadline exceeded for approval task, auto-escalated to manager",
+    "metadata": {},
+    "created_at": "2026-06-09T22:01:00+00:00"
+  },
+  {
+    "id": "0b975de8-2db2-4199-897a-60b4b6ba2a17",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "engine",
+    "message": "Process stuck detected, escalation initiated",
+    "metadata": {},
+    "created_at": "2026-06-11T06:29:00+00:00"
+  },
+  {
+    "id": "c359b526-faed-4b5f-b24a-ff2b9619e1c7",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-06-14T06:22:00+00:00"
+  },
+  {
+    "id": "b88e0d3c-42e1-470b-8848-218bbae6f671",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "celery",
+    "message": "Duplicate process detection skipped (same context)",
+    "metadata": {},
+    "created_at": "2026-06-18T01:59:00+00:00"
+  },
+  {
+    "id": "bf2c7de6-3c2d-4d6b-8b56-6c2d6706998d",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "celery",
+    "message": "API rate limit approaching for workflow operations",
+    "metadata": {},
+    "created_at": "2026-06-20T13:11:00+00:00"
+  },
+  {
+    "id": "708aaf58-40e0-4073-9c72-affad95748bb",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "celery",
+    "message": "Process stuck detected, escalation initiated",
+    "metadata": {},
+    "created_at": "2026-06-22T22:29:00+00:00"
+  },
+  {
+    "id": "917e246d-8be5-4753-b198-5c38481c2d84",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "celery",
+    "message": "Deadline exceeded for approval task, auto-escalated to manager",
+    "metadata": {},
+    "created_at": "2026-06-24T14:03:00+00:00"
+  },
+  {
+    "id": "bf13e35b-b6b4-4e66-a644-12ad643db4f4",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "api",
+    "message": "Celery worker queue depth > 100",
+    "metadata": {},
+    "created_at": "2026-06-28T14:18:00+00:00"
+  },
+  {
+    "id": "9dbaf612-6323-495f-84c6-25784856833c",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "engine",
+    "message": "API rate limit approaching for workflow operations",
+    "metadata": {},
+    "created_at": "2026-07-01T23:49:00+00:00"
+  },
+  {
+    "id": "12a00669-cd6a-49ff-b3aa-d29764ad130f",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "Task timeout triggered for overdue task",
+    "metadata": {},
+    "created_at": "2026-07-06T02:23:00+00:00"
+  },
+  {
+    "id": "783d2c55-5f2a-4392-b8de-c56542b4897b",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "engine",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-07-07T15:59:00+00:00"
+  },
+  {
+    "id": "2dcaafb5-177b-4bf0-b63c-479f303882e4",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "api",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-07-08T12:42:00+00:00"
+  },
+  {
+    "id": "10e9aa65-4ee2-47a4-88b3-2f689cdb5a4c",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "engine",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-07-09T15:28:00+00:00"
+  },
+  {
+    "id": "55773c6b-13a6-4e42-a91e-2cafae9687d2",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "engine",
+    "message": "API rate limit approaching for workflow operations",
+    "metadata": {},
+    "created_at": "2026-07-13T05:54:00+00:00"
+  },
+  {
+    "id": "6d603123-d5b3-4f3c-856e-176869af0030",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "celery",
+    "message": "MongoDB connection retry on replica set failover",
+    "metadata": {},
+    "created_at": "2026-07-14T15:27:00+00:00"
+  },
+  {
+    "id": "4d060279-35d5-4465-8f56-3b0859bb1603",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "Task timeout triggered for overdue task",
+    "metadata": {},
+    "created_at": "2026-07-14T23:16:00+00:00"
+  },
+  {
+    "id": "477ac815-917d-487a-bb7e-26518a49d529",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "celery",
+    "message": "Deadline exceeded for approval task, auto-escalated to manager",
+    "metadata": {},
+    "created_at": "2026-07-15T23:30:00+00:00"
+  },
+  {
+    "id": "403fe828-bb41-4ea1-ba76-55d663eba3b0",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "api",
+    "message": "Task timeout triggered for overdue task",
+    "metadata": {},
+    "created_at": "2026-07-17T04:11:00+00:00"
+  },
+  {
+    "id": "ad61fb4e-06b0-498d-be80-f9d45498e5f4",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "Duplicate process detection skipped (same context)",
+    "metadata": {},
+    "created_at": "2026-07-23T03:42:00+00:00"
+  },
+  {
+    "id": "5ec031ff-d501-44dc-94c6-9aeb4849fb17",
+    "org_id": "org_fanaavaran",
+    "level": "info",
+    "source": "celery",
+    "message": "Celery worker queue depth > 100",
+    "metadata": {},
+    "created_at": "2026-07-23T18:24:00+00:00"
+  },
+  {
+    "id": "97b2c51a-8e08-4019-8e47-06b52252d849",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "engine",
+    "message": "Task timeout triggered for overdue task",
+    "metadata": {},
+    "created_at": "2026-07-25T19:27:00+00:00"
+  },
+  {
+    "id": "4fde9189-fa7a-4ff0-a7af-69ec1dd16f8c",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "celery",
+    "message": "Duplicate process detection skipped (same context)",
+    "metadata": {},
+    "created_at": "2026-07-25T19:03:00+00:00"
+  },
+  {
+    "id": "8905e0de-45ee-48ae-b4d1-1c168abdc75e",
+    "org_id": "org_fanaavaran",
+    "level": "error",
+    "source": "celery",
+    "message": "Process stuck detected, escalation initiated",
+    "metadata": {},
+    "created_at": "2026-07-28T02:12:00+00:00"
+  },
+  {
+    "id": "5201de71-e0fd-4aa0-90c2-a83f00d258dc",
+    "org_id": "org_fanaavaran",
+    "level": "warning",
+    "source": "engine",
+    "message": "Celery worker queue depth > 100",
+    "metadata": {},
+    "created_at": "2026-08-03T03:35:00+00:00"
+  }
+]

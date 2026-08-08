@@ -17,34 +17,32 @@
                     └──────────────┬──────────────────────┘
                                    │
                     ┌──────────────▼──────────────────────┐
-                    │    FastAPI + Uvicorn  (port 8000)    │
+                    │    Django + Gunicorn (port 8000)     │
                     │                                      │
                     │  ┌────────┐  ┌────────┐  ┌───────┐  │
-                    │  │ server │  │ engine │  │  auth │  │
-                    │  └───┬────┘  └───┬────┘  └───────┘  │
-                    │      │          │                    │
-                    │  ┌───▼──────────▼──────────────┐     │
+                    │  │  core  │  │ engine │  │ celery│  │
+                    │  └───┬────┘  └───┬────┘  └───┬───┘  │
+                    │      │          │            │       │
+                    │  ┌───▼──────────▼────────────▼─┐     │
                     │  │  services/                   │     │
                     │  │   ├── ai_service.py          │     │
                     │  │   └── prompts.py             │     │
                     │  └──────────────────────────────┘     │
                     └──────────────┬──────────────────────┘
-                                   │ Motor (async)
-                    ┌──────────────▼──────────────────────┐
-                    │         MongoDB 7.0                  │
-                    │                                      │
-                    │  Collections:                        │
-                    │  ├── organizations                   │
-                    │  ├── users                           │
-                    │  ├── departments                     │
-                    │  ├── workflows                       │
-                    │  ├── forms                           │
-                    │  ├── process_instances               │
-                    │  ├── tasks                           │
-                    │  ├── comments                        │
-                    │  ├── activities                      │
-                    │  └── chat_messages                   │
-                    └──────────────────────────────────────┘
+                                   │
+                ┌──────────────────┴──────────────────┐
+                │                                     │
+      PostgreSQL (psycopg2)                     MongoDB (Motor/PyMongo)
+  ┌─────────────▼─────────────┐         ┌─────────────▼─────────────┐
+  │                           │         │                           │
+  │ Models (Tables):          │         │ Collections:              │
+  │ ├── core_organization     │         │ ├── process_instances     │
+  │ ├── core_user             │         │ ├── comments              │
+  │ ├── core_department       │         │ ├── activities            │
+  │ ├── core_workflow         │         │ └── chat_messages         │
+  │ ├── core_form             │         └───────────────────────────┘
+  │ └── core_task             │
+  └───────────────────────────┘
                                    ▲
                     ┌──────────────┴──────────────────────┐
                     │       AI Provider (LLM)              │
@@ -85,14 +83,12 @@ User → POST /api/workflows (ذخیره workflow تولید شده)
      → /admin/workflows/{id} (باز کردن در builder)
 ```
 
-### ۴. Cron Scheduler
+### ۴. Cron Scheduler (Celery Beat)
 ```
-Startup → asyncio.create_task(cron_scheduler())
-Loop (هر ۶۰ ثانیه):
-  → db.workflows.find({trigger_type: "cron", status: "published"})
-  → croniter.match(expr, now)
-  → ProcessInstance ایجاد → advance_process()
-  → check_timeouts() برای task‌های منقضی‌شده
+Celery Beat (هر دقیقه):
+  → celery_app.send_task("core.tasks.check_timeouts_task")
+  → بررسی task‌های منقضی‌شده و اجرای advance_process() در صورت نیاز
+  → بررسی فرایندهای زمان‌بندی‌شده (در صورت وجود)
 ```
 
 ---
@@ -102,26 +98,30 @@ Loop (هر ۶۰ ثانیه):
 ```
 chahkaran-main/
 │
-├── backend/                          ← سرویس Backend (FastAPI)
-│   ├── server.py                     ← نقطه ورود، تمام Routes
-│   ├── engine.py                     ← موتور اجرای فرایند
-│   ├── models.py                     ← مدل‌های Pydantic
-│   ├── auth.py                       ← JWT احراز هویت
-│   ├── db.py                         ← اتصال MongoDB
-│   ├── seed.py                       ← داده‌های اولیه
-│   ├── seed_heavy.py                 ← داده‌های نمونه انبوه
-│   ├── seed_ai_workflow.py           ← workflow نمونه با AI Node
-│   ├── test_cron.py                  ← تست cron scheduler
+├── backend/                          ← سرویس Backend (Django)
+│   ├── manage.py                     ← نقطه ورود خط فرمان Django
+│   ├── jaryan/                       ← تنظیمات اصلی پروژه
+│   │   ├── settings.py               ← فایل تنظیمات شامل DB و Celery
+│   │   ├── urls.py                   ← روتینگ APIها و ادمین
+│   │   └── wsgi.py                   ← نقطه ورود WSGI برای Gunicorn
+│   ├── core/                         ← اپلیکیشن اصلی (Core)
+│   │   ├── models.py                 ← مدل‌های رابطه‌ای Django (PostgreSQL)
+│   │   ├── engine.py                 ← موتور اجرای فرایند
+│   │   ├── auth.py                   ← احراز هویت JWT سفارشی
+│   │   ├── db.py                     ← اتصال به دیتابیس MongoDB
+│   │   ├── server.py                 ← روت‌های مربوط به APIهای قبلی/اضافی
+│   │   ├── seed.py                   ← داده‌های اولیه
+│   │   ├── seed_heavy.py             ← داده‌های نمونه انبوه
+│   │   ├── seed_ai_workflow.py       ← workflow نمونه با AI Node
+│   │   ├── test_cron.py              ← تست زمان‌بندی
+│   │   ├── services/                 ← سرویس‌های جانبی
+│   │   │   ├── ai_service.py         ← سرویس LLM
+│   │   │   └── prompts.py            ← Prompt‌های ثابت
+│   │   └── tests/                    ← پوشه تست‌ها
 │   ├── requirements.txt              ← وابستگی‌های Python
 │   ├── Dockerfile                    ← Docker image بک‌اند
 │   ├── .env                          ← متغیرهای محیطی (local)
-│   ├── .env.production               ← نمونه production
-│   ├── services/
-│   │   ├── ai_service.py             ← سرویس LLM
-│   │   └── prompts.py                ← Prompt‌های ثابت
-│   └── tests/
-│       ├── conftest.py               ← تنظیمات pytest
-│       └── backend_test.py           ← تست‌های API
+│   └── .env.production               ← نمونه production
 │
 ├── frontend/                         ← سرویس Frontend (React)
 │   ├── src/

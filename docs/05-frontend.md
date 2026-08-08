@@ -255,6 +255,7 @@ const { badgeCount } = useBadge();
 ```javascript
 const { theme, toggleTheme } = useTheme();
 // theme: "light" | "dark"
+// نکته: باگ قبلی دارک مود با اعمال کلاس 'dark' به المان <html> سیستم عامل/مرورگر و استفاده صحیح از رنگ‌های Tailwind CSS حل شده است.
 ```
 
 ---
@@ -265,6 +266,8 @@ const { theme, toggleTheme } = useTheme();
 ```javascript
 export const api = axios.create({ baseURL: API_BASE });
 // auto-attach JWT به هر request
+// نکته معماری: برای جلوگیری از باگ‌های ریدایرکت (APPEND_SLASH) جنگو، تنظیمات Axios به‌گونه‌ای پایدار شده است که با خطاهای 301 و trailing slash‌ها به درستی برخورد کند.
+```
 
 export async function streamAI(message, sessionId, onDelta, onDone, onError)
 // SSE streaming برای AI

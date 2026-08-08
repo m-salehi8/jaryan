@@ -35,7 +35,7 @@ export const NODE_TYPES_META = {
   ocr_task:  { label: "پردازش سند / OCR", icon: ScanText,  bar: "linear-gradient(to right, #14b8a6, #06b6d4)", description: "استخراج هوشمند اطلاعات از تصاویر و فاکتورها." },
   end:       { label: "پایان",        icon: Square,       bar: "#171717", description: "نقطه پایان فرایند." },
 };
-const ROLES = ["ادمین سازمان", "طراح فرایند", "مدیر تیم", "کارمند"];
+const ROLES = ["مدیر", "کارمند"];
 
 // Custom node renderer (monochromatic, top colored bar by type)
 function FlowNode({ data, selected, id }) {

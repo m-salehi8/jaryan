@@ -69,7 +69,7 @@ async def seed_ai_workflow():
                 type="approval",
                 label="تایید نهایی توسط انسان",
                 position={"x": 950, "y": 50},
-                data={"assignee_role": "مدیر تیم"},
+                data={"assignee_role": "مدیر"},
             ),
             WorkflowNode(
                 id="n6",

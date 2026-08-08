@@ -58,7 +58,7 @@ class TestAuth:
         assert r.status_code == 200
         u = r.json()
         assert u["email"] == "admin@jaryan.ir"
-        assert u["role"] == "ادمین سازمان"
+        assert u["role"] == "مدیر"
 
     def test_me_missing_token(self, session):
         r = session.get(f"{BASE_URL}/api/auth/me")

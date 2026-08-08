@@ -18,12 +18,10 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
 
-const ROLES = ["ادمین سازمان", "طراح فرایند", "مدیر تیم", "کارمند"];
+const ROLES = ["مدیر", "کارمند"];
 
 const ROLE_BADGE = {
-  "ادمین سازمان": "bg-brand-soft text-brand border-brand/20",
-  "طراح فرایند": "bg-blue-50 text-blue-700 border-blue-200",
-  "مدیر تیم": "bg-amber-50 text-amber-700 border-amber-200",
+  "مدیر": "bg-brand-soft text-brand border-brand/20",
   "کارمند": "bg-muted text-muted-foreground border-border",
 };
 
@@ -46,7 +44,7 @@ export default function UserManagement() {
 
   // Admin guard
   useEffect(() => {
-    if (user && user.role !== "ادمین سازمان") {
+    if (user && user.role !== "مدیر") {
       nav("/", { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,7 +64,7 @@ export default function UserManagement() {
     }
   };
   useEffect(() => {
-    if (user?.role === "ادمین سازمان") load();
+    if (user?.role === "مدیر") load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

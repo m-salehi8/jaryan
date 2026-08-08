@@ -4,12 +4,13 @@
 
 جریان از **JWT (JSON Web Token)** با امضای **HS256** استفاده می‌کند.
 
-### پارامترهای JWT
+### پارامترهای JWT (Django)
 
 ```python
+# در تنظیمات جنگو یا متغیرهای محیطی
 JWT_ALG = "HS256"
 JWT_TTL_HOURS = 24 * 14  # 14 روز اعتبار
-JWT_SECRET = os.environ["JWT_SECRET"]  # از متغیر محیطی
+SECRET_KEY = os.environ["SECRET_KEY"]  # کلید اصلی جنگو
 ```
 
 ### Payload توکن
@@ -22,13 +23,9 @@ JWT_SECRET = os.environ["JWT_SECRET"]  # از متغیر محیطی
 }
 ```
 
-### رمز عبور
+### هش رمز عبور
 
-```python
-# هش ساده SHA256 (برای demo - production باید bcrypt باشد)
-def hash_password(plain: str) -> str:
-    return hashlib.sha256(plain.encode("utf-8")).hexdigest()
-```
+سیستم اکنون از مکانیزم‌های بومی رمزنگاری جنگو (`check_password` و `make_password`) با الگوریتم‌های استانداردتر استفاده می‌کند که امنیت را نسبت به هش خام SHA256 افزایش می‌دهد.
 
 ---
 
@@ -46,17 +43,25 @@ def hash_password(plain: str) -> str:
 
 ---
 
-## Dependency Injection
+## استفاده از کاربر (Django REST Framework)
 
 ```python
-# در auth.py:
-CurrentUser = Depends(get_current_user)
+# در تنظیمات:
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "core.auth.JWTAuthentication",
+    ],
+}
 
-# استفاده در routes:
-@api.get("/workflows")
-async def list_workflows(user: User = CurrentUser):
-    # user حالا اطلاعات کاربر تأیید شده را دارد
-    return db.workflows.find({"org_id": user.org_id})
+# در ویوها (Views):
+from rest_framework.views import APIView
+
+class WorkflowListView(APIView):
+    def get(self, request):
+        # request.user شامل اطلاعات کاربر است
+        # request.user.org_id سازمان کاربر را مشخص می‌کند
+        workflows = Workflow.objects.all() # به صورت خودکار توسط TenantManager فیلتر می‌شود
+        return Response(...)
 ```
 
 ---
@@ -72,36 +77,32 @@ async def list_workflows(user: User = CurrentUser):
 | مدیر تیم | Team Manager | تایید تسک‌ها |
 | کارمند | Employee | تکمیل تسک |
 
-### بررسی نقش در Backend
+### بررسی نقش در Backend (DRF Permissions)
 
 ```python
-# بررسی دستی در هر endpoint:
-if user.role != "ادمین سازمان":
-    raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
+# در ویوهای DRF از Permission سفارشی استفاده می‌شود:
+from rest_framework.permissions import BasePermission
+
+class IsOrgAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == "ادمین سازمان"
 ```
 
 ### عملیات محدود به ادمین
 
 | عملیات | Endpoint |
 |--------|---------|
-| ایجاد کاربر | `POST /api/users` |
-| ویرایش نقش | `PATCH /api/users/{id}` |
-| حذف کاربر | `DELETE /api/users/{id}` |
-| ایجاد دپارتمان | `POST /api/departments` |
-| ویرایش دپارتمان | `PATCH /api/departments/{id}` |
-| حذف دپارتمان | `DELETE /api/departments/{id}` |
+| ایجاد کاربر | `POST /api/users/` |
+| ویرایش نقش | `PATCH /api/users/{id}/` |
+| حذف کاربر | `DELETE /api/users/{id}/` |
+| ایجاد دپارتمان | `POST /api/departments/` |
+| ویرایش دپارتمان | `PATCH /api/departments/{id}/` |
+| حذف دپارتمان | `DELETE /api/departments/{id}/` |
 
-### ایزولاسیون سازمان
+### ایزولاسیون سازمان (TenantManager)
 
-**هر** query به دیتابیس با `org_id` فیلتر می‌شود:
-
-```python
-# درست:
-db.tasks.find({"org_id": user.org_id, "id": task_id})
-
-# هرگز بدون org_id:
-# db.tasks.find({"id": task_id})  ← خطر نشت داده بین سازمان‌ها
-```
+با معماری جنگو، تمام مدل‌ها از `TenantBaseModel` ارث می‌برند که باعث می‌شود به صورت **خودکار** هر query با `org_id` کاربر فیلتر شود.
+این کار توسط Middleware و فیلترهای ORM به صورت شفاف (transparent) انجام می‌شود تا خطر نشت داده به صفر برسد.
 
 ---
 
@@ -186,15 +187,13 @@ api.interceptors.request.use((config) => {
 
 ## نقاط بهبود پیشنهادی (Security)
 
-> ⚠️ موارد زیر برای production باید اعمال شوند:
+> ⚠️ موارد زیر برای استقرار تولید باید اعمال شوند:
 
-1. **bcrypt به جای SHA256**: برای هش رمز عبور امن‌تر
-2. **Refresh Token**: توکن‌های کوتاه‌مدت + refresh
-3. **Role-Based Access Control کامل**: بررسی نقش در تمام endpoints (نه فقط user management)
-4. **Rate Limiting**: محدودیت تعداد درخواست
-5. **HTTPS اجباری**: در production همه traffic باید HTTPS باشد
-6. **Audit Log**: لاگ تمام دسترسی‌های حساس
-
+1. **Refresh Token**: توکن‌های کوتاه‌مدت + refresh (می‌توانید از `SimpleJWT` خود جنگو در آینده استفاده کنید)
+2. **Role-Based Access Control کامل**: استفاده فراگیر از سیستم مجوزهای DRF (Permissions) در همه ViewSet‌ها
+3. **Rate Limiting**: استفاده از throttling در DRF
+4. **HTTPS اجباری**: در production همه traffic باید HTTPS باشد (تنظیم `SECURE_SSL_REDIRECT = True`)
+5. **Audit Log**: ادامه ثبت دقیق دسترسی‌های حساس در `ActivityLog`
 ---
 
 ## مثال کامل جریان احراز هویت

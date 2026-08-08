@@ -11,9 +11,7 @@ from db import BaseDocument, new_id, now_iso
 # ---------- Users & Org ----------
 
 RoleFa = Literal[
-    "ادمین سازمان",
-    "طراح فرایند",
-    "مدیر تیم",
+    "مدیر",
     "کارمند",
 ]
 

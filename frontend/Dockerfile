@@ -4,10 +4,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package.json ./
+COPY package.json yarn.lock ./
 
 # Install dependencies
-RUN yarn install --network-timeout 600000
+RUN yarn install --network-timeout 600000 --frozen-lockfile
 
 # Copy the rest of the source
 COPY . .

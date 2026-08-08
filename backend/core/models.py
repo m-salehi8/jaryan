@@ -53,7 +53,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('role', 'ادمین سازمان')
+        extra_fields.setdefault('role', 'مدیر')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         
@@ -80,9 +80,7 @@ class TenantUserManager(UserManager, TenantManager):
 
 class User(AbstractBaseUser, PermissionsMixin, TenantBaseModel):
     ROLE_CHOICES = (
-        ('ادمین سازمان', 'ادمین سازمان'),
-        ('طراح فرایند', 'طراح فرایند'),
-        ('مدیر تیم', 'مدیر تیم'),
+        ('مدیر', 'مدیر'),
         ('کارمند', 'کارمند'),
     )
     email = models.EmailField(unique=True)
@@ -125,6 +123,15 @@ class Workflow(TenantBaseModel):
     def __str__(self):
         return self.name
 
+class Form(TenantBaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    fields = models.JSONField(default=list)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.name
+
 class Task(TenantBaseModel):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -137,6 +144,12 @@ class Task(TenantBaseModel):
     node_id = models.CharField(max_length=100)
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Dynamic JSON data
+    form_data = models.JSONField(default=dict, blank=True)
+    draft_data = models.JSONField(default=dict, blank=True)
+    field_permissions = models.JSONField(default=dict, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

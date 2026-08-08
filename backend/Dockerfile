@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy application code
 COPY . .
 
+# Make entrypoint executable
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
-CMD ["gunicorn", "jaryan.wsgi:application", "--bind", "0.0.0.0:8000"]
+ENTRYPOINT ["/app/entrypoint.sh"]

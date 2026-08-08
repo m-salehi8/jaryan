@@ -93,49 +93,39 @@ def evaluate_rule(rule: Optional[dict], context: dict) -> bool:
     return False
 
 
-@sync_to_async
-def _get_workflow(workflow_id: str):
-    return Workflow.objects.filter(id=workflow_id).first()
+async def _get_workflow(workflow_id: str):
+    return await Workflow.objects.filter(id=workflow_id).afirst()
 
-@sync_to_async
-def _get_user(user_id: str, org_id: str):
-    return User.objects.filter(id=user_id, org_id=org_id).first()
+async def _get_user(user_id: str):
+    return await User.objects.filter(id=user_id).afirst()
 
-@sync_to_async
-def _get_department(dept_id: str, org_id: str):
-    return Department.objects.filter(id=dept_id, org_id=org_id).first()
+async def _get_department(dept_id: str):
+    return await Department.objects.filter(id=dept_id).afirst()
 
-@sync_to_async
-def _get_task(task_id: str):
-    return ORMTask.objects.filter(id=task_id).first()
+async def _get_task(task_id: str):
+    return await ORMTask.objects.filter(id=task_id).afirst()
 
-@sync_to_async
-def _get_all_tasks_for_process(process_instance_id: str):
-    return list(ORMTask.objects.filter(process_instance_id=process_instance_id))
+async def _get_all_tasks_for_process(process_instance_id: str):
+    return [task async for task in ORMTask.objects.filter(process_instance_id=process_instance_id)]
 
-@sync_to_async
-def _get_tasks_by_status(statuses, max_deadline):
-    return list(ORMTask.objects.filter(status__in=statuses, updated_at__lt=max_deadline))
+async def _get_tasks_by_status(statuses, max_deadline):
+    return [task async for task in ORMTask.objects.filter(status__in=statuses, updated_at__lt=max_deadline)]
 
-@sync_to_async
-def _create_task(task_data: dict, workflow: Workflow, org_id: str):
+async def _create_task(task_data: dict, workflow: Workflow):
     user = None
     if task_data.get("assignee_id"):
-        user = User.objects.filter(id=task_data["assignee_id"]).first()
+        user = await User.objects.filter(id=task_data["assignee_id"]).afirst()
     elif task_data.get("assignee_role"):
-        # Simplistic role assignment, pick first user with role or admin
-        user = User.objects.filter(role=task_data["assignee_role"], org_id=org_id).first()
+        user = await User.objects.filter(role=task_data["assignee_role"]).afirst()
         if not user:
-            user = User.objects.filter(org_id=org_id).first() # Fallback
+            user = await User.objects.afirst() # Fallback
             
     if not user:
-        # Cannot assign task to nobody in ORM if assigned_to is required
-        # For this prototype we fallback to any user in org
-        user = User.objects.filter(org_id=org_id).first()
+        user = await User.objects.afirst()
 
-    return ORMTask.objects.create(
+    return await ORMTask.objects.acreate(
         id=task_data["id"],
-        org_id=org_id,
+        org=workflow.org,
         workflow=workflow,
         process_instance_id=task_data["process_id"],
         node_id=task_data["node_id"],
@@ -167,21 +157,21 @@ async def _node_to_task_data(
     elif assignee_type == "specific_user":
         resolved_assignee_id = assignee_id
     elif assignee_type == "manager" and process.get("started_by"):
-        starter = await _get_user(process["started_by"], org)
+        starter = await _get_user(process["started_by"])
         if starter and starter.manager_id:
             resolved_assignee_id = starter.manager_id
         else:
-            resolved_assignee_role = "ادمین سازمان"
+            resolved_assignee_role = "مدیر"
     elif assignee_type == "department_manager" and process.get("started_by"):
-        starter = await _get_user(process["started_by"], org)
+        starter = await _get_user(process["started_by"])
         if starter and starter.department_id:
-            dept = await _get_department(starter.department_id, org)
+            dept = await _get_department(starter.department_id)
             if dept and dept.manager_id:
                 resolved_assignee_id = dept.manager_id
             else:
-                resolved_assignee_role = "ادمین سازمان"
+                resolved_assignee_role = "مدیر"
         else:
-            resolved_assignee_role = "ادمین سازمان"
+            resolved_assignee_role = "مدیر"
 
     task_type = "approval" if ntype == "approval" else "form" if ntype == "form" else "task"
 
@@ -249,14 +239,13 @@ async def update_process_status(process_id: str):
             {"id": process_id}, {"$set": {"status": p_status, "updated_at": now_iso()}}
         )
 
-@sync_to_async
-def _get_expired_tasks(now_dt):
+async def _get_expired_tasks(now_dt):
     # status__in=["pending", "in_progress"] would be needed if tasks have those statuses
     # For now we use the ones available in Task.STATUS_CHOICES
-    return list(ORMTask.objects.filter(
+    return [task async for task in ORMTask.objects.filter(
         status__in=["pending"],
         created_at__lt=now_dt - timedelta(days=3) # simplistic timeout since we don't store deadline in ORM
-    ))
+    )]
 
 async def check_timeouts():
     db = get_db()
@@ -284,7 +273,7 @@ async def check_timeouts():
             continue
 
         if action == "auto_reject":
-            await sync_to_async(ORMTask.objects.filter(id=task.id).update)(status="rejected", updated_at=now_dt)
+            await ORMTask.objects.filter(id=task.id).aupdate(status="rejected", updated_at=now_dt)
             process_completed = process.get("completed_nodes", [])
             process_completed.append(node["id"])
             await db.process_instances.update_one(
@@ -303,19 +292,19 @@ async def check_timeouts():
                     "created_at": now,
                 }
             )
-            await advance_process(process_id=process["id"], completed_node_id=node["id"])
+            await advance_process(process_id=process["id"], completed_node_id=node["id"], task_status="rejected")
             await update_process_status(process["id"])
 
         elif action == "escalate_to_manager":
             starter_id = process.get("started_by")
             new_assignee = None
             if starter_id:
-                starter = await _get_user(starter_id, task.org_id)
+                starter = await _get_user(starter_id)
                 if starter and starter.manager_id:
-                    new_assignee = await _get_user(starter.manager_id, task.org_id)
+                    new_assignee = await _get_user(starter.manager_id)
 
             if new_assignee:
-                await sync_to_async(ORMTask.objects.filter(id=task.id).update)(
+                await ORMTask.objects.filter(id=task.id).aupdate(
                     assigned_to=new_assignee, updated_at=now_dt
                 )
                 await db.activity_logs.insert_one(
@@ -333,7 +322,8 @@ async def check_timeouts():
 
 
 async def advance_process(
-    *, process_id: str, completed_node_id: str, context_update: dict | None = None
+    *, process_id: str, completed_node_id: str, context_update: dict | None = None,
+    task_status: str | None = None
 ) -> dict:
     db = get_db()
     process = await db.process_instances.find_one({"id": process_id}, {"_id": 0})
@@ -349,6 +339,8 @@ async def advance_process(
 
     ctx = dict(process.get("context") or {})
     ctx_updates = dict(context_update) if context_update else {}
+    if task_status:
+        ctx_updates["_task_status"] = task_status
     if ctx_updates:
         ctx.update(ctx_updates)
 
@@ -404,14 +396,14 @@ async def advance_process(
                 continue
 
             # check if there's an existing pending task for this target node
-            existing_task = await sync_to_async(ORMTask.objects.filter(
+            existing_task = await ORMTask.objects.filter(
                 process_instance_id=process_id, node_id=target_id, status__in=["pending", "waiting"]
-            ).first)()
+            ).afirst()
 
             if existing_task:
                 # Assuming ORM doesn't store wait conditions, we just leave it pending
                 if existing_task.status == "waiting" and not missing_deps:
-                    await sync_to_async(ORMTask.objects.filter(id=existing_task.id).update)(status="pending")
+                    await ORMTask.objects.filter(id=existing_task.id).aupdate(status="pending")
                     new_node_ids.append(target_id)
                 continue
 
@@ -435,7 +427,7 @@ async def advance_process(
     created_tasks = []
     if next_tasks_data:
         for t_data in next_tasks_data:
-            t_obj = await _create_task(t_data, workflow_obj, process["org_id"])
+            t_obj = await _create_task(t_data, workflow_obj)
             created_tasks.append(t_obj)
 
     target_types = [nodes_by_id[nid]["type"] for nid in new_node_ids if nid in nodes_by_id]

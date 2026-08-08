@@ -2,51 +2,31 @@
 
 ## ساختار کلی
 
-Backend با **FastAPI** نوشته شده و از معماری تک‌فایلی (`server.py`) با ماژول‌های جداگانه برای منطق تخصصی استفاده می‌کند.
+Backend اخیراً به **Django + Django REST Framework** مهاجرت کرده است و از یک معماری **هیبریدی (PostgreSQL + MongoDB)** استفاده می‌کند. منطق تجاری سیستم در یک app به نام `core` مجتمع شده است.
 
 ---
 
 ## فایل‌های اصلی
 
-### `server.py` — نقطه ورود
+### تنظیمات و نقطه ورود (Django)
 
-تمام Route‌های API در این فایل تعریف شده‌اند. ساختار کلی:
+نقطه ورود اصلی سرور `manage.py` (برای توسعه و دستورات) و `jaryan/wsgi.py` (برای استقرار با Gunicorn) است. تنظیمات در `jaryan/settings.py` قرار دارد.
+تغییرات ساختاری در جنگو اعمال شده که برای مثال `APPEND_SLASH = False` جهت تطابق با کلاینت فعلی در نظر گرفته شده است.
 
+#### Celery و زمان‌بندی (Cron Scheduler)
+
+به جای حلقه `asyncio`، سیستم از **Celery Beat** برای کارهای دوره‌ای استفاده می‌کند:
+
+تنظیمات در `settings.py`:
 ```python
-app = FastAPI(title="Jaryan API")
-api = APIRouter(prefix="/api")
-
-# --- Lifecycle ---
-@app.on_event("startup")    # seed data + cron scheduler
-@app.on_event("shutdown")   # بستن MongoDB client
-
-# --- Routes ---
-# Auth, Users, Departments, Workflows, Forms,
-# Tasks, Processes, Dashboard, Search,
-# Analytics, Comments, AI Chat
-
-app.include_router(api)
-app.add_middleware(CORSMiddleware, ...)
+CELERY_BEAT_SCHEDULE = {
+    'check-timeouts-every-minute': {
+        'task': 'core.tasks.check_timeouts_task',
+        'schedule': crontab(minute='*'),
+    },
+}
 ```
-
-#### Cron Scheduler
-یک task پس‌زمینه (asyncio) که هر ۶۰ ثانیه اجرا می‌شود:
-
-```python
-async def cron_scheduler():
-    while True:
-        # پیدا کردن workflow های cron published
-        cursor = db.workflows.find({"status": "published", "trigger_type": "cron"})
-        async for wf in cursor:
-            if croniter.match(wf["cron_expression"], now_dt):
-                # ایجاد process instance + اجرا
-                await advance_process(...)
-        
-        # بررسی timeout تسک‌ها
-        await check_timeouts()
-        
-        await asyncio.sleep(60 - now.second)
-```
+این task هر دقیقه برای بررسی timeout‌ها و workflow‌های زمان‌بندی‌شده اجرا می‌شود.
 
 ---
 
@@ -66,41 +46,41 @@ async def cron_scheduler():
 
 ---
 
-### `models.py` — مدل‌های Pydantic
+### `models.py` — مدل‌های داده (Django ORM)
 
 مستندات کامل در [06-data-models.md](./06-data-models.md).
 
+مدل‌های پایه با استفاده از ORM جنگو تعریف شده‌اند و قابلیت‌های **Multi-Tenancy** به صورت درونی تعبیه شده است:
+
 ```python
-# BaseDocument: پایه همه documents
-class BaseDocument(BaseModel):
-    id: str = Field(default_factory=new_id)      # UUID4
-    created_at: str = Field(default_factory=now_iso)
-    updated_at: str = Field(default_factory=now_iso)
+class TenantBaseModel(models.Model):
+    id = models.CharField(primary_key=True, default=uuid.uuid4, max_length=100)
+    org = models.ForeignKey(Organization, on_delete=models.CASCADE, ...)
     
-    def to_mongo(self) -> dict   # برای ذخیره در MongoDB
-    def from_mongo(cls, doc) -> Self  # برای خواندن از MongoDB
+    objects = TenantManager() # فیلتر خودکار بر اساس org_id کارنت
+
+    class Meta:
+        abstract = True
 ```
+علاوه بر مدل‌های جنگو، مدل‌های مبتنی بر MongoDB (با استفاده از Pydantic/Motor) نیز همچنان در `engine.py` یا فایل‌های اختصاصی وجود دارند تا به عنوان **ProcessInstance** و اسناد لاگ کار کنند.
 
 ---
 
-### `auth.py` — احراز هویت
+### `auth.py` — احراز هویت سفارشی
 
 مستندات کامل در [09-auth.md](./09-auth.md).
 
+با مهاجرت به جنگو، احراز هویت بر مبنای `BaseAuthentication` جنگو (در قالب یک سیستم JWT سفارشی برای سازگاری با سیستم‌های قبلی) تغییر پیدا کرده است:
+
 ```python
-JWT_SECRET = os.environ["JWT_SECRET"]
-JWT_ALG = "HS256"
-JWT_TTL_HOURS = 24 * 14  # 14 روز
-
-def hash_password(plain: str) -> str    # SHA256
-def verify_password(plain, hashed) -> bool
-def make_token(user_id, org_id) -> str  # JWT
-def decode_token(token) -> dict
-async def get_current_user(authorization) -> User
-
-# Dependency Injection
-CurrentUser = Depends(get_current_user)
+# در تنظیمات REST_FRAMEWORK
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "core.auth.JWTAuthentication",
+    ],
+}
 ```
+کاربر جاری (`current_user`) و `current_org_id` در سطح Middleware نیز استخراج و نگهداری می‌شوند.
 
 ---
 
@@ -175,13 +155,13 @@ class AIService:
 
 | متغیر | الزامی | پیش‌فرض | توضیح |
 |-------|--------|---------|-------|
+| `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` | ✅ | — | تنظیمات اتصال به PostgreSQL |
 | `MONGO_URL` | ✅ | — | آدرس MongoDB |
-| `DB_NAME` | ✅ | — | نام دیتابیس |
-| `JWT_SECRET` | ✅ | — | کلید رمزنگاری JWT |
+| `MONGO_DB_NAME` | ✅ | — | نام دیتابیس MongoDB |
+| `REDIS_URL` | ✅ | `redis://localhost:6379/0` | اتصال Celery/Broker |
+| `SECRET_KEY` | ✅ | — | کلید امنیتی Django / JWT |
 | `EMERGENT_LLM_KEY` | ✅ | — | کلید API هوش مصنوعی |
-| `CORS_ORIGINS` | ❌ | `*` | دامنه‌های مجاز CORS |
-| `OPENAI_BASE_URL` | ❌ | `http://localhost:20128/v1` | آدرس LLM provider |
-| `OPENAI_MODEL` | ❌ | `cf/@cf/moonshotai/kimi-k2.5` | مدل AI |
+| `CORS_ALLOW_ALL_ORIGINS` | ❌ | `True` | کنترل CORS در Django |
 
 ---
 
@@ -217,7 +197,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+# اجرای Gunicorn با WSGI جنگو
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "jaryan.wsgi:application"]
 ```
 
 ---

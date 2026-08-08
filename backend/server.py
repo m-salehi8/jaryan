@@ -168,7 +168,7 @@ async def list_users(user: User = CurrentUser):
 
 @api.post("/users")
 async def create_user(payload: UserCreate, user: User = CurrentUser):
-    if user.role != "ادمین سازمان":
+    if user.role != "مدیر":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
     existing = await db.users.find_one({"email": payload.email})
     if existing:
@@ -195,7 +195,7 @@ async def create_user(payload: UserCreate, user: User = CurrentUser):
 
 @api.patch("/users/{uid}")
 async def update_user_role(uid: str, payload: UserRoleUpdate, user: User = CurrentUser):
-    if user.role != "ادمین سازمان":
+    if user.role != "مدیر":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
     doc = await db.users.find_one({"id": uid, "org_id": user.org_id}, {"_id": 0})
     if not doc:
@@ -220,7 +220,7 @@ async def update_user_role(uid: str, payload: UserRoleUpdate, user: User = Curre
 
 @api.delete("/users/{uid}")
 async def delete_user(uid: str, user: User = CurrentUser):
-    if user.role != "ادمین سازمان":
+    if user.role != "مدیر":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
     if uid == user.id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "cannot_delete_self")
@@ -242,7 +242,7 @@ async def list_departments(user: User = CurrentUser):
 
 @api.post("/departments")
 async def create_department(payload: DepartmentCreate, user: User = CurrentUser):
-    if user.role != "ادمین سازمان":
+    if user.role != "مدیر":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
     dept = Department(
         org_id=user.org_id,
@@ -265,7 +265,7 @@ async def create_department(payload: DepartmentCreate, user: User = CurrentUser)
 async def update_department(
     did: str, payload: DepartmentUpdate, user: User = CurrentUser
 ):
-    if user.role != "ادمین سازمان":
+    if user.role != "مدیر":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
     updates = {
         k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None
@@ -288,7 +288,7 @@ async def update_department(
 
 @api.delete("/departments/{did}")
 async def delete_department(did: str, user: User = CurrentUser):
-    if user.role != "ادمین سازمان":
+    if user.role != "مدیر":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_permissions")
     res = await db.departments.delete_one({"id": did, "org_id": user.org_id})
     if res.deleted_count == 0:
@@ -849,8 +849,10 @@ async def analytics_dashboard(
         return [{"date": k, "count": counts[k]} for k in day_keys]
 
     async def _task_status_dist():
+        # Get ALL workflows for this org (not filtered by created_at — workflows
+        # are created once and reused indefinitely).
         docs = await db.workflows.find(
-            {"org_id": user.org_id, "created_at": {"$gte": start_iso, "$lte": end_iso}},
+            {"org_id": user.org_id},
             {"_id": 0, "id": 1, "name": 1},
         ).to_list(100)
         wf_map = {d["id"]: d["name"] for d in docs}
@@ -881,8 +883,9 @@ async def analytics_dashboard(
             {
                 "$match": {
                     "org_id": user.org_id,
-                    "status": {"$in": ["pending", "in_progress"]},
+                    "status": {"$in": ["approved", "done"]},
                     "assignee_id": {"$ne": None},
+                    "created_at": {"$gte": start_iso, "$lte": end_iso},
                 }
             },
             {"$group": {"_id": "$assignee_id", "task_count": {"$sum": 1}}},
@@ -1046,8 +1049,9 @@ async def analytics_workflow_heatmap(wf_id: str, user: User = CurrentUser):
     return heatmap
 
 
-@api.get("/analytics/forms")
-async def analytics_forms(user: User = CurrentUser):
+@api.get("/analytics/workflow-distribution")
+async def analytics_workflow_distribution(user: User = CurrentUser):
+    """Distribution of process instances grouped by workflow name."""
     pipeline = [
         {"$match": {"org_id": user.org_id}},
         {"$group": {"_id": "$workflow_name", "count": {"$sum": 1}}},
@@ -1056,6 +1060,47 @@ async def analytics_forms(user: User = CurrentUser):
     async for doc in db.process_instances.aggregate(pipeline):
         result.append({"name": doc["_id"], "value": doc["count"]})
     return result
+
+
+@api.get("/analytics/forms")
+async def analytics_forms(user: User = CurrentUser):
+    """Form usage analytics — how many processes ran per form."""
+    # Build a mapping from form_id → form name
+    forms_cursor = db.forms.find(
+        {"org_id": user.org_id}, {"_id": 0, "id": 1, "name": 1}
+    )
+    form_map: dict[str, str] = {}
+    async for f in forms_cursor:
+        if f.get("id"):
+            form_map[f["id"]] = f.get("name", f["id"])
+
+    # Collect all process instances and extract form_ids from their workflow node data
+    # Approach: get all process instances → find their workflow → read node data.form_id
+    wf_ids = set()
+    async for pi in db.process_instances.find(
+        {"org_id": user.org_id}, {"_id": 0, "workflow_id": 1}
+    ):
+        if pi.get("workflow_id"):
+            wf_ids.add(pi["workflow_id"])
+
+    # Get workflows that have form nodes
+    form_usage: dict[str, int] = {}
+    if wf_ids:
+        async for wf in db.workflows.find(
+            {"id": {"$in": list(wf_ids)}}, {"_id": 0, "id": 1, "nodes": 1}
+        ):
+            for node in wf.get("nodes", []):
+                fid = node.get("data", {}).get("form_id")
+                if fid and fid in form_map:
+                    count = await db.process_instances.count_documents(
+                        {"workflow_id": wf["id"], "org_id": user.org_id}
+                    )
+                    form_usage[form_map[fid]] = form_usage.get(form_map[fid], 0) + count
+
+    return [
+        {"name": name, "value": count}
+        for name, count in sorted(form_usage.items(), key=lambda x: -x[1])
+    ]
 
 
 # ---------- Comments ----------

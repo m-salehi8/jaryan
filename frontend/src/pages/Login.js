@@ -8,8 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Workflow, KeyRound } from "lucide-react";
 
 const DEMOS = [
-  { email: "admin@jaryan.ir", password: "admin123", role: "ادمین سازمان" },
-  { email: "hr.manager@jaryan.ir", password: "pass123", role: "مدیر تیم" },
+  { email: "admin@jaryan.ir", password: "admin123", role: "مدیر" },
   { email: "emp1@jaryan.ir", password: "pass123", role: "کارمند" },
 ];
 

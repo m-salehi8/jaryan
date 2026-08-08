@@ -1,0 +1,446 @@
+[
+  {
+    "id": "wf_leave",
+    "name": "درخواست مرخصی",
+    "description": "ثبت و تایید مرخصی کارکنان با زنجیره تایید بر اساس مدت",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "trigger",
+        "label": "شروع: ثبت درخواست",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      },
+      {
+        "id": "n2",
+        "type": "form",
+        "label": "تکمیل فرم مرخصی",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "form_id": "form_leave",
+          "assignee_role": "کارمند"
+        }
+      },
+      {
+        "id": "n3",
+        "type": "approval",
+        "label": "تایید مدیر تیم",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n4",
+        "type": "condition",
+        "label": "بیش از ۳ روز؟",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "expression": "duration > 3"
+        }
+      },
+      {
+        "id": "n5",
+        "type": "approval",
+        "label": "تایید ادمین سازمان",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n6",
+        "type": "end",
+        "label": "اعلام نتیجه",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "n1",
+        "target": "n2"
+      },
+      {
+        "id": "e2",
+        "source": "n2",
+        "target": "n3"
+      },
+      {
+        "id": "e3",
+        "source": "n3",
+        "target": "n4"
+      },
+      {
+        "id": "e4",
+        "source": "n4",
+        "target": "n5",
+        "label": "بله",
+        "condition": {
+          "field_id": "_task_status",
+          "op": "=",
+          "value": "approved"
+        }
+      },
+      {
+        "id": "e5",
+        "source": "n4",
+        "target": "n6",
+        "label": "خیر"
+      },
+      {
+        "id": "e6",
+        "source": "n5",
+        "target": "n6"
+      }
+    ]
+  },
+  {
+    "id": "wf_petty",
+    "name": "تنخواه‌گردان",
+    "description": "درخواست و تصویب تنخواه با مسیر تایید دوگانه بر اساس مبلغ",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "trigger",
+        "label": "ثبت درخواست تنخواه",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      },
+      {
+        "id": "n2",
+        "type": "form",
+        "label": "تکمیل فرم تنخواه",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "form_id": "form_petty",
+          "assignee_role": "کارمند"
+        }
+      },
+      {
+        "id": "n3",
+        "type": "approval",
+        "label": "تایید مدیر",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n4",
+        "type": "approval",
+        "label": "تایید مالی (مبالغ بالا)",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n5",
+        "type": "task",
+        "label": "پرداخت",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n6",
+        "type": "end",
+        "label": "پایان",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "n1",
+        "target": "n2"
+      },
+      {
+        "id": "e2",
+        "source": "n2",
+        "target": "n3"
+      },
+      {
+        "id": "e3",
+        "source": "n3",
+        "target": "n4",
+        "label": "مبلغ>۵میلیون",
+        "condition": {
+          "field_id": "amount",
+          "op": ">",
+          "value": "5000000"
+        }
+      },
+      {
+        "id": "e4",
+        "source": "n3",
+        "target": "n5",
+        "label": "مبلغ عادی"
+      },
+      {
+        "id": "e5",
+        "source": "n4",
+        "target": "n5"
+      },
+      {
+        "id": "e6",
+        "source": "n5",
+        "target": "n6"
+      }
+    ]
+  },
+  {
+    "id": "wf_hire",
+    "name": "جذب و استخدام",
+    "description": "فرایند جذب، مصاحبه و صدور قرارداد نیروی جدید",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "trigger",
+        "label": "شروع فرایند استخدام",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      },
+      {
+        "id": "n2",
+        "type": "form",
+        "label": "تکمیل فرم درخواست استخدام",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "form_id": "form_hire",
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n3",
+        "type": "approval",
+        "label": "بررسی و تایید منابع انسانی",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n4",
+        "type": "condition",
+        "label": "نتیجه بررسی",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      },
+      {
+        "id": "n5",
+        "type": "task",
+        "label": "تنظیم قرارداد و آنبوردینگ",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "کارمند"
+        }
+      },
+      {
+        "id": "n6",
+        "type": "end",
+        "label": "استخدام موفق",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      },
+      {
+        "id": "n7",
+        "type": "end",
+        "label": "رد درخواست",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "n1",
+        "target": "n2"
+      },
+      {
+        "id": "e2",
+        "source": "n2",
+        "target": "n3"
+      },
+      {
+        "id": "e3",
+        "source": "n3",
+        "target": "n4"
+      },
+      {
+        "id": "e4",
+        "source": "n4",
+        "target": "n5",
+        "label": "تایید",
+        "condition": {
+          "field_id": "_task_status",
+          "op": "=",
+          "value": "approved"
+        }
+      },
+      {
+        "id": "e5",
+        "source": "n4",
+        "target": "n7",
+        "label": "رد",
+        "condition": {
+          "field_id": "_task_status",
+          "op": "=",
+          "value": "rejected"
+        }
+      },
+      {
+        "id": "e6",
+        "source": "n5",
+        "target": "n6"
+      }
+    ]
+  },
+  {
+    "id": "wf_it",
+    "name": "پشتیبانی فناوری اطلاعات",
+    "description": "ثبت و پیگیری درخواست‌های پشتیبانی فناوری اطلاعات",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "trigger",
+        "label": "ثبت تیکت پشتیبانی",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      },
+      {
+        "id": "n2",
+        "type": "form",
+        "label": "ثبت شرح مشکل",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "form_id": "form_it",
+          "assignee_role": "کارمند"
+        }
+      },
+      {
+        "id": "n3",
+        "type": "task",
+        "label": "بررسی و رفع مشکل",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "مدیر"
+        }
+      },
+      {
+        "id": "n4",
+        "type": "approval",
+        "label": "تایید کاربر (پایان کار)",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "assignee_role": "کارمند"
+        }
+      },
+      {
+        "id": "n5",
+        "type": "end",
+        "label": "تیکت بسته شد",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "n1",
+        "target": "n2"
+      },
+      {
+        "id": "e2",
+        "source": "n2",
+        "target": "n3"
+      },
+      {
+        "id": "e3",
+        "source": "n3",
+        "target": "n4"
+      },
+      {
+        "id": "e4",
+        "source": "n4",
+        "target": "n5"
+      }
+    ]
+  }
+]

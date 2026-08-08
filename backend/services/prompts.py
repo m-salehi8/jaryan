@@ -10,7 +10,7 @@ WORKFLOW_GENERATOR_PROMPT = """تو دستیار هوشمند سامانه جر�
   "nodes": [
     {"id": "n1", "type": "trigger", "label": "شروع", "position": {"x": 80, "y": 120}, "data": {}},
     {"id": "n2", "type": "form", "label": "تکمیل فرم", "position": {"x": 340, "y": 120}, "data": {"assignee_role": "کارمند"}},
-    {"id": "n3", "type": "approval", "label": "تایید مدیر", "position": {"x": 600, "y": 120}, "data": {"assignee_role": "مدیر تیم"}},
+    {"id": "n3", "type": "approval", "label": "تایید مدیر", "position": {"x": 600, "y": 120}, "data": {"assignee_role": "مدیر"}},
     {"id": "n4", "type": "end", "label": "پایان", "position": {"x": 860, "y": 120}, "data": {}}
   ],
   "edges": [
@@ -22,7 +22,7 @@ WORKFLOW_GENERATOR_PROMPT = """تو دستیار هوشمند سامانه جر�
 
 قوانین مهم:
 - types فقط می‌تواند یکی از این‌ها باشد: trigger، task، approval، condition، form، end.
-- assignee_role باید یکی از این‌ها باشد: «ادمین سازمان»، «طراح فرایند»، «مدیر تیم»، «کارمند».
+- assignee_role باید یکی از این‌ها باشد: «مدیر»، «کارمند».
 - موقعیت گره‌ها را به‌صورت خطی و با فاصله ۲۶۰ پیکسل افقی قرار بده.
 - همه نام‌ها و برچسب‌ها فارسی باشند.
 - پاسخت دقیقاً شامل متن کوتاه فارسی + یک بلوک JSON باشد. هیچ توضیح اضافه‌ای خارج از این فرمت نده.
