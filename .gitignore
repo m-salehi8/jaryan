@@ -93,6 +93,12 @@ credentials.json
 data/db/
 data/mongod.log*
 
+# Database
+backend/db.sqlite3
+
+# Generated datasets
+dataset/
+
 # Temp directories
 tmp_deps/
 test_reports/
