@@ -16,7 +16,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
 _mongo_url = os.environ["MONGO_URL"]
-_db_name = os.environ["DB_NAME"]
+_db_name = os.environ["MONGO_DB_NAME"]
 
 client: AsyncIOMotorClient = AsyncIOMotorClient(_mongo_url)
 db: AsyncIOMotorDatabase = client[_db_name]

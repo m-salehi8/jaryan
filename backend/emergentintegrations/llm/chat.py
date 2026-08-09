@@ -37,8 +37,8 @@ class StreamDone:
 
 # ── LlmChat ───────────────────────────────────────────────────────────────────
 
-_DEFAULT_BASE = os.environ.get("OPENAI_BASE_URL", "http://localhost:20128/v1")
-_DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "cf/@cf/moonshotai/kimi-k2.5")
+_DEFAULT_BASE = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+_DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 
 
 class LlmChat:

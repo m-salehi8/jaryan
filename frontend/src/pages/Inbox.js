@@ -10,6 +10,7 @@ import FormRenderer from "@/components/FormRenderer";
 import { getSLAStatus, SLA_BADGE } from "@/lib/sla";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { evaluateRule } from "@/lib/formLogic";
+import { Input } from "@/components/ui/input";
 
 const FILTERS = [
   { key: "all", label: "همه" },
@@ -206,16 +207,16 @@ export default function Inbox() {
           <span className="text-xs text-muted-foreground fa-nums">({toFaNumber(filtered.length)})</span>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button variant="ghost" size="icon"
             data-testid="toggle-mine"
             onClick={() => setAssignedToMe(v => !v)}
             className={`text-xs px-2.5 py-1 rounded-md border ${assignedToMe ? "bg-primary text-primary-foreground border-neutral-900" : "bg-card border-border text-muted-foreground"}`}
           >
             {assignedToMe ? "تسک‌های من" : "همه تسک‌ها"}
-          </button>
+          </Button>
           <div className="flex items-center gap-2 border border-border rounded-md px-2 bg-card">
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <input
+            <Input
               data-testid="inbox-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -230,7 +231,7 @@ export default function Inbox() {
       <div className="border-b border-border bg-card px-6 py-2 flex items-center gap-1 overflow-x-auto">
         <Filter className="w-3.5 h-3.5 text-muted-foreground ms-2 shrink-0" />
         {FILTERS.map((f) => (
-          <button
+          <Button variant="ghost" size="icon"
             key={f.key}
             data-testid={`filter-${f.key}`}
             onClick={() => setFilter(f.key)}
@@ -239,7 +240,7 @@ export default function Inbox() {
             }`}
           >
             {f.label}
-          </button>
+          </Button>
         ))}
       </div>
 

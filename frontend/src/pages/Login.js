@@ -9,7 +9,7 @@ import { ArrowLeft, Workflow, KeyRound } from "lucide-react";
 
 const DEMOS = [
   { email: "admin@jaryan.ir", password: "admin123", role: "مدیر" },
-  { email: "emp1@jaryan.ir", password: "pass123", role: "کارمند" },
+  { email: "emp1@jaryan.ir",  password: "pass123",  role: "کارمند" },
 ];
 
 export default function Login() {

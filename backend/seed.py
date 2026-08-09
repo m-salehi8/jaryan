@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+import os
 
 from auth import hash_password
 from db import db, new_id, now_iso
@@ -23,6 +24,9 @@ from models import (
 
 
 async def seed() -> dict:
+    if os.environ.get("ENV", "development") == "production":
+        return {"status": "skipped", "reason": "production_environment"}
+
     # Idempotent + auto-migration: if the latest sample form ("درخواست خدمات")
     # is missing, wipe and reseed so new schema features show up.
     existing_org = await db.organizations.find_one(

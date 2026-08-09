@@ -41,6 +41,11 @@ echo "==> Starting Gunicorn..."
 exec gunicorn jaryan.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 3 \
-    --timeout 120 \
+    --timeout 300 \
+    --graceful-timeout 30 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
     --access-logfile - \
-    --error-logfile -
+    --error-logfile - \
+    --log-level info

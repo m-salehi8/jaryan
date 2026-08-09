@@ -48,13 +48,6 @@ from models import (
     WorkflowUpdate,
 )
 from seed import seed as seed_data
-from pydantic import BaseModel
-
-
-class SimulatePayload(BaseModel):
-    mock_context: dict
-
-
 # ---------- AI ----------
 from services.ai_service import ai_service
 
@@ -68,8 +61,9 @@ logger = logging.getLogger("jaryan")
 # ---------- Lifecycle ----------
 @app.on_event("startup")
 async def _startup() -> None:
-    result = await seed_data()
-    logger.info("seed: %s", result)
+    if os.environ.get("ENV", "development") != "production":
+        result = await seed_data()
+        logger.info("seed: %s", result)
     asyncio.create_task(cron_scheduler())
 
 
@@ -80,6 +74,9 @@ async def cron_scheduler():
             now_dt = datetime.now(timezone.utc)
             cursor = db.workflows.find({"status": "published", "trigger_type": "cron"})
             async for wf in cursor:
+                org_id = wf.get("org_id")
+                if not org_id:
+                    continue
                 expr = wf.get("cron_expression")
                 if not expr:
                     continue
@@ -90,9 +87,9 @@ async def cron_scheduler():
                         if (now_dt - last_dt).total_seconds() < 50:
                             continue
 
-                    logger.info(f"Triggering cron workflow {wf['id']} '{wf['name']}'")
+                    logger.info(f"Triggering cron workflow {wf['id']} '{wf['name']}' for org {org_id}")
                     await db.workflows.update_one(
-                        {"id": wf["id"]}, {"$set": {"last_triggered_at": now_iso()}}
+                        {"id": wf["id"], "org_id": org_id}, {"$set": {"last_triggered_at": now_iso()}}
                     )
 
                     first_node = next(
@@ -101,12 +98,13 @@ async def cron_scheduler():
                     )
                     if first_node:
                         instance = ProcessInstance(
-                            org_id=wf["org_id"],
+                            org_id=org_id,
                             workflow_id=wf["id"],
                             workflow_name=wf["name"],
                             started_by=None,
                             current_node_id=first_node["id"],
                             status="running",
+                            completed_nodes=[first_node["id"]],
                             context={"requester": "System (Cron)"},
                             workflow_snapshot={
                                 "nodes": wf.get("nodes", []),
@@ -115,7 +113,7 @@ async def cron_scheduler():
                         )
                         await db.process_instances.insert_one(instance.to_mongo())
                         await advance_process(
-                            process_id=instance.id, completed_node_id=first_node["id"]
+                            process_id=instance.id, org_id=org_id, completed_node_id=first_node["id"]
                         )
 
             # Check timeouts for escalation/rejection
@@ -304,6 +302,27 @@ async def delete_department(did: str, user: User = CurrentUser):
     return {"deleted": True}
 
 
+async def _get_workflow_or_404(wf_id: str, org_id: str) -> dict:
+    doc = await db.workflows.find_one({"id": wf_id, "org_id": org_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "workflow_not_found")
+    return doc
+
+
+async def _get_form_or_404(form_id: str, org_id: str) -> dict:
+    doc = await db.forms.find_one({"id": form_id, "org_id": org_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "form_not_found")
+    return doc
+
+
+async def _get_process_or_404(pid: str, org_id: str) -> dict:
+    doc = await db.process_instances.find_one({"id": pid, "org_id": org_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "process_not_found")
+    return doc
+
+
 # ---------- Workflows ----------
 @api.get("/workflows")
 async def list_workflows(user: User = CurrentUser):
@@ -334,9 +353,7 @@ async def create_workflow(payload: WorkflowCreate, user: User = CurrentUser):
 
 @api.get("/workflows/{wf_id}")
 async def get_workflow(wf_id: str, user: User = CurrentUser):
-    doc = await db.workflows.find_one({"id": wf_id, "org_id": user.org_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(404, "workflow_not_found")
+    doc = await _get_workflow_or_404(wf_id, user.org_id)
     return doc
 
 
@@ -360,17 +377,14 @@ async def update_workflow(
 
 @api.delete("/workflows/{wf_id}")
 async def delete_workflow(wf_id: str, user: User = CurrentUser):
-    res = await db.workflows.delete_one({"id": wf_id, "org_id": user.org_id})
-    if res.deleted_count == 0:
-        raise HTTPException(404, "workflow_not_found")
+    await _get_workflow_or_404(wf_id, user.org_id)
+    await db.workflows.delete_one({"id": wf_id, "org_id": user.org_id})
     return {"deleted": True}
 
 
 @api.post("/workflows/{wf_id}/start")
 async def start_workflow(wf_id: str, user: User = CurrentUser):
-    wf = await db.workflows.find_one({"id": wf_id, "org_id": user.org_id}, {"_id": 0})
-    if not wf:
-        raise HTTPException(404, "workflow_not_found")
+    wf = await _get_workflow_or_404(wf_id, user.org_id)
     if wf.get("status") != "published":
         raise HTTPException(400, "workflow_not_published")
     first_node = next(
@@ -400,23 +414,10 @@ async def start_workflow(wf_id: str, user: User = CurrentUser):
     if first_node:
         advanced = await advance_process(
             process_id=instance.id,
+            org_id=instance.org_id,
             completed_node_id=first_node["id"],
         )
     return {"process": instance, "advanced": advanced}
-
-
-@api.post("/workflows/{wf_id}/simulate")
-async def simulate_workflow_endpoint(
-    wf_id: str, payload: SimulatePayload, user: User = CurrentUser
-):
-    wf = await db.workflows.find_one({"id": wf_id, "org_id": user.org_id}, {"_id": 0})
-    if not wf:
-        raise HTTPException(404, "workflow_not_found")
-
-    from engine import simulate_workflow
-
-    traces = await simulate_workflow(wf, payload.mock_context)
-    return {"traces": traces}
 
 
 # ---------- Forms ----------
@@ -448,9 +449,7 @@ async def create_form(payload: FormCreate, user: User = CurrentUser):
 
 @api.get("/forms/{form_id}")
 async def get_form(form_id: str, user: User = CurrentUser):
-    doc = await db.forms.find_one({"id": form_id, "org_id": user.org_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(404, "form_not_found")
+    doc = await _get_form_or_404(form_id, user.org_id)
     return doc
 
 
@@ -470,9 +469,8 @@ async def update_form(form_id: str, payload: FormUpdate, user: User = CurrentUse
 
 @api.delete("/forms/{form_id}")
 async def delete_form(form_id: str, user: User = CurrentUser):
-    res = await db.forms.delete_one({"id": form_id, "org_id": user.org_id})
-    if res.deleted_count == 0:
-        raise HTTPException(404, "form_not_found")
+    await _get_form_or_404(form_id, user.org_id)
+    await db.forms.delete_one({"id": form_id, "org_id": user.org_id})
     return {"deleted": True}
 
 
@@ -494,22 +492,21 @@ async def list_tasks(
     rows = await db.tasks.find(q, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return rows
 
+async def _get_task_or_404(task_id: str, org_id: str) -> dict:
+    doc = await db.tasks.find_one({"id": task_id, "org_id": org_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "task_not_found")
+    return doc
 
 @api.get("/tasks/{task_id}")
 async def get_task(task_id: str, user: User = CurrentUser):
-    doc = await db.tasks.find_one({"id": task_id, "org_id": user.org_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(404, "task_not_found")
+    doc = await _get_task_or_404(task_id, user.org_id)
     return doc
 
 
 @api.patch("/tasks/{task_id}")
 async def update_task(task_id: str, payload: TaskUpdate, user: User = CurrentUser):
-    doc_initial = await db.tasks.find_one(
-        {"id": task_id, "org_id": user.org_id}, {"_id": 0}
-    )
-    if not doc_initial:
-        raise HTTPException(404, "task_not_found")
+    doc_initial = await _get_task_or_404(task_id, user.org_id)
 
     updates: dict = {"updated_at": now_iso()}
     is_completing = payload.status in ("approved", "rejected", "done")
@@ -553,6 +550,7 @@ async def update_task(task_id: str, payload: TaskUpdate, user: User = CurrentUse
         context_update["_task_status"] = payload.status
         advanced = await advance_process(
             process_id=doc["process_id"],
+            org_id=user.org_id,
             completed_node_id=doc["node_id"],
             context_update=context_update,
         )
@@ -582,11 +580,9 @@ async def update_task(task_id: str, payload: TaskUpdate, user: User = CurrentUse
 async def save_task_draft(
     task_id: str, payload: TaskDraftUpdate, user: User = CurrentUser
 ):
-    doc = await db.tasks.find_one({"id": task_id, "org_id": user.org_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(404, "task_not_found")
+    doc = await _get_task_or_404(task_id, user.org_id)
     await db.tasks.update_one(
-        {"id": task_id},
+        {"id": task_id, "org_id": user.org_id},
         {"$set": {"draft_data": payload.draft_data, "updated_at": now_iso()}},
     )
     return {"saved": True}
@@ -605,11 +601,7 @@ async def list_processes(user: User = CurrentUser):
 
 @api.get("/processes/{pid}")
 async def get_process(pid: str, user: User = CurrentUser):
-    doc = await db.process_instances.find_one(
-        {"id": pid, "org_id": user.org_id}, {"_id": 0}
-    )
-    if not doc:
-        raise HTTPException(404, "process_not_found")
+    doc = await _get_process_or_404(pid, user.org_id)
     tasks = await db.tasks.find(
         {"process_id": pid, "org_id": user.org_id}, {"_id": 0}
     ).to_list(1000)

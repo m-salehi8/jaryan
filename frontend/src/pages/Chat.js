@@ -4,6 +4,7 @@ import { Sparkles, Send, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { api, streamAI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const SUGGESTIONS = [
   "فرایند درخواست مرخصی بساز",
@@ -117,14 +118,14 @@ const [sessionId] = useState(() => {
               </p>
               <div className="mt-8 grid sm:grid-cols-2 gap-2 max-w-xl mx-auto">
                 {SUGGESTIONS.map((s) => (
-                  <button
+                  <Button variant="ghost" size="icon"
                     key={s}
                     data-testid={`suggestion-${s.slice(0, 8)}`}
                     onClick={() => send(s)}
                     className="text-right px-4 py-3 rounded-lg border border-border hover:border-brand hover:bg-brand-soft hover:text-brand transition-colors text-sm text-muted-foreground"
                   >
                     {s}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -197,7 +198,7 @@ const [sessionId] = useState(() => {
             onSubmit={(e) => { e.preventDefault(); send(); }}
             className="flex items-center gap-2 rounded-xl border border-border focus-within:border-neutral-900 bg-card px-3"
           >
-            <input
+            <Input
               data-testid="chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -205,14 +206,14 @@ const [sessionId] = useState(() => {
               className="flex-1 bg-transparent py-3 text-sm focus:outline-none"
               disabled={streaming}
             />
-            <button
+            <Button variant="ghost" size="icon"
               type="submit"
               data-testid="chat-send"
               disabled={streaming || !input.trim()}
               className="p-2 rounded-md bg-brand text-white hover:bg-brand-strong disabled:opacity-40 transition shadow-[0_4px_14px_rgba(79,70,229,0.25)]"
             >
               <Send className="w-4 h-4 rotate-180" />
-            </button>
+            </Button>
           </form>
         </div>
       </div>

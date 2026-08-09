@@ -1,4 +1,4 @@
-version: "3.9"
+
 
 services:
   # ─────────────────────────────
@@ -79,6 +79,8 @@ services:
       DB_PASS: postgres
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./dataset:/dataset:ro
     depends_on:
       mongo:
         condition: service_healthy
@@ -104,7 +106,7 @@ services:
       dockerfile: Dockerfile
     container_name: jaryan_celery_worker
     restart: unless-stopped
-    command: ["celery", "-A", "jaryan", "worker", "-l", "info"]
+    command: ["celery", "-A", "jaryan", "worker", "-l", "info", "--without-gossip", "--without-mingle", "--without-heartbeat"]
     env_file:
       - ./backend/.env
     environment:
@@ -117,6 +119,8 @@ services:
       DB_PASS: postgres
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./dataset:/dataset:ro
     depends_on:
       db:
         condition: service_healthy
@@ -147,6 +151,8 @@ services:
       DB_PASS: postgres
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./dataset:/dataset:ro
     depends_on:
       db:
         condition: service_healthy

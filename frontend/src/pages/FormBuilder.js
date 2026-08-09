@@ -134,7 +134,7 @@ export default function FormBuilder() {
       <div className="border-b border-border bg-card px-6 py-3 flex items-center justify-between sticky top-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
           <Link to="/admin/forms" className="text-muted-foreground hover:text-foreground"><ArrowRight className="w-4 h-4" /></Link>
-          <input
+          <Input
             data-testid="form-name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -160,7 +160,7 @@ export default function FormBuilder() {
             {FIELD_TYPES.map((t) => {
               const Icon = t.icon;
               return (
-                <button
+                <Button variant="ghost" size="icon"
                   key={t.key}
                   data-testid={`palette-${t.key}`}
                   onClick={() => addField(t.key)}
@@ -170,7 +170,7 @@ export default function FormBuilder() {
                 >
                   <Icon className="w-4 h-4" />
                   {t.label}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -224,9 +224,9 @@ export default function FormBuilder() {
                 <div className="flex items-center gap-2 text-xs font-medium">
                   <Sparkles className="w-3.5 h-3.5" /> پیش‌نمایش زنده
                 </div>
-                <button onClick={() => setPreviewValues({})} className="text-[11px] text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" onClick={() => setPreviewValues({})} className="text-[11px] text-muted-foreground hover:text-foreground">
                   پاک‌سازی
-                </button>
+                </Button>
               </div>
               <div className="p-5 max-h-[70vh] overflow-y-auto">
                 {form.fields.length === 0 ? (
@@ -277,7 +277,7 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
             <Settings2 className="w-4 h-4" />
             تنظیمات فیلد — {f.label}
           </SheetTitle>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="w-4 h-4" /></button>
+          <Button variant="ghost" size="icon" onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="w-4 h-4" /></Button>
         </div>
       </SheetHeader>
 
@@ -398,13 +398,13 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
           </Section>
         )}
 
-        <button
+        <Button variant="ghost" size="icon"
           data-testid="ins-delete"
           onClick={onRemove}
           className="w-full mt-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 inline-flex items-center justify-center gap-2"
         >
           <Trash2 className="w-3.5 h-3.5" /> حذف فیلد
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -433,9 +433,9 @@ function OptionsEditor({ options, onChange }) {
       {options.map((o, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <Input value={o} onChange={(e) => { const n = [...options]; n[i] = e.target.value; onChange(n); }} />
-          <button onClick={() => onChange(options.filter((_, idx) => idx !== i))} className="p-1.5 text-muted-foreground hover:text-red-600">
+          <Button variant="ghost" size="icon" onClick={() => onChange(options.filter((_, idx) => idx !== i))} className="p-1.5 text-muted-foreground hover:text-red-600">
             <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       ))}
       <Button variant="outline" size="sm" onClick={() => onChange([...options, `گزینه ${options.length + 1}`])} className="w-full">
@@ -455,9 +455,9 @@ function TabsEditor({ tabs, onChange }) {
             value={t.label}
             onChange={(e) => onChange(tabs.map(x => x.id === t.id ? { ...x, label: e.target.value } : x))}
           />
-          <button onClick={() => onChange(tabs.filter(x => x.id !== t.id))} className="p-1.5 text-muted-foreground hover:text-red-600">
+          <Button variant="ghost" size="icon" onClick={() => onChange(tabs.filter(x => x.id !== t.id))} className="p-1.5 text-muted-foreground hover:text-red-600">
             <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       ))}
       <Button
@@ -477,14 +477,14 @@ function RuleEditor({ rule, controllers, onChange }) {
 
   if (!rule) {
     return (
-      <button
+      <Button variant="ghost" size="icon"
         data-testid="add-rule"
         onClick={() => onChange({ field_id: controllers[0]?.id || "", op: "=", value: "" })}
         disabled={controllers.length === 0}
         className="w-full text-sm py-2 px-3 border border-dashed border-border rounded-lg hover:border-brand hover:bg-brand-soft disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-brand transition-colors"
       >
         {controllers.length === 0 ? "ابتدا فیلدی بالاتر اضافه کن" : "+ افزودن قاعده شرطی"}
-      </button>
+      </Button>
     );
   }
 
@@ -503,13 +503,13 @@ function RuleEditor({ rule, controllers, onChange }) {
           onChange={(c) => onChange(c)}
           onRemove={() => onChange(null)}
         />
-        <button
+        <Button variant="ghost" size="icon"
           data-testid="add-and-clause"
           onClick={promoteToGroup}
           className="w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground transition-colors"
         >
           + افزودن شرط ترکیبی (و / یا)
-        </button>
+        </Button>
       </div>
     );
   }
@@ -519,22 +519,22 @@ function RuleEditor({ rule, controllers, onChange }) {
     <div className="bg-muted/60 border border-border rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between mb-1">
         <div className="inline-flex rounded-md border border-border overflow-hidden">
-          <button
+          <Button variant="ghost" size="icon"
             data-testid="combinator-and"
             onClick={() => onChange({ ...rule, combinator: "and" })}
             className={`px-2.5 py-1 text-[11px] font-medium ${rule.combinator === "and" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
-          >و (همه)</button>
-          <button
+          >و (همه)</Button>
+          <Button variant="ghost" size="icon"
             data-testid="combinator-or"
             onClick={() => onChange({ ...rule, combinator: "or" })}
             className={`px-2.5 py-1 text-[11px] font-medium border-s border-border ${rule.combinator === "or" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
-          >یا (یکی)</button>
+          >یا (یکی)</Button>
         </div>
-        <button
+        <Button variant="ghost" size="icon"
           data-testid="remove-rule"
           onClick={() => onChange(null)}
           className="text-[11px] text-muted-foreground hover:text-red-600"
-        >پاک‌سازی همه</button>
+        >پاک‌سازی همه</Button>
       </div>
 
       {rule.conditions.map((c, idx) => (
@@ -556,7 +556,7 @@ function RuleEditor({ rule, controllers, onChange }) {
         />
       ))}
 
-      <button
+      <Button variant="ghost" size="icon"
         data-testid="add-another-clause"
         onClick={() => onChange({
           ...rule,
@@ -565,7 +565,7 @@ function RuleEditor({ rule, controllers, onChange }) {
         className="w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground transition-colors"
       >
         + افزودن شرط دیگر
-      </button>
+      </Button>
     </div>
   );
 }
@@ -583,9 +583,9 @@ function ClauseEditor({ clause, controllers, onChange, onRemove, index, combinat
       )}
       <div className="flex items-center justify-between">
         <div className="text-[10px] text-muted-foreground">وقتی…</div>
-        <button onClick={onRemove} className="text-neutral-300 hover:text-red-600">
+        <Button variant="ghost" size="icon" onClick={onRemove} className="text-neutral-300 hover:text-red-600">
           <X className="w-3 h-3" />
-        </button>
+        </Button>
       </div>
       <Select value={clause.field_id || ""} onValueChange={(v) => onChange({ ...clause, field_id: v })}>
         <SelectTrigger data-testid="rule-field" className="h-8 text-xs"><SelectValue placeholder="فیلد" /></SelectTrigger>
@@ -638,15 +638,15 @@ function FieldCard({
     >
       <div className="p-3 flex items-start gap-2 group" onClick={onSelect}>
         <div className="flex flex-col items-center gap-0.5 text-neutral-300 pt-1">
-          <button onClick={(e) => { e.stopPropagation(); onMove(-1); }} className="hover:text-muted-foreground"><ChevronUp className="w-3 h-3" /></button>
-          <button onClick={(e) => { e.stopPropagation(); onMove(1); }} className="hover:text-muted-foreground"><ChevronDown className="w-3 h-3" /></button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMove(-1); }} className="hover:text-muted-foreground"><ChevronUp className="w-3 h-3" /></Button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMove(1); }} className="hover:text-muted-foreground"><ChevronDown className="w-3 h-3" /></Button>
         </div>
         <div className="flex-1 min-w-0 space-y-1.5 cursor-pointer">
           <div className="flex items-center gap-2">
             <span className={`text-[10px] mono uppercase px-1.5 py-0.5 rounded ${
               f.type === "tabs" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             }`}>{f.type}</span>
-            <input
+            <Input
               data-testid={`field-${f.id}-label`}
               value={f.label}
               onChange={(e) => onUpdate({ label: e.target.value })}
@@ -663,13 +663,13 @@ function FieldCard({
             <div className="text-[11px] text-muted-foreground">{f.placeholder || "نمونه ورودی…"}</div>
           )}
         </div>
-        <button
+        <Button variant="ghost" size="icon"
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
           data-testid={`field-${f.id}-delete`}
           className="opacity-0 group-hover:opacity-100 transition p-1.5 text-red-500 hover:bg-red-50 rounded-md"
         >
           <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       </div>
 
       {f.type === "tabs" && (
@@ -697,23 +697,23 @@ function FieldCard({
                     data-testid={`child-${cf.id}`}
                   >
                     <div className="flex flex-col items-center gap-0.5 text-neutral-300">
-                      <button onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, -1); }}><ChevronUp className="w-3 h-3 hover:text-muted-foreground" /></button>
-                      <button onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, 1); }}><ChevronDown className="w-3 h-3 hover:text-muted-foreground" /></button>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, -1); }}><ChevronUp className="w-3 h-3 hover:text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, 1); }}><ChevronDown className="w-3 h-3 hover:text-muted-foreground" /></Button>
                     </div>
                     <span className="text-[10px] mono uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{cf.type}</span>
-                    <input
+                    <Input
                       value={cf.label}
                       onChange={(e) => onUpdateChild(cf.id, { label: e.target.value })}
                       onClick={(e) => e.stopPropagation()}
                       className="flex-1 bg-transparent text-sm font-medium border-0 focus:outline-none"
                     />
                     {cf.visible_if && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">شرطی</span>}
-                    <button
+                    <Button variant="ghost" size="icon"
                       onClick={(e) => { e.stopPropagation(); onRemoveChild(cf.id); }}
                       className="p-1 text-neutral-300 hover:text-red-600"
                     >
                       <Trash2 className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -732,13 +732,13 @@ function ChildAdder({ onAdd }) {
   const types = FIELD_TYPES.filter(t => t.key !== "tabs"); // no nested tabs for simplicity
   if (!open) {
     return (
-      <button
+      <Button variant="ghost" size="icon"
         onClick={() => setOpen(true)}
         data-testid="add-child-field"
         className="mt-2 w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-neutral-900 hover:bg-card text-muted-foreground"
       >
         + افزودن فیلد به این تب
-      </button>
+      </Button>
     );
   }
   return (
@@ -746,7 +746,7 @@ function ChildAdder({ onAdd }) {
       {types.map(t => {
         const Icon = t.icon;
         return (
-          <button
+          <Button variant="ghost" size="icon"
             key={t.key}
             onClick={() => { onAdd(t.key); setOpen(false); }}
             data-testid={`add-child-${t.key}`}
@@ -754,10 +754,10 @@ function ChildAdder({ onAdd }) {
           >
             <Icon className="w-3.5 h-3.5" />
             {t.label}
-          </button>
+          </Button>
         );
       })}
-      <button onClick={() => setOpen(false)} className="text-[10px] text-muted-foreground col-span-4 py-1">انصراف</button>
+      <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="text-[10px] text-muted-foreground col-span-4 py-1">انصراف</Button>
     </div>
   );
 }

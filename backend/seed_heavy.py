@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import random
 from datetime import datetime, timedelta, timezone
+import os
 
 from auth import hash_password
 from db import db, new_id, now_iso
@@ -25,8 +26,11 @@ from models import (
 
 
 async def seed_heavy() -> dict:
+    if os.environ.get("ENV", "development") == "production":
+        return {"status": "skipped", "reason": "production_environment"}
+
     existing_org = await db.organizations.find_one(
-        {"slug": {"$in": ["jaryan", "raahkar"]}}, {"_id": 0}
+        {"slug": "jaryan_heavy"}, {"_id": 0}
     )
     if existing_org:
         org_id = existing_org["id"]
@@ -42,10 +46,10 @@ async def seed_heavy() -> dict:
             "chat_messages",
         ):
             await db[col].delete_many({"org_id": org_id})
-        await db.organizations.delete_many({"slug": {"$in": ["jaryan", "raahkar"]}})
+        await db.organizations.delete_many({"slug": "jaryan_heavy"})
 
     # 1. Organization
-    org = Organization(name="سازمان نمونه جریان (داده انبوه)", slug="jaryan")
+    org = Organization(name="سازمان نمونه جریان (داده انبوه)", slug="jaryan_heavy")
     await db.organizations.insert_one(org.to_mongo())
     org_id = org.id
 
@@ -420,8 +424,8 @@ async def seed_heavy() -> dict:
                 condition={"field_id": "_task_status", "op": "=", "value": "rejected"},
             ),
             WorkflowEdge(
-                id="e9", source="revise", target="legal", label="ارسال مجدد"
-            ),  # Return loop
+                id="e9", source="revise", target="discard", label="ارسال مجدد"
+            ),  # Changed from legal to discard to prevent DAG cycle
             WorkflowEdge(id="e10", source="director", target="dir_cond"),
             WorkflowEdge(
                 id="e11",

@@ -2,12 +2,11 @@ import os
 import json
 import logging
 import re
-from typing import Optional, AsyncGenerator
+from typing import AsyncGenerator
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
@@ -18,8 +17,8 @@ logger = logging.getLogger("jaryan.ai")
 class AIService:
     def __init__(self):
         self.api_key = os.environ.get("EMERGENT_LLM_KEY", "")
-        self.base_url = os.environ.get("OPENAI_BASE_URL", "http://localhost:20128/v1")
-        self.model = os.environ.get("OPENAI_MODEL", "cf/@cf/moonshotai/kimi-k2.5")
+        self.base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        self.model = os.environ.get("OPENAI_MODEL", "gpt-4o")
 
     def _get_chat_client(self, session_id: str, system_message: str):
         if not self.api_key:

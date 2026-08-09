@@ -210,10 +210,10 @@ def _outgoing(edges: list[dict], node_id: str) -> list[dict]:
     return [e for e in edges if e.get("source") == node_id]
 
 
-async def update_process_status(process_id: str):
+async def update_process_status(process_id: str, org_id: str):
     tasks = await _get_all_tasks_for_process(process_id)
     db = get_db()
-    process = await db.process_instances.find_one({"id": process_id})
+    process = await db.process_instances.find_one({"id": process_id, "org_id": org_id})
     if not process:
         return
 
@@ -236,7 +236,7 @@ async def update_process_status(process_id: str):
 
     if p_status != process.get("status"):
         await db.process_instances.update_one(
-            {"id": process_id}, {"$set": {"status": p_status, "updated_at": now_iso()}}
+            {"id": process_id, "org_id": org_id}, {"$set": {"status": p_status, "updated_at": now_iso()}}
         )
 
 async def _get_expired_tasks(now_dt):
@@ -255,7 +255,7 @@ async def check_timeouts():
     expired_tasks = await _get_expired_tasks(now_dt)
 
     for task in expired_tasks:
-        process = await db.process_instances.find_one({"id": task.process_instance_id})
+        process = await db.process_instances.find_one({"id": task.process_instance_id, "org_id": task.org_id})
         if not process:
             continue
 
@@ -277,7 +277,7 @@ async def check_timeouts():
             process_completed = process.get("completed_nodes", [])
             process_completed.append(node["id"])
             await db.process_instances.update_one(
-                {"id": process["id"]},
+                {"id": process["id"], "org_id": process["org_id"]},
                 {"$set": {"completed_nodes": process_completed, "updated_at": now}},
             )
             await db.activity_logs.insert_one(
@@ -292,8 +292,8 @@ async def check_timeouts():
                     "created_at": now,
                 }
             )
-            await advance_process(process_id=process["id"], completed_node_id=node["id"], task_status="rejected")
-            await update_process_status(process["id"])
+            await advance_process(process_id=process["id"], org_id=process["org_id"], completed_node_id=node["id"], task_status="rejected")
+            await update_process_status(process["id"], process["org_id"])
 
         elif action == "escalate_to_manager":
             starter_id = process.get("started_by")
@@ -322,11 +322,11 @@ async def check_timeouts():
 
 
 async def advance_process(
-    *, process_id: str, completed_node_id: str, context_update: dict | None = None,
+    *, process_id: str, org_id: str, completed_node_id: str, context_update: dict | None = None,
     task_status: str | None = None
 ) -> dict:
     db = get_db()
-    process = await db.process_instances.find_one({"id": process_id}, {"_id": 0})
+    process = await db.process_instances.find_one({"id": process_id, "org_id": org_id}, {"_id": 0})
     if not process:
         return {"ok": False, "reason": "process_not_found"}
 
@@ -458,7 +458,7 @@ async def advance_process(
     for k, v in ctx_updates.items():
         update_ops["$set"][f"context.{k}"] = v
 
-    await db.process_instances.update_one({"id": process_id}, update_ops)
+    await db.process_instances.update_one({"id": process_id, "org_id": org_id}, update_ops)
 
     return {
         "ok": True,
