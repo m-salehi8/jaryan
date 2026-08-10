@@ -31,6 +31,7 @@ logger = logging.getLogger("jaryan.ai")
 
 ENV_FALLBACK_BASE_URL = "https://api.openai.com/v1"
 ENV_FALLBACK_MODEL = "gpt-4o"
+EMERGENT_FALLBACK_MODEL = "gpt-4o-mini"
 
 
 @dataclass(frozen=True)
@@ -49,7 +50,7 @@ class ResolvedProvider:
 
 def _from_env() -> ResolvedProvider:
     return ResolvedProvider(
-        api_key=os.environ.get("EMERGENT_LLM_KEY", ""),
+        api_key=os.environ.get("AI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY", ""),
         base_url=os.environ.get("OPENAI_BASE_URL", ENV_FALLBACK_BASE_URL).rstrip("/"),
         model=os.environ.get("OPENAI_MODEL", ENV_FALLBACK_MODEL),
         source="env",
@@ -106,26 +107,72 @@ class AIService:
                 "No API key for AI provider %r; requests will likely fail with 401.",
                 provider.source,
             )
-        return LlmChat(
+        chat = LlmChat(
             api_key=provider.api_key,
             session_id=session_id,
             system_message=system_message,
-            base_url=provider.base_url,
-        ).with_model("custom", provider.model)
+        )
+        # Emergent universal keys (sk-emergent-*) are routed through the Emergent
+        # integration proxy by the library itself — do NOT override the endpoint.
+        # Any other key is a plain OpenAI-compatible endpoint (e.g. AvalAI): point
+        # the client at the configured base_url via api_base.
+        if provider.api_key.startswith("sk-emergent"):
+            return chat.with_model("openai", provider.model)
+        return chat.with_model("openai", provider.model).with_params(
+            api_base=provider.base_url
+        )
+
+    async def _provider_chain(self) -> list[ResolvedProvider]:
+        """Primary provider first, with the Emergent universal key as a fallback.
+
+        This lets a deployment prefer a custom endpoint (e.g. AvalAI) while still
+        keeping AI working if that endpoint is unreachable — for example from the
+        Emergent preview network, which cannot reach some external hosts.
+        """
+        primary = await aresolve_provider()
+        chain: list[ResolvedProvider] = [primary] if primary.is_usable else []
+        emk = os.environ.get("EMERGENT_LLM_KEY", "")
+        if emk and not primary.api_key.startswith("sk-emergent"):
+            chain.append(
+                ResolvedProvider(
+                    api_key=emk,
+                    base_url="",
+                    model=os.environ.get("EMERGENT_FALLBACK_MODEL", EMERGENT_FALLBACK_MODEL),
+                    source="emergent-fallback",
+                )
+            )
+        return chain or [primary]
 
     async def stream_workflow_generation(
         self, session_id: str, message: str
     ) -> AsyncGenerator[str, None]:
         from services.prompts import WORKFLOW_GENERATOR_PROMPT
 
-        provider = await aresolve_provider()
-        chat = self._chat_client(provider, session_id, WORKFLOW_GENERATOR_PROMPT)
-
-        async for ev in chat.stream_message(UserMessage(text=message)):
-            if isinstance(ev, TextDelta):
-                yield ev.content
-            elif isinstance(ev, StreamDone):
-                break
+        providers = await self._provider_chain()
+        last_err: Exception | None = None
+        for idx, provider in enumerate(providers):
+            chat = self._chat_client(provider, session_id, WORKFLOW_GENERATOR_PROMPT)
+            produced = False
+            try:
+                async for ev in chat.stream_message(UserMessage(text=message)):
+                    if isinstance(ev, TextDelta):
+                        produced = True
+                        yield ev.content
+                    elif isinstance(ev, StreamDone):
+                        break
+                return
+            except Exception as exc:  # noqa: BLE001
+                last_err = exc
+                if produced or idx == len(providers) - 1:
+                    logger.error("AI provider %r failed: %s", provider.source, exc)
+                    raise
+                logger.warning(
+                    "AI provider %r unreachable (%s); falling back to next provider.",
+                    provider.source,
+                    exc,
+                )
+        if last_err:
+            raise last_err
 
     @retry(
         stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10)
@@ -137,18 +184,28 @@ class AIService:
         Wrapper to strictly enforce JSON outputs from the LLM, with automatic retries on failure.
         Useful for Workflow AI Agent Nodes.
         """
-        provider = await aresolve_provider()
-        chat = self._chat_client(provider, session_id, system_prompt)
-
-        full_text = ""
-        async for ev in chat.stream_message(UserMessage(text=user_message)):
-            if isinstance(ev, TextDelta):
-                full_text += ev.content
-            elif isinstance(ev, StreamDone):
-                break
-
-        return self.extract_json_block(full_text)
-
+        providers = await self._provider_chain()
+        last_err: Exception | None = None
+        for idx, provider in enumerate(providers):
+            chat = self._chat_client(provider, session_id, system_prompt)
+            try:
+                full_text = ""
+                async for ev in chat.stream_message(UserMessage(text=user_message)):
+                    if isinstance(ev, TextDelta):
+                        full_text += ev.content
+                    elif isinstance(ev, StreamDone):
+                        break
+                return self.extract_json_block(full_text)
+            except Exception as exc:  # noqa: BLE001
+                last_err = exc
+                if idx == len(providers) - 1:
+                    raise
+                logger.warning(
+                    "AI provider %r failed for JSON call (%s); trying fallback.",
+                    provider.source,
+                    exc,
+                )
+        raise last_err or RuntimeError("no_ai_provider")
     def extract_json_block(self, text: str) -> dict:
         m = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
         if not m:
