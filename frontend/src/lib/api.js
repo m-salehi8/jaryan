@@ -24,16 +24,6 @@ export const api = axios.create({ baseURL: API_BASE });
 api.interceptors.request.use((config) => {
   const t = getToken();
   if (t) config.headers.Authorization = `Bearer ${t}`;
-
-  // Automatically append trailing slash to URL if missing (required by Django REST Framework)
-  if (config.url) {
-    let [path, query] = config.url.split('?');
-    if (!path.endsWith('/')) {
-      path += '/';
-    }
-    config.url = query ? `${path}?${query}` : path;
-  }
-
   return config;
 });
 
@@ -61,7 +51,7 @@ api.interceptors.response.use(
 
 export async function streamAI(message, sessionId, onDelta, onDone, onError) {
   const token = getToken();
-  const resp = await fetch(`${API_BASE}/ai/generate-workflow/`, {
+  const resp = await fetch(`${API_BASE}/ai/generate-workflow`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
