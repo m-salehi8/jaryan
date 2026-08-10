@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useWorkflowManager } from "@/hooks/useWorkflowManager";
 import { Inspector } from "@/components/workflow/Inspector";
-import { NODE_TYPES_META } from "@/lib/workflowUtils";
+import { NODE_TYPES_META, getNodeMeta } from "@/lib/workflowUtils";
 
 export default function SimpleWorkflowBuilder() {
   const { id } = useParams();
@@ -203,7 +203,7 @@ export default function SimpleWorkflowBuilder() {
               </div>
             ) : (
               sortedNodes.map((node, index) => {
-                const meta = NODE_TYPES_META[node.data.nodeType] || NODE_TYPES_META.task;
+                const meta = getNodeMeta(node.data.nodeType);
                 const Icon = meta.icon;
                 const isSelected = selected?.id === node.id;
                 
@@ -257,6 +257,7 @@ export default function SimpleWorkflowBuilder() {
                           <div className="grid grid-cols-1 gap-1">
                             {Object.entries(NODE_TYPES_META).filter(([k]) => !['trigger', 'cron'].includes(k)).map(([k, m]) => {
                               const MIcon = m.icon;
+                              if (!MIcon) return null;
                               return (
                                 <button
                                   key={k}
@@ -291,6 +292,7 @@ export default function SimpleWorkflowBuilder() {
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
           forms={forms}
+          users={users}
           nodes={nodes}
           edges={edges}
           onNode={updateNode}

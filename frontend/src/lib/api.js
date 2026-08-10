@@ -37,6 +37,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Now that tokens carry an exp claim they will eventually expire mid-session.
+// Without a response interceptor the app would sit there firing failing
+// requests; instead, clear the stale credentials once and send the user to the
+// login page. Guarded so a 401 from the login form itself doesn't loop.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || "";
+    const isLoginCall = url.includes("/auth/login");
+
+    if (status === 401 && !isLoginCall) {
+      clearToken();
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 export async function streamAI(message, sessionId, onDelta, onDone, onError) {
   const token = getToken();

@@ -160,13 +160,13 @@ export default function FormBuilder() {
             {FIELD_TYPES.map((t) => {
               const Icon = t.icon;
               return (
-                <Button variant="ghost" size="icon"
+                <Button variant="ghost"
                   key={t.key}
                   data-testid={`palette-${t.key}`}
                   onClick={() => addField(t.key)}
-                  className={`flex flex-col items-center gap-1 px-2 py-3 rounded-lg border ${
+                  className={`h-auto w-full flex flex-col items-center gap-1 px-2 py-3 rounded-lg border ${
                     t.accent ? "border-brand text-brand bg-brand-soft" : "border-border"
-                  } hover:border-brand hover:bg-brand-soft hover:text-brand transition-colors text-xs`}
+                  } hover:border-brand hover:bg-brand-soft hover:text-brand transition-colors text-xs whitespace-normal text-center`}
                 >
                   <Icon className="w-4 h-4" />
                   {t.label}
@@ -224,7 +224,7 @@ export default function FormBuilder() {
                 <div className="flex items-center gap-2 text-xs font-medium">
                   <Sparkles className="w-3.5 h-3.5" /> پیش‌نمایش زنده
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setPreviewValues({})} className="text-[11px] text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" onClick={() => setPreviewValues({})} className="h-auto py-1 px-2 text-[11px] text-muted-foreground hover:text-foreground">
                   پاک‌سازی
                 </Button>
               </div>
@@ -398,10 +398,10 @@ function Inspector({ field, controllers, onChange, onClose, onRemove }) {
           </Section>
         )}
 
-        <Button variant="ghost" size="icon"
+        <Button variant="ghost"
           data-testid="ins-delete"
           onClick={onRemove}
-          className="w-full mt-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 inline-flex items-center justify-center gap-2"
+          className="h-auto w-full mt-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 inline-flex items-center justify-center gap-2"
         >
           <Trash2 className="w-3.5 h-3.5" /> حذف فیلد
         </Button>
@@ -433,7 +433,7 @@ function OptionsEditor({ options, onChange }) {
       {options.map((o, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <Input value={o} onChange={(e) => { const n = [...options]; n[i] = e.target.value; onChange(n); }} />
-          <Button variant="ghost" size="icon" onClick={() => onChange(options.filter((_, idx) => idx !== i))} className="p-1.5 text-muted-foreground hover:text-red-600">
+          <Button variant="ghost" size="icon" onClick={() => onChange(options.filter((_, idx) => idx !== i))} className="h-8 w-8 flex-shrink-0 p-1.5 text-muted-foreground hover:text-red-600">
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -455,7 +455,7 @@ function TabsEditor({ tabs, onChange }) {
             value={t.label}
             onChange={(e) => onChange(tabs.map(x => x.id === t.id ? { ...x, label: e.target.value } : x))}
           />
-          <Button variant="ghost" size="icon" onClick={() => onChange(tabs.filter(x => x.id !== t.id))} className="p-1.5 text-muted-foreground hover:text-red-600">
+          <Button variant="ghost" size="icon" onClick={() => onChange(tabs.filter(x => x.id !== t.id))} className="h-8 w-8 flex-shrink-0 p-1.5 text-muted-foreground hover:text-red-600">
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -477,11 +477,11 @@ function RuleEditor({ rule, controllers, onChange }) {
 
   if (!rule) {
     return (
-      <Button variant="ghost" size="icon"
+      <Button variant="ghost"
         data-testid="add-rule"
         onClick={() => onChange({ field_id: controllers[0]?.id || "", op: "=", value: "" })}
         disabled={controllers.length === 0}
-        className="w-full text-sm py-2 px-3 border border-dashed border-border rounded-lg hover:border-brand hover:bg-brand-soft disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-brand transition-colors"
+        className="h-auto w-full text-sm py-2 px-3 border border-dashed border-border rounded-lg hover:border-brand hover:bg-brand-soft disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground hover:text-brand whitespace-normal transition-colors"
       >
         {controllers.length === 0 ? "ابتدا فیلدی بالاتر اضافه کن" : "+ افزودن قاعده شرطی"}
       </Button>
@@ -503,10 +503,10 @@ function RuleEditor({ rule, controllers, onChange }) {
           onChange={(c) => onChange(c)}
           onRemove={() => onChange(null)}
         />
-        <Button variant="ghost" size="icon"
+        <Button variant="ghost"
           data-testid="add-and-clause"
           onClick={promoteToGroup}
-          className="w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground transition-colors"
+          className="h-auto w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground whitespace-normal transition-colors"
         >
           + افزودن شرط ترکیبی (و / یا)
         </Button>
@@ -519,21 +519,21 @@ function RuleEditor({ rule, controllers, onChange }) {
     <div className="bg-muted/60 border border-border rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between mb-1">
         <div className="inline-flex rounded-md border border-border overflow-hidden">
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             data-testid="combinator-and"
             onClick={() => onChange({ ...rule, combinator: "and" })}
-            className={`px-2.5 py-1 text-[11px] font-medium ${rule.combinator === "and" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
+            className={`h-auto rounded-none px-2.5 py-1 text-[11px] font-medium ${rule.combinator === "and" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
           >و (همه)</Button>
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             data-testid="combinator-or"
             onClick={() => onChange({ ...rule, combinator: "or" })}
-            className={`px-2.5 py-1 text-[11px] font-medium border-s border-border ${rule.combinator === "or" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
+            className={`h-auto rounded-none px-2.5 py-1 text-[11px] font-medium border-s border-border ${rule.combinator === "or" ? "bg-brand text-white" : "text-muted-foreground bg-card"}`}
           >یا (یکی)</Button>
         </div>
-        <Button variant="ghost" size="icon"
+        <Button variant="ghost"
           data-testid="remove-rule"
           onClick={() => onChange(null)}
-          className="text-[11px] text-muted-foreground hover:text-red-600"
+          className="h-auto py-1 px-2 text-[11px] text-muted-foreground hover:text-red-600"
         >پاک‌سازی همه</Button>
       </div>
 
@@ -556,13 +556,13 @@ function RuleEditor({ rule, controllers, onChange }) {
         />
       ))}
 
-      <Button variant="ghost" size="icon"
+      <Button variant="ghost"
         data-testid="add-another-clause"
         onClick={() => onChange({
           ...rule,
           conditions: [...rule.conditions, { field_id: controllers[0]?.id || "", op: "=", value: "" }],
         })}
-        className="w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground transition-colors"
+        className="h-auto w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-brand hover:text-brand text-muted-foreground whitespace-normal transition-colors"
       >
         + افزودن شرط دیگر
       </Button>
@@ -583,7 +583,7 @@ function ClauseEditor({ clause, controllers, onChange, onRemove, index, combinat
       )}
       <div className="flex items-center justify-between">
         <div className="text-[10px] text-muted-foreground">وقتی…</div>
-        <Button variant="ghost" size="icon" onClick={onRemove} className="text-neutral-300 hover:text-red-600">
+        <Button variant="ghost" size="icon" onClick={onRemove} className="h-6 w-6 flex-shrink-0 text-neutral-300 hover:text-red-600">
           <X className="w-3 h-3" />
         </Button>
       </div>
@@ -638,8 +638,8 @@ function FieldCard({
     >
       <div className="p-3 flex items-start gap-2 group" onClick={onSelect}>
         <div className="flex flex-col items-center gap-0.5 text-neutral-300 pt-1">
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMove(-1); }} className="hover:text-muted-foreground"><ChevronUp className="w-3 h-3" /></Button>
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMove(1); }} className="hover:text-muted-foreground"><ChevronDown className="w-3 h-3" /></Button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMove(-1); }} className="h-4 w-4 [&_svg]:size-3 hover:text-muted-foreground"><ChevronUp className="w-3 h-3" /></Button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMove(1); }} className="h-4 w-4 [&_svg]:size-3 hover:text-muted-foreground"><ChevronDown className="w-3 h-3" /></Button>
         </div>
         <div className="flex-1 min-w-0 space-y-1.5 cursor-pointer">
           <div className="flex items-center gap-2">
@@ -697,8 +697,8 @@ function FieldCard({
                     data-testid={`child-${cf.id}`}
                   >
                     <div className="flex flex-col items-center gap-0.5 text-neutral-300">
-                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, -1); }}><ChevronUp className="w-3 h-3 hover:text-muted-foreground" /></Button>
-                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, 1); }}><ChevronDown className="w-3 h-3 hover:text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, -1); }} className="h-4 w-4 [&_svg]:size-3"><ChevronUp className="w-3 h-3 hover:text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onMoveChild(cf.id, 1); }} className="h-4 w-4 [&_svg]:size-3"><ChevronDown className="w-3 h-3 hover:text-muted-foreground" /></Button>
                     </div>
                     <span className="text-[10px] mono uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{cf.type}</span>
                     <Input
@@ -710,7 +710,7 @@ function FieldCard({
                     {cf.visible_if && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">شرطی</span>}
                     <Button variant="ghost" size="icon"
                       onClick={(e) => { e.stopPropagation(); onRemoveChild(cf.id); }}
-                      className="p-1 text-neutral-300 hover:text-red-600"
+                      className="h-6 w-6 flex-shrink-0 [&_svg]:size-3 p-1 text-neutral-300 hover:text-red-600"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
@@ -732,10 +732,10 @@ function ChildAdder({ onAdd }) {
   const types = FIELD_TYPES.filter(t => t.key !== "tabs"); // no nested tabs for simplicity
   if (!open) {
     return (
-      <Button variant="ghost" size="icon"
+      <Button variant="ghost"
         onClick={() => setOpen(true)}
         data-testid="add-child-field"
-        className="mt-2 w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-neutral-900 hover:bg-card text-muted-foreground"
+        className="h-auto mt-2 w-full text-xs py-1.5 rounded-md border border-dashed border-border hover:border-neutral-900 hover:bg-card text-muted-foreground whitespace-normal"
       >
         + افزودن فیلد به این تب
       </Button>
@@ -746,18 +746,18 @@ function ChildAdder({ onAdd }) {
       {types.map(t => {
         const Icon = t.icon;
         return (
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             key={t.key}
             onClick={() => { onAdd(t.key); setOpen(false); }}
             data-testid={`add-child-${t.key}`}
-            className="flex flex-col items-center gap-1 py-2 rounded-md border border-border hover:border-neutral-900 hover:bg-card text-[10px] text-muted-foreground"
+            className="h-auto w-full flex flex-col items-center gap-1 py-2 rounded-md border border-border hover:border-neutral-900 hover:bg-card text-[10px] text-muted-foreground whitespace-normal text-center"
           >
             <Icon className="w-3.5 h-3.5" />
             {t.label}
           </Button>
         );
       })}
-      <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="text-[10px] text-muted-foreground col-span-4 py-1">انصراف</Button>
+      <Button variant="ghost" onClick={() => setOpen(false)} className="h-auto text-[10px] text-muted-foreground col-span-4 py-1">انصراف</Button>
     </div>
   );
 }

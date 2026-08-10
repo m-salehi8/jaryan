@@ -85,15 +85,21 @@ export default function UserManagement() {
         email: form.email.trim(),
         role: form.role,
         password: form.password,
-        department_id: form.department_id || null,
-        manager_id: form.manager_id || null,
+        // DRF field names are `department`/`manager`, not the *_id variants —
+        // sending the wrong key made these silently drop.
+        department: form.department_id || null,
+        manager: form.manager_id || null,
       });
       toast.success("کاربر افزوده شد");
       setForm(emptyForm);
       setAddOpen(false);
       load();
     } catch (e) {
-      if (e?.response?.status === 409) {
+      const status = e?.response?.status;
+      const emailErr = e?.response?.data?.email;
+      // A duplicate inside the same org is caught by the serializer's unique
+      // validator (400); one in another org trips the DB constraint (409).
+      if (status === 409 || (status === 400 && emailErr)) {
         setFormError("این ایمیل قبلاً ثبت شده است");
       } else {
         setFormError("خطا در افزودن کاربر. دوباره تلاش کنید.");
@@ -128,7 +134,7 @@ export default function UserManagement() {
     // optimistic update
     setUsers((list) => list.map((u) => (u.id === uid ? { ...u, department_id: newDept || null } : u)));
     try {
-      await api.patch(`/users/${uid}`, { department_id: newDept || null });
+      await api.patch(`/users/${uid}`, { department: newDept || null });
       toast.success("دپارتمان کاربر به‌روز شد");
       setDeptDrafts((d) => ({ ...d, [uid]: undefined }));
     } catch {

@@ -207,10 +207,10 @@ export default function Inbox() {
           <span className="text-xs text-muted-foreground fa-nums">({toFaNumber(filtered.length)})</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             data-testid="toggle-mine"
             onClick={() => setAssignedToMe(v => !v)}
-            className={`text-xs px-2.5 py-1 rounded-md border ${assignedToMe ? "bg-primary text-primary-foreground border-neutral-900" : "bg-card border-border text-muted-foreground"}`}
+            className={`h-auto text-xs px-2.5 py-1 rounded-md border whitespace-nowrap ${assignedToMe ? "bg-primary text-primary-foreground border-neutral-900" : "bg-card border-border text-muted-foreground"}`}
           >
             {assignedToMe ? "تسک‌های من" : "همه تسک‌ها"}
           </Button>
@@ -231,11 +231,11 @@ export default function Inbox() {
       <div className="border-b border-border bg-card px-6 py-2 flex items-center gap-1 overflow-x-auto">
         <Filter className="w-3.5 h-3.5 text-muted-foreground ms-2 shrink-0" />
         {FILTERS.map((f) => (
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             key={f.key}
             data-testid={`filter-${f.key}`}
             onClick={() => setFilter(f.key)}
-            className={`text-xs px-2.5 py-1 rounded-md shrink-0 ${
+            className={`h-auto text-xs px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap ${
               filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             }`}
           >

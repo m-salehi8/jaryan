@@ -152,6 +152,100 @@ class Task(TenantBaseModel):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return f"Task {self.id} - {self.status}"
+
+
+class AIProviderConfig(models.Model):
+    """A switchable LLM endpoint: base URL + model name + API key.
+
+    Deliberately *not* a TenantBaseModel. This is infrastructure configuration
+    for the whole deployment, not per-organisation data, so it uses the plain
+    manager and is reachable regardless of the current_org_id context var.
+
+    Exactly one row may be active at a time; ``activate()`` is the only
+    supported way to switch, and the partial unique constraint below makes a
+    second active row a database error rather than a silent ambiguity.
+    Everything the AI layer needs is read from the active row at call time, so
+    switching models takes effect on the next request with no redeploy.
+    """
+
+    id = models.CharField(primary_key=True, default=uuid.uuid4, max_length=100)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Label used to switch between configs, e.g. 'agentrouter-opus'.",
+    )
+    base_url = models.URLField(
+        max_length=500,
+        help_text="OpenAI-compatible endpoint root, including /v1 and no trailing slash.",
+    )
+    model = models.CharField(
+        max_length=200,
+        help_text="Model identifier sent verbatim to the provider, e.g. 'claude-opus-4-8'.",
+    )
+    api_key = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text="Sent as the Bearer token. Masked in API responses; leave blank to fall back to EMERGENT_LLM_KEY.",
+    )
+    is_active = models.BooleanField(
+        default=False,
+        help_text="The one config the AI layer actually uses.",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "AI provider config"
+        verbose_name_plural = "AI provider configs"
+        ordering = ("-is_active", "name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["is_active"],
+                condition=models.Q(is_active=True),
+                name="unique_active_ai_provider_config",
+            )
+        ]
+
+    def __str__(self):
+        suffix = " (active)" if self.is_active else ""
+        return f"{self.name} → {self.model}{suffix}"
+
+    @property
+    def masked_api_key(self) -> str:
+        """Last four characters only — enough to tell two keys apart, not enough to use.
+
+        A key short enough that the last four characters would reveal most of it
+        is masked entirely: showing "…sk-B" for a 4-character key leaks the whole
+        secret.
+        """
+        if not self.api_key:
+            return ""
+        if len(self.api_key) < 12:
+            return "…"
+        return f"…{self.api_key[-4:]}"
+
+    def activate(self):
+        """Make this the active config, deactivating whichever one was.
+
+        Deactivating first is required, not stylistic: the partial unique
+        constraint rejects a second active row, so the writes must happen in
+        this order inside one transaction.
+        """
+        from django.db import transaction
+
+        with transaction.atomic():
+            AIProviderConfig.objects.filter(is_active=True).exclude(pk=self.pk).update(
+                is_active=False
+            )
+            if not self.is_active:
+                self.is_active = True
+                self.save(update_fields=["is_active", "updated_at"])
+        return self
+
+    @classmethod
+    def get_active(cls):
+        return cls.objects.filter(is_active=True).first()

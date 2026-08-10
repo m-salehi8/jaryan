@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+import json
+import logging
 import re
 import uuid
 
@@ -16,6 +18,8 @@ from django.utils import timezone as django_timezone
 
 from core.models import User, Department, Workflow, Task as ORMTask, Organization
 from core.mongo import get_db
+
+logger = logging.getLogger("jaryan.engine")
 
 def new_id() -> str:
     return str(uuid.uuid4())
@@ -41,6 +45,56 @@ def inject_variables(text: str, context: dict) -> str:
             return ""
 
     return re.sub(r"\{\{([^}]+)\}\}", replacer, text)
+
+
+async def _run_ai_node(*, node: dict, context: dict, process_id: str) -> tuple[str | None, Any]:
+    """Execute an ai_task or ocr_task node and return ``(output_key, result)``.
+
+    Nobody is assigned to these nodes, so they run inline while the process is
+    advancing. That makes failure handling the important part: a provider
+    outage or a malformed model response must not wedge the process forever.
+    Every failure is therefore caught and turned into a result dict carrying
+    ``_error``, which downstream conditions can branch on
+    (``{{ocr_result._error}}``) while the process keeps moving.
+
+    Prompts go through inject_variables first, so a node can reference earlier
+    form data as ``{{form1.amount}}`` exactly like the rest of the engine.
+    """
+    from services.ai_service import ai_service
+
+    data = node.get("data") or {}
+    node_type = node.get("type")
+    output_key = str(data.get("output_key") or "").strip()
+
+    if not output_key:
+        # Without somewhere to put the answer the call would be a pure cost
+        # with no observable effect, so skip it rather than burn a request.
+        return None, None
+
+    session_id = f"{process_id}:{node.get('id')}"
+
+    try:
+        if node_type == "ocr_task":
+            source = inject_variables(str(data.get("source_file_variable") or ""), context).strip()
+            prompt = inject_variables(str(data.get("extraction_prompt") or ""), context).strip()
+            if not source:
+                return output_key, {"_error": "source_file_missing"}
+            result = await ai_service.extract_data_from_image(source, prompt)
+        else:
+            system_prompt = inject_variables(str(data.get("system_prompt") or ""), context).strip()
+            if not system_prompt:
+                return output_key, {"_error": "prompt_missing"}
+            # The model needs the process data to reason over, not just the
+            # instruction; _ prefixed keys are engine bookkeeping.
+            visible = {k: v for k, v in context.items() if not k.startswith("_")}
+            result = await ai_service.ask_ai_json(
+                session_id, system_prompt, json.dumps(visible, ensure_ascii=False)
+            )
+    except Exception as exc:
+        logger.exception("AI node %s failed in process %s", node.get("id"), process_id)
+        return output_key, {"_error": type(exc).__name__, "_detail": str(exc)[:200]}
+
+    return output_key, result
 
 
 def _coerce(a: Any, b: Any):
@@ -123,14 +177,18 @@ async def _create_task(task_data: dict, workflow: Workflow):
     if not user:
         user = await User.objects.afirst()
 
+    # NOTE: use org_id / workflow_id instead of the related objects — touching a
+    # lazily-loaded FK (workflow.org) from async code raises SynchronousOnlyOperation.
     return await ORMTask.objects.acreate(
         id=task_data["id"],
-        org=workflow.org,
-        workflow=workflow,
+        org_id=task_data["org_id"],
+        workflow_id=workflow.id,
         process_instance_id=task_data["process_id"],
         node_id=task_data["node_id"],
         assigned_to=user,
-        status=task_data.get("status", "pending")
+        status=task_data.get("status", "pending"),
+        form_data=task_data.get("form_data") or {},
+        field_permissions=task_data.get("field_permissions") or {},
     )
 
 
@@ -388,7 +446,24 @@ async def advance_process(
             missing_deps = [d for d in dependencies if d not in completed_nodes]
 
             if ttype in ("ai_task", "ocr_task"):
-                # simplified for now, as in previous code, just pass-through with no real AI since we don't have it
+                # These nodes run inline: nobody is assigned to them, so the
+                # process must not stop here. Whatever the model returns is
+                # merged into the process context under the node's output_key
+                # so downstream conditions and prompts can reference it via
+                # {{output_key.field}}.
+                if missing_deps:
+                    # A parallel branch this node reads from has not finished,
+                    # so its context would be incomplete. Leave the node for a
+                    # later pass rather than calling the model on partial data.
+                    continue
+
+                output_key, result = await _run_ai_node(
+                    node=target_node, context=ctx, process_id=process_id
+                )
+                if output_key:
+                    ctx[output_key] = result
+                    ctx_updates[output_key] = result
+
                 if target_id not in completed_nodes:
                     completed_nodes.append(target_id)
                     new_completed_nodes.append(target_id)
