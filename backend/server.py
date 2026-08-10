@@ -67,6 +67,12 @@ async def _startup() -> None:
     if os.environ.get("ENV", "development") != "production":
         result = await seed_data()
         logger.info("seed: %s", result)
+        try:
+            from seed_real_processes import run as seed_real
+            real = await seed_real()
+            logger.info("seed_real: %s", real)
+        except Exception as exc:
+            logger.warning("seed_real failed: %s", exc)
     asyncio.create_task(cron_scheduler())
 
 
