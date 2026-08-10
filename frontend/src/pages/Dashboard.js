@@ -71,51 +71,58 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <div className="flex items-end justify-between flex-wrap gap-4 mb-8 animate-in">
-        <div>
-          <div className="text-xs text-muted-foreground mb-1">داشبورد اصلی</div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            سلام {user?.full_name?.split(" ")[0]} 👋
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">یک نگاه سریع به وضعیت فرایندهای سازمان شما.</p>
+      <div className="relative overflow-hidden rounded-3xl p-6 lg:p-7 mb-8 animate-in text-white"
+        style={{ background: "linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)" }}>
+        <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute -bottom-20 left-8 w-64 h-64 rounded-full bg-fuchsia-400/10 blur-3xl" />
+        <div className="relative flex items-end justify-between flex-wrap gap-4">
+          <div>
+            <div className="text-xs text-indigo-200 mb-1">داشبورد اصلی</div>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              سلام {user?.full_name?.split(" ")[0]} 👋
+            </h1>
+            <p className="text-sm text-indigo-200 mt-1.5">یک نگاه سریع به وضعیت فرایندهای سازمان شما.</p>
+          </div>
+          {isAdmin(user) ? (
+            <Link
+              to="/admin/chat"
+              data-testid="dashboard-ai-cta"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 text-sm font-bold shadow-lg transition-all"
+            >
+              <Sparkles className="w-4 h-4" />
+              ساخت فرایند با هوش مصنوعی
+            </Link>
+          ) : (
+            <Link
+              to="/new"
+              data-testid="dashboard-new-request-cta"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 text-sm font-bold shadow-lg transition-all"
+            >
+              <Sparkles className="w-4 h-4" />
+              ثبت درخواست جدید
+            </Link>
+          )}
         </div>
-        {isAdmin(user) ? (
-          <Link
-            to="/admin/chat"
-            data-testid="dashboard-ai-cta"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-strong text-white text-sm font-semibold shadow-[0_4px_14px_rgba(79,70,229,0.25)] transition-all"
-          >
-            <Sparkles className="w-4 h-4" />
-            ساخت فرایند با هوش مصنوعی
-          </Link>
-        ) : (
-          <Link
-            to="/new"
-            data-testid="dashboard-new-request-cta"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-strong text-white text-sm font-semibold shadow-[0_4px_14px_rgba(79,70,229,0.25)] transition-all"
-          >
-            <Sparkles className="w-4 h-4" />
-            ثبت درخواست جدید
-          </Link>
-        )}
       </div>
 
       {/* Counters */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         {[
-          { icon: Inbox, label: "تسک‌های من", value: c.my_tasks, testId: "counter-my-tasks" },
-          { icon: CheckCircle2, label: "تاییدیه‌های در انتظار", value: c.pending_approvals, testId: "counter-approvals" },
-          { icon: Activity, label: "فرایندهای در حال اجرا", value: c.running_processes, testId: "counter-running" },
-          { icon: Workflow, label: "تعداد فرایندها", value: c.workflows, testId: "counter-workflows" },
+          { icon: Inbox, label: "تسک‌های من", value: c.my_tasks, testId: "counter-my-tasks", grad: "from-sky-500 to-blue-600" },
+          { icon: CheckCircle2, label: "تاییدیه‌های در انتظار", value: c.pending_approvals, testId: "counter-approvals", grad: "from-emerald-500 to-teal-600" },
+          { icon: Activity, label: "فرایندهای در حال اجرا", value: c.running_processes, testId: "counter-running", grad: "from-violet-500 to-fuchsia-600" },
+          { icon: Workflow, label: "تعداد فرایندها", value: c.workflows, testId: "counter-workflows", grad: "from-amber-500 to-orange-600" },
         ].map((it) => {
           const Icon = it.icon;
           return (
-            <div key={it.label} data-testid={it.testId} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <Icon className="w-4 h-4" />
-                <span className="text-[11px]">{it.label}</span>
+            <div key={it.label} data-testid={it.testId} className="group bg-card border border-border rounded-2xl p-4 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center justify-between">
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${it.grad} grid place-items-center shadow-md`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-[11px] text-muted-foreground text-left leading-4">{it.label}</span>
               </div>
-              <div className="mt-3 text-3xl font-bold text-foreground fa-nums">{toFaNumber(it.value)}</div>
+              <div className="mt-3 text-3xl font-extrabold text-foreground fa-nums">{toFaNumber(it.value)}</div>
             </div>
           );
         })}
@@ -268,7 +275,7 @@ export default function Dashboard() {
 
 function SectionCard({ title, link, linkLabel, children, testId, subtle }) {
   return (
-    <section data-testid={testId} className={`rounded-xl border border-border ${subtle ? "bg-muted" : "bg-card"} p-5`}>
+    <section data-testid={testId} className={`rounded-2xl border border-border ${subtle ? "bg-muted" : "bg-card"} p-5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.05)] transition-shadow`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {link && (
