@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Inbox, Activity, LogOut, LayoutDashboard, Menu, Moon, Sun, Smartphone } from "lucide-react";
+import { Inbox, Activity, LogOut, LayoutDashboard, Menu, Moon, Sun, Smartphone, PlusCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBadge } from "@/lib/badgeContext";
 import { useTheme } from "@/lib/themeContext";
@@ -7,6 +7,7 @@ import { toFaNumber } from "@/lib/jalali";
 
 const NAV = [
   { to: "/", icon: LayoutDashboard, label: "داشبورد", end: true, testId: "nav-dashboard" },
+  { to: "/new", icon: PlusCircle, label: "درخواست جدید", testId: "nav-new" },
   { to: "/inbox", icon: Inbox, label: "کارتابل", testId: "nav-inbox" },
   { to: "/monitoring", icon: Activity, label: "پایش زنده", testId: "nav-monitoring" },
 ];
@@ -145,7 +146,7 @@ function MobileTopbar() {
 function MobileBottomNav() {
   const { pendingCount } = useBadge();
   return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border grid grid-cols-5">
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border grid grid-cols-4">
       {NAV.slice(0, 5).map((item) => {
         const Icon = item.icon;
         return (

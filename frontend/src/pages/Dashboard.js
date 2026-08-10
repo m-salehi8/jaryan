@@ -79,7 +79,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">یک نگاه سریع به وضعیت فرایندهای سازمان شما.</p>
         </div>
-        {isAdmin(user) && (
+        {isAdmin(user) ? (
           <Link
             to="/admin/chat"
             data-testid="dashboard-ai-cta"
@@ -87,6 +87,15 @@ export default function Dashboard() {
           >
             <Sparkles className="w-4 h-4" />
             ساخت فرایند با هوش مصنوعی
+          </Link>
+        ) : (
+          <Link
+            to="/new"
+            data-testid="dashboard-new-request-cta"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-strong text-white text-sm font-semibold shadow-[0_4px_14px_rgba(79,70,229,0.25)] transition-all"
+          >
+            <Sparkles className="w-4 h-4" />
+            ثبت درخواست جدید
           </Link>
         )}
       </div>
