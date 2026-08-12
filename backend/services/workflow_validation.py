@@ -22,14 +22,19 @@ VALID_NODE_TYPES = frozenset(
     {"trigger", "task", "approval", "condition", "form", "end", "ai_task", "ocr_task"}
 )
 
-# Must match core.models.User.ROLE_CHOICES.
-VALID_ROLES = frozenset({"مدیر", "کارمند"})
+# Must match core.models.User.ROLE_CHOICES. Imported rather than duplicated so
+# that adding a role to the model cannot silently leave this list behind.
+from core.models import User
 
-# Legacy four-role vocabulary → the two roles that exist. Keeps a generated
-# workflow assignable instead of routing tasks to a role nobody holds.
+VALID_ROLES = frozenset(value for value, _label in User.ROLE_CHOICES)
+
+# Vocabulary the model tends to invent, plus the legacy four-role names, mapped
+# onto roles that actually exist. Keeps a generated workflow assignable instead
+# of routing tasks to a role nobody holds.
 ROLE_ALIASES = {
+    # Legacy four-role vocabulary
     "ادمین سازمان": "مدیر",
-    "طراح فرایند": "مدیر",
+    "طراح فرایند": "مدیرکل تحول اداری",
     "مدیر تیم": "مدیر",
     "مدیر گروه": "مدیر",
     "کارشناس": "کارمند",
@@ -38,6 +43,35 @@ ROLE_ALIASES = {
     "manager": "مدیر",
     "employee": "کارمند",
     "user": "کارمند",
+    # Common phrasings of the organisational roles
+    "متقاضی": "کارمند",
+    "درخواست‌کننده": "کارمند",
+    "درخواست کننده": "کارمند",
+    "مدیر مافوق": "مدیر",
+    "معاونت برنامه‌ریزی و توسعه مدیریت": "معاون برنامه‌ریزی و توسعه مدیریت",
+    "معاون برنامه ریزی و توسعه مدیریت": "معاون برنامه‌ریزی و توسعه مدیریت",
+    "رئیس مرکز ملی فضای مجازی": "رئیس مرکز",
+    "مدیرکل پشتیبانی، تدارکات و امور قراردادها": "مدیرکل پشتیبانی و تدارکات",
+    "مدیرکل پشتیبانی": "مدیرکل پشتیبانی و تدارکات",
+    "مدیرکل تدارکات و پشتیبانی": "مدیرکل پشتیبانی و تدارکات",
+    "مدیر پشتیبانی": "رئیس اداره پشتیبانی",
+    "مدیرکل مالی اداری": "مدیرکل مالی و سرمایه انسانی",
+    "مدیرکل مالی و سرمایه‌ی انسانی": "مدیرکل مالی و سرمایه انسانی",
+    "مدیرکل فناوری اطلاعات و تحول دیجیتال": "مدیرکل فناوری اطلاعات",
+    "مدیرکل تحول اداری و بهبود فرآیندها": "مدیرکل تحول اداری",
+    "رئیس اداره تدارکات و امور قراردادها": "رئیس اداره تدارکات",
+    "رئیس اداره حفاظت فناوری اطلاعات و اسناد": "رئیس اداره حفاظت فناوری اطلاعات",
+    "اداره حراست": "مدیرکل حراست",
+    "کارشناس تدارکات و انبار (انباردار)": "کارشناس تدارکات و انبار",
+    "انباردار": "کارشناس تدارکات و انبار",
+    "کارشناس خزانه": "کارشناس مالی",
+    "کارشناس خزامه": "کارشناس مالی",  # typo in the پرداخت قرارداد document
+    "کارشناس مالی (خزانه)": "کارشناس مالی",
+    "اعضای کمیته فنی و بازرگانی": "کمیته فنی و بازرگانی",
+    "دبیر کمیته فنی و بازرگانی": "رئیس اداره تدارکات",
+    "کارشناس اداره سرمایه انسانی": "کارشناس سرمایه انسانی",
+    "کارشناس فرآیند‌ها": "کارشناس فرآیندها",
+    "کارشناس فرایندها": "کارشناس فرآیندها",
 }
 
 NODE_SPACING_X = 260

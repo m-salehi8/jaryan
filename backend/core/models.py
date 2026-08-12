@@ -79,10 +79,46 @@ class TenantUserManager(UserManager, TenantManager):
     pass
 
 class User(AbstractBaseUser, PermissionsMixin, TenantBaseModel):
+    # Organisational roles taken from the four approved روش اجرایی documents
+    # (میز خدمت، جذب نیرو، پرداخت قرارداد، تأمین کالا و تجهیزات).
+    #
+    # 'مدیر' and 'کارمند' are kept as the generic fallbacks: every workflow
+    # authored before this expansion assigns to them, and
+    # services/workflow_validation.py still maps unknown role strings onto
+    # 'کارمند'. Permission tiers are defined in core/permissions.py — adding a
+    # role here without putting it in the right frozenset there leaves it with
+    # employee-level access.
     ROLE_CHOICES = (
+        # Generic tiers
         ('مدیر', 'مدیر'),
         ('کارمند', 'کارمند'),
+        # Executive
+        ('رئیس مرکز', 'رئیس مرکز'),
+        ('معاون برنامه‌ریزی و توسعه مدیریت', 'معاون برنامه‌ریزی و توسعه مدیریت'),
+        # Directors general
+        ('مدیرکل پشتیبانی و تدارکات', 'مدیرکل پشتیبانی و تدارکات'),
+        ('مدیرکل مالی و سرمایه انسانی', 'مدیرکل مالی و سرمایه انسانی'),
+        ('مدیرکل فناوری اطلاعات', 'مدیرکل فناوری اطلاعات'),
+        ('مدیرکل حراست', 'مدیرکل حراست'),
+        ('مدیرکل تحول اداری', 'مدیرکل تحول اداری'),
+        # Department heads
+        ('رئیس اداره تدارکات', 'رئیس اداره تدارکات'),
+        ('رئیس اداره پشتیبانی', 'رئیس اداره پشتیبانی'),
+        ('رئیس اداره فناوری اطلاعات', 'رئیس اداره فناوری اطلاعات'),
+        ('رئیس اداره حفاظت فناوری اطلاعات', 'رئیس اداره حفاظت فناوری اطلاعات'),
+        # Specialists
+        ('کارشناس تدارکات و انبار', 'کارشناس تدارکات و انبار'),
+        ('کارشناس خرید', 'کارشناس خرید'),
+        ('کارشناس فناوری اطلاعات', 'کارشناس فناوری اطلاعات'),
+        ('کارشناس مالی', 'کارشناس مالی'),
+        ('کارشناس سرمایه انسانی', 'کارشناس سرمایه انسانی'),
+        ('کارشناس فرآیندها', 'کارشناس فرآیندها'),
+        ('امین اموال', 'امین اموال'),
+        # Committees
+        ('کمیته امنیت سایبری', 'کمیته امنیت سایبری'),
+        ('کمیته فنی و بازرگانی', 'کمیته فنی و بازرگانی'),
     )
+
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)

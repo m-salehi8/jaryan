@@ -18,6 +18,12 @@ import re
 from dataclasses import dataclass
 from typing import AsyncGenerator
 
+from _vendored_emergentintegrations_disabled.llm.chat import (
+    LlmChat,
+    UserMessage,
+    TextDelta,
+    StreamDone,
+)
 from asgiref.sync import sync_to_async
 from tenacity import (
     retry,
@@ -25,7 +31,6 @@ from tenacity import (
     wait_exponential,
 )
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
 
 logger = logging.getLogger("jaryan.ai")
 
@@ -65,7 +70,7 @@ def _from_config(config) -> ResolvedProvider:
     from the database.
     """
     return ResolvedProvider(
-        api_key=config.api_key or os.environ.get("EMERGENT_LLM_KEY", ""),
+        api_key=(config.api_key or os.environ.get("AI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY", "")),
         base_url=(config.base_url or "").rstrip("/"),
         model=config.model,
         source=config.name,
@@ -87,7 +92,20 @@ def resolve_provider() -> ResolvedProvider:
 
     if config is None:
         return _from_env()
-    return _from_config(config)
+
+    provider = _from_config(config)
+    if provider.is_usable:
+        return provider
+
+    env_provider = _from_env()
+    if env_provider.is_usable:
+        logger.warning(
+            "Active AIProviderConfig %r incomplete; falling back to environment.",
+            config.name,
+        )
+        return env_provider
+
+    return provider
 
 
 # The ORM call is blocking, so async callers must not run it on the event loop.
