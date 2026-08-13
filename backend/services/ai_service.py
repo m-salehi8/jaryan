@@ -125,20 +125,22 @@ class AIService:
                 "No API key for AI provider %r; requests will likely fail with 401.",
                 provider.source,
             )
-        chat = LlmChat(
-            api_key=provider.api_key,
-            session_id=session_id,
-            system_message=system_message,
-        )
+        
         # Emergent universal keys (sk-emergent-*) are routed through the Emergent
         # integration proxy by the library itself — do NOT override the endpoint.
         # Any other key is a plain OpenAI-compatible endpoint (e.g. AvalAI): point
         # the client at the configured base_url via api_base.
-        if provider.api_key.startswith("sk-emergent"):
-            return chat.with_model("openai", provider.model)
-        return chat.with_model("openai", provider.model).with_params(
-            api_base=provider.base_url
+        kwargs = {}
+        if not provider.api_key.startswith("sk-emergent"):
+            kwargs["base_url"] = provider.base_url
+
+        chat = LlmChat(
+            api_key=provider.api_key,
+            session_id=session_id,
+            system_message=system_message,
+            **kwargs
         )
+        return chat.with_model("openai", provider.model)
 
     async def _provider_chain(self) -> list[ResolvedProvider]:
         """Primary provider first, with the Emergent universal key as a fallback.
