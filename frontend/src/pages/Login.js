@@ -9,14 +9,14 @@ import { ArrowLeft, Workflow, KeyRound } from "lucide-react";
 
 const DEMOS = [
   { email: "admin@jaryan.ir", password: "admin123", role: "مدیر" },
-  { email: "emp1@jaryan.ir",  password: "pass123",  role: "کارمند" },
+  { email: "employee@jaryan.ir", password: "1234", role: "کارمند" },
 ];
 
 export default function Login() {
   const { login } = useAuth();
   const nav = useNavigate();
   const [email, setEmail] = useState("admin@jaryan.ir");
-  const [password, setPassword] = useState("admin123");
+  const [password, setPassword] = useState("admin1234");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e) => {

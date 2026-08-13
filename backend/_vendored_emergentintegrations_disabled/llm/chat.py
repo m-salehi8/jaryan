@@ -62,19 +62,17 @@ class LlmChat:
             LlmChat._sessions[session_id] = []
 
     def with_model(self, provider: str, model: str) -> "LlmChat":
-        """Override the model. Provider is ignored (we use one endpoint)."""
-        # If the caller passes a well-known Anthropic model name, keep default.
-        # Otherwise use the model string verbatim.
-        anthropic_aliases = {
-            "claude-sonnet-4-6",
-            "claude-sonnet-4-5",
-            "claude-3-5-sonnet-20241022",
-            "claude-opus-4",
-            "claude-haiku-4",
-        }
-        if model not in anthropic_aliases:
+        """Override the model. Provider is ignored (we use one endpoint).
+
+        The model string is sent verbatim. An earlier version kept a set of
+        "Anthropic aliases" that it silently dropped in favour of the
+        env-configured default — which meant selecting a Claude model quietly
+        ran a different model than the one requested. Whether a given name is
+        valid is the endpoint's business, not this shim's, so any non-empty
+        string is honoured and an invalid one surfaces as a provider error.
+        """
+        if model:
             self._model = model
-        # If it IS an Anthropic alias, keep the env-configured default model
         return self
 
     async def stream_message(

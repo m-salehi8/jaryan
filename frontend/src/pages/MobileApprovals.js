@@ -23,10 +23,18 @@ export default function MobileApprovals() {
   useEffect(load, []);
 
   const act = async (id, status) => {
-    await api.patch(`/tasks/${id}`, { status });
-    toast.success(status === "approved" ? "تایید شد" : status === "rejected" ? "رد شد" : "انجام شد");
-    setTasks((ts) => ts.filter(t => t.id !== id));
-    setActive(null);
+    try {
+      await api.patch(`/tasks/${id}`, { status });
+      toast.success(status === "approved" ? "تایید شد" : status === "rejected" ? "رد شد" : "انجام شد");
+      setTasks((ts) => ts.filter(t => t.id !== id));
+      setActive(null);
+    } catch (e) {
+      const code = e?.response?.status;
+      if (code === 409) toast.error("این تسک قبلاً بررسی شده است");
+      else if (code === 403) toast.error("این تسک به شما ارجاع نشده است");
+      else toast.error("خطا در ثبت. دوباره تلاش کنید.");
+      load();
+    }
   };
 
   return (

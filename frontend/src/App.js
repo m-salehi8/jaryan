@@ -16,6 +16,7 @@ import FormBuilder from "@/pages/FormBuilder";
 import Inbox from "@/pages/Inbox";
 import ProcessMonitoring from "@/pages/ProcessMonitoring";
 import MobileApprovals from "@/pages/MobileApprovals";
+import NewRequest from "@/pages/NewRequest";
 import UserManagement from "@/pages/UserManagement";
 import { ThemeProvider } from "@/lib/themeContext";
 import Analytics from "@/pages/Analytics";
@@ -85,6 +86,7 @@ function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="new" element={<NewRequest />} />
         <Route path="inbox" element={<Inbox />} />
         <Route path="monitoring" element={<ProcessMonitoring />} />
       </Route>

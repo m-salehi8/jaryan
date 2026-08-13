@@ -207,10 +207,10 @@ export default function Inbox() {
           <span className="text-xs text-muted-foreground fa-nums">({toFaNumber(filtered.length)})</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             data-testid="toggle-mine"
             onClick={() => setAssignedToMe(v => !v)}
-            className={`text-xs px-2.5 py-1 rounded-md border ${assignedToMe ? "bg-primary text-primary-foreground border-neutral-900" : "bg-card border-border text-muted-foreground"}`}
+            className={`h-auto text-xs px-2.5 py-1 rounded-md border whitespace-nowrap ${assignedToMe ? "bg-primary text-primary-foreground border-neutral-900" : "bg-card border-border text-muted-foreground"}`}
           >
             {assignedToMe ? "تسک‌های من" : "همه تسک‌ها"}
           </Button>
@@ -231,11 +231,11 @@ export default function Inbox() {
       <div className="border-b border-border bg-card px-6 py-2 flex items-center gap-1 overflow-x-auto">
         <Filter className="w-3.5 h-3.5 text-muted-foreground ms-2 shrink-0" />
         {FILTERS.map((f) => (
-          <Button variant="ghost" size="icon"
+          <Button variant="ghost"
             key={f.key}
             data-testid={`filter-${f.key}`}
             onClick={() => setFilter(f.key)}
-            className={`text-xs px-2.5 py-1 rounded-md shrink-0 ${
+            className={`h-auto text-xs px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap ${
               filter === f.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             }`}
           >
@@ -303,16 +303,26 @@ export default function Inbox() {
         {/* Detail */}
         <div className="hidden md:flex flex-1 min-w-0 bg-[#fafafa] dark:bg-background">
           {!active ? (
-            <div className="flex-1 grid place-items-center text-sm text-muted-foreground">یک تسک از فهرست انتخاب کن.</div>
+            <div className="flex-1 grid place-items-center text-center text-sm text-muted-foreground">
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-brand-soft text-brand grid place-items-center mx-auto mb-3">
+                  <InboxIcon className="w-6 h-6" />
+                </div>
+                یک تسک از فهرست انتخاب کنید تا جزئیاتش را ببینید.
+              </div>
+            </div>
           ) : (
             <div className="flex-1 overflow-auto p-8 max-w-3xl">
-              <div className="text-[11px] text-muted-foreground mb-1">{active.workflow_name}</div>
-              <h2 className="text-2xl font-bold text-foreground">{active.title}</h2>
-              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                <span className={`px-1.5 py-0.5 rounded-md border ${STATUS_META[active.status].cls}`}>{STATUS_META[active.status].label}</span>
-                <span>اولویت: {active.priority === "urgent" ? "فوری" : active.priority === "high" ? "بالا" : active.priority === "medium" ? "متوسط" : "پایین"}</span>
-                {active.assignee_role && <span>نقش: {active.assignee_role}</span>}
-                {active.deadline && <span className="fa-nums">مهلت: {toJalaliDateTime(active.deadline)}</span>}
+              <div className="rounded-2xl border border-border bg-card p-5 mb-6 relative overflow-hidden">
+                <span className={`absolute top-0 bottom-0 right-0 w-1.5 ${PRIORITY_DOT[active.priority] || "bg-neutral-300"}`} />
+                <div className="text-[11px] text-muted-foreground mb-1">{active.workflow_name}</div>
+                <h2 className="text-2xl font-extrabold text-foreground">{active.title}</h2>
+                <div className="flex items-center gap-2 mt-3 text-xs flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full border ${STATUS_META[active.status].cls}`}>{STATUS_META[active.status].label}</span>
+                  <span className="px-2 py-0.5 rounded-full border border-border text-muted-foreground">اولویت: {active.priority === "urgent" ? "فوری" : active.priority === "high" ? "بالا" : active.priority === "medium" ? "متوسط" : "پایین"}</span>
+                  {active.assignee_role && <span className="px-2 py-0.5 rounded-full border border-border text-muted-foreground">نقش: {active.assignee_role}</span>}
+                  {active.deadline && <span className="px-2 py-0.5 rounded-full border border-border text-muted-foreground fa-nums">مهلت: {toJalaliDateTime(active.deadline)}</span>}
+                </div>
               </div>
 
               {active.description && (

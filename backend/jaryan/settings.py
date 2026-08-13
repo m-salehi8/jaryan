@@ -86,17 +86,28 @@ WSGI_APPLICATION = "jaryan.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+#
+# SQLite by default, so the project runs with no external database server.
+# Setting DB_HOST (docker-compose does) switches to PostgreSQL.
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ["DB_NAME"],
-        "USER": os.environ["DB_USER"],
-        "PASSWORD": os.environ["DB_PASS"],
-        "HOST": os.environ["DB_HOST"],
-        "PORT": os.environ.get("DB_PORT", "5432"),
+if os.environ.get("DB_HOST"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ["DB_NAME"],
+            "USER": os.environ["DB_USER"],
+            "PASSWORD": os.environ["DB_PASS"],
+            "HOST": os.environ["DB_HOST"],
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

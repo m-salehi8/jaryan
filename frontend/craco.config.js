@@ -115,6 +115,13 @@ let webpackConfig = {
 };
 
 webpackConfig.devServer = (devServerConfig) => {
+  // Allow the external preview host (webpack-dev-server v5 rejects unknown hosts).
+  devServerConfig.allowedHosts = "all";
+  devServerConfig.client = {
+    ...(devServerConfig.client || {}),
+    webSocketURL: { port: 443, protocol: "wss" },
+  };
+
   // Add health check endpoints if enabled
   if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
     const originalSetupMiddlewares = devServerConfig.setupMiddlewares;

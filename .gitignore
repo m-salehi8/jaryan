@@ -7,6 +7,7 @@
 # Dependencies
 node_modules/
 /node_modules
+node/
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -41,6 +42,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 dump.rdb
+.logs/
 
 # System files
 .DS_Store
@@ -69,6 +71,7 @@ agenthub/agents/youtube/db
 **/*.tar.gz
 **/*.tar
 **/*.tgz
+**/*.tar.xz
 *.pack
 *.deb
 *.dylib
@@ -83,6 +86,8 @@ android-sdk/
 .env
 .env.*
 *.env
+# ...but the secret-less template must stay tracked so deploys have a reference.
+!.env.example
 credentials.json
 *.key
 .credentials
@@ -101,6 +106,8 @@ dataset/
 tmp_deps/
 test_reports/
 test_result.md
+q.json
+ait.py
 
 # Internal scratchpad (keep .gitkeep)
 memory/*

@@ -1,27 +1,25 @@
-"""Process execution engine for Jaryan.
+"""Process execution engine for Jaryan (MongoDB).
 
 Evaluates outgoing edges from the current node, picks the next node(s),
 creates the corresponding tasks, and updates the process instance.
+
+This module uses the same Motor/MongoDB layer as the rest of the app
+(``db`` from ``db.py``) so workflows, users, departments, tasks and process
+instances all live in one place.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+import json
+import logging
 import re
-import uuid
 
-from asgiref.sync import sync_to_async
-from django.utils import timezone as django_timezone
+from db import db, new_id, now_iso
 
-from core.models import User, Department, Workflow, Task as ORMTask, Organization
-from core.mongo import get_db
+logger = logging.getLogger("jaryan.engine")
 
-def new_id() -> str:
-    return str(uuid.uuid4())
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 def inject_variables(text: str, context: dict) -> str:
     if not text:
@@ -41,6 +39,41 @@ def inject_variables(text: str, context: dict) -> str:
             return ""
 
     return re.sub(r"\{\{([^}]+)\}\}", replacer, text)
+
+
+async def _run_ai_node(*, node: dict, context: dict, process_id: str) -> tuple[str | None, Any]:
+    """Execute an ai_task or ocr_task node and return ``(output_key, result)``."""
+    from services.ai_service import ai_service
+
+    data = node.get("data") or {}
+    node_type = node.get("type")
+    output_key = str(data.get("output_key") or "").strip()
+
+    if not output_key:
+        return None, None
+
+    session_id = f"{process_id}:{node.get('id')}"
+
+    try:
+        if node_type == "ocr_task":
+            source = inject_variables(str(data.get("source_file_variable") or ""), context).strip()
+            prompt = inject_variables(str(data.get("extraction_prompt") or ""), context).strip()
+            if not source:
+                return output_key, {"_error": "source_file_missing"}
+            result = await ai_service.extract_data_from_image(source, prompt)
+        else:
+            system_prompt = inject_variables(str(data.get("system_prompt") or ""), context).strip()
+            if not system_prompt:
+                return output_key, {"_error": "prompt_missing"}
+            visible = {k: v for k, v in context.items() if not k.startswith("_")}
+            result = await ai_service.ask_ai_json(
+                session_id, system_prompt, json.dumps(visible, ensure_ascii=False)
+            )
+    except Exception as exc:
+        logger.exception("AI node %s failed in process %s", node.get("id"), process_id)
+        return output_key, {"_error": type(exc).__name__, "_detail": str(exc)[:200]}
+
+    return output_key, result
 
 
 def _coerce(a: Any, b: Any):
@@ -93,51 +126,23 @@ def evaluate_rule(rule: Optional[dict], context: dict) -> bool:
     return False
 
 
-async def _get_workflow(workflow_id: str):
-    return await Workflow.objects.filter(id=workflow_id).afirst()
+# ---------- Mongo data access ----------
+async def _get_workflow(workflow_id: str) -> Optional[dict]:
+    return await db.workflows.find_one({"id": workflow_id}, {"_id": 0})
 
-async def _get_user(user_id: str):
-    return await User.objects.filter(id=user_id).afirst()
 
-async def _get_department(dept_id: str):
-    return await Department.objects.filter(id=dept_id).afirst()
+async def _get_user(user_id: str) -> Optional[dict]:
+    return await db.users.find_one({"id": user_id}, {"_id": 0})
 
-async def _get_task(task_id: str):
-    return await ORMTask.objects.filter(id=task_id).afirst()
 
-async def _get_all_tasks_for_process(process_instance_id: str):
-    return [task async for task in ORMTask.objects.filter(process_instance_id=process_instance_id)]
-
-async def _get_tasks_by_status(statuses, max_deadline):
-    return [task async for task in ORMTask.objects.filter(status__in=statuses, updated_at__lt=max_deadline)]
-
-async def _create_task(task_data: dict, workflow: Workflow):
-    user = None
-    if task_data.get("assignee_id"):
-        user = await User.objects.filter(id=task_data["assignee_id"]).afirst()
-    elif task_data.get("assignee_role"):
-        user = await User.objects.filter(role=task_data["assignee_role"]).afirst()
-        if not user:
-            user = await User.objects.afirst() # Fallback
-            
-    if not user:
-        user = await User.objects.afirst()
-
-    return await ORMTask.objects.acreate(
-        id=task_data["id"],
-        org=workflow.org,
-        workflow=workflow,
-        process_instance_id=task_data["process_id"],
-        node_id=task_data["node_id"],
-        assigned_to=user,
-        status=task_data.get("status", "pending")
-    )
+async def _get_department(dept_id: str) -> Optional[dict]:
+    return await db.departments.find_one({"id": dept_id}, {"_id": 0})
 
 
 async def _node_to_task_data(
     *, org: str, process: dict, workflow_id: str, workflow_name: str, node: dict
 ) -> Optional[dict]:
-    """Build task data dict for a workflow node."""
+    """Build task document for a workflow node, or None if the node is not a task."""
     ntype = node.get("type")
     if ntype in ("trigger", "end", "condition", "ai_task", "ocr_task"):
         return None
@@ -158,20 +163,24 @@ async def _node_to_task_data(
         resolved_assignee_id = assignee_id
     elif assignee_type == "manager" and process.get("started_by"):
         starter = await _get_user(process["started_by"])
-        if starter and starter.manager_id:
-            resolved_assignee_id = starter.manager_id
+        if starter and starter.get("manager_id"):
+            resolved_assignee_id = starter["manager_id"]
         else:
             resolved_assignee_role = "مدیر"
     elif assignee_type == "department_manager" and process.get("started_by"):
         starter = await _get_user(process["started_by"])
-        if starter and starter.department_id:
-            dept = await _get_department(starter.department_id)
-            if dept and dept.manager_id:
-                resolved_assignee_id = dept.manager_id
+        if starter and starter.get("department_id"):
+            dept = await _get_department(starter["department_id"])
+            if dept and dept.get("manager_id"):
+                resolved_assignee_id = dept["manager_id"]
             else:
                 resolved_assignee_role = "مدیر"
         else:
             resolved_assignee_role = "مدیر"
+    else:
+        # Fallback: honour whatever the node carried.
+        resolved_assignee_role = assignee_role
+        resolved_assignee_id = assignee_id
 
     task_type = "approval" if ntype == "approval" else "form" if ntype == "form" else "task"
 
@@ -193,12 +202,16 @@ async def _node_to_task_data(
         "assignee_role": resolved_assignee_role,
         "type": task_type,
         "status": "pending",
+        "wait_conditions": [],
         "priority": "medium",
         "deadline": deadline,
+        "seen_time": None,
+        "done_time": None,
         "form_id": form_id,
         "form_data": {},
-        "field_permissions": field_permissions,
+        "draft_data": {},
         "description": "",
+        "field_permissions": field_permissions,
         "escalated": False,
         "attempt_number": 1,
         "created_at": now_iso(),
@@ -211,51 +224,47 @@ def _outgoing(edges: list[dict], node_id: str) -> list[dict]:
 
 
 async def update_process_status(process_id: str, org_id: str):
-    tasks = await _get_all_tasks_for_process(process_id)
-    db = get_db()
-    process = await db.process_instances.find_one({"id": process_id, "org_id": org_id})
+    process = await db.process_instances.find_one({"id": process_id, "org_id": org_id}, {"_id": 0})
     if not process:
         return
 
-    statuses = [t.status for t in tasks]
+    tasks = await db.tasks.find({"process_id": process_id, "org_id": org_id}, {"_id": 0}).to_list(1000)
+    statuses = [t.get("status") for t in tasks]
+
     if "rejected" in statuses:
         p_status = "rejected"
-    elif all(s in ("done", "approved", "rejected") for s in statuses) and statuses:
+    elif statuses and all(s in ("done", "approved", "rejected") for s in statuses):
         workflow = await _get_workflow(process["workflow_id"])
         if workflow:
-            end_nodes = [n["id"] for n in workflow.nodes if n.get("type") == "end"]
+            end_nodes = [n["id"] for n in workflow.get("nodes", []) if n.get("type") == "end"]
             completed = process.get("completed_nodes", [])
-            if any(e in completed for e in end_nodes):
-                p_status = "completed"
-            else:
-                p_status = "in_progress"
+            p_status = "completed" if any(e in completed for e in end_nodes) else "running"
         else:
             p_status = "completed"
     else:
-        p_status = "in_progress"
+        p_status = "running"
 
     if p_status != process.get("status"):
         await db.process_instances.update_one(
-            {"id": process_id, "org_id": org_id}, {"$set": {"status": p_status, "updated_at": now_iso()}}
+            {"id": process_id, "org_id": org_id},
+            {"$set": {"status": p_status, "updated_at": now_iso()}},
         )
 
-async def _get_expired_tasks(now_dt):
-    # status__in=["pending", "in_progress"] would be needed if tasks have those statuses
-    # For now we use the ones available in Task.STATUS_CHOICES
-    return [task async for task in ORMTask.objects.filter(
-        status__in=["pending"],
-        created_at__lt=now_dt - timedelta(days=3) # simplistic timeout since we don't store deadline in ORM
-    )]
 
 async def check_timeouts():
-    db = get_db()
-    now_dt = django_timezone.now()
+    """Escalate or auto-reject tasks whose deadline has passed."""
+    now_dt = datetime.now(timezone.utc)
     now = now_iso()
-    
-    expired_tasks = await _get_expired_tasks(now_dt)
 
-    for task in expired_tasks:
-        process = await db.process_instances.find_one({"id": task.process_instance_id, "org_id": task.org_id})
+    expired = await db.tasks.find(
+        {"status": {"$in": ["pending", "in_progress"]}, "deadline": {"$lt": now}},
+        {"_id": 0},
+    ).to_list(1000)
+
+    for task in expired:
+        process = await db.process_instances.find_one(
+            {"id": task["process_id"], "org_id": task["org_id"]}, {"_id": 0}
+        )
         if not process:
             continue
 
@@ -263,84 +272,112 @@ async def check_timeouts():
         if not workflow:
             continue
 
-        nodes = {n["id"]: n for n in workflow.nodes}
-        node = nodes.get(task.node_id)
+        nodes = {n["id"]: n for n in workflow.get("nodes", [])}
+        node = nodes.get(task["node_id"])
         if not node:
             continue
 
         action = node.get("timeout_action", "none")
-        if action == "none":
+        if action in (None, "none"):
             continue
 
         if action == "auto_reject":
-            await ORMTask.objects.filter(id=task.id).aupdate(status="rejected", updated_at=now_dt)
-            process_completed = process.get("completed_nodes", [])
-            process_completed.append(node["id"])
+            await db.tasks.update_one(
+                {"id": task["id"], "org_id": task["org_id"]},
+                {"$set": {"status": "rejected", "done_time": now, "updated_at": now}},
+            )
             await db.process_instances.update_one(
                 {"id": process["id"], "org_id": process["org_id"]},
-                {"$set": {"completed_nodes": process_completed, "updated_at": now}},
+                {"$addToSet": {"completed_nodes": node["id"]}, "$set": {"updated_at": now}},
             )
-            await db.activity_logs.insert_one(
+            await db.activities.insert_one(
                 {
                     "id": new_id(),
-                    "org_id": task.org_id,
+                    "org_id": task["org_id"],
                     "actor_name": "سیستم (تایم‌اوت)",
                     "action": "task.rejected",
                     "target_type": "task",
-                    "target_id": str(task.id),
+                    "target_id": task["id"],
                     "summary": "تسک به صورت خودکار رد شد (پایان مهلت)",
                     "created_at": now,
+                    "updated_at": now,
                 }
             )
-            await advance_process(process_id=process["id"], org_id=process["org_id"], completed_node_id=node["id"], task_status="rejected")
+            await advance_process(
+                process_id=process["id"],
+                org_id=process["org_id"],
+                completed_node_id=node["id"],
+                context_update={"_task_status": "rejected"},
+            )
             await update_process_status(process["id"], process["org_id"])
 
         elif action == "escalate_to_manager":
+            new_assignee_id = None
             starter_id = process.get("started_by")
-            new_assignee = None
             if starter_id:
                 starter = await _get_user(starter_id)
-                if starter and starter.manager_id:
-                    new_assignee = await _get_user(starter.manager_id)
+                if starter and starter.get("manager_id"):
+                    new_assignee_id = starter["manager_id"]
 
-            if new_assignee:
-                await ORMTask.objects.filter(id=task.id).aupdate(
-                    assigned_to=new_assignee, updated_at=now_dt
+            if new_assignee_id:
+                await db.tasks.update_one(
+                    {"id": task["id"], "org_id": task["org_id"]},
+                    {
+                        "$set": {
+                            "assignee_id": new_assignee_id,
+                            "escalated": True,
+                            "deadline": (now_dt + timedelta(days=1)).isoformat(),
+                            "updated_at": now,
+                        }
+                    },
                 )
-                await db.activity_logs.insert_one(
+                await db.activities.insert_one(
                     {
                         "id": new_id(),
-                        "org_id": task.org_id,
+                        "org_id": task["org_id"],
                         "actor_name": "سیستم (تایم‌اوت)",
                         "action": "task.escalated",
                         "target_type": "task",
-                        "target_id": str(task.id),
+                        "target_id": task["id"],
                         "summary": "تسک به دلیل پایان مهلت به مدیر ارجاع شد",
                         "created_at": now,
+                        "updated_at": now,
                     }
                 )
 
 
 async def advance_process(
-    *, process_id: str, org_id: str, completed_node_id: str, context_update: dict | None = None,
-    task_status: str | None = None
+    *,
+    process_id: str,
+    org_id: str,
+    completed_node_id: str,
+    context_update: dict | None = None,
 ) -> dict:
-    db = get_db()
     process = await db.process_instances.find_one({"id": process_id, "org_id": org_id}, {"_id": 0})
     if not process:
         return {"ok": False, "reason": "process_not_found"}
 
     workflow_obj = await _get_workflow(process["workflow_id"])
     if not workflow_obj:
-        return {"ok": False, "reason": "workflow_not_found"}
-        
-    workflow_nodes = workflow_obj.nodes
-    workflow_edges = workflow_obj.edges
+        # Fall back to the frozen snapshot taken when the process started.
+        snapshot = process.get("workflow_snapshot")
+        if snapshot:
+            workflow_obj = {
+                "id": process["workflow_id"],
+                "name": process.get("workflow_name", ""),
+                "nodes": snapshot.get("nodes", []),
+                "edges": snapshot.get("edges", []),
+            }
+        else:
+            return {"ok": False, "reason": "workflow_not_found"}
+
+    workflow_nodes = workflow_obj.get("nodes", [])
+    workflow_edges = workflow_obj.get("edges", [])
+    workflow_id = workflow_obj.get("id", process["workflow_id"])
+    workflow_name = workflow_obj.get("name", process.get("workflow_name", ""))
 
     ctx = dict(process.get("context") or {})
     ctx_updates = dict(context_update) if context_update else {}
-    if task_status:
-        ctx_updates["_task_status"] = task_status
     if ctx_updates:
         ctx.update(ctx_updates)
 
@@ -388,30 +425,42 @@ async def advance_process(
             missing_deps = [d for d in dependencies if d not in completed_nodes]
 
             if ttype in ("ai_task", "ocr_task"):
-                # simplified for now, as in previous code, just pass-through with no real AI since we don't have it
+                if missing_deps:
+                    continue
+                output_key, result = await _run_ai_node(
+                    node=target_node, context=ctx, process_id=process_id
+                )
+                if output_key:
+                    ctx[output_key] = result
+                    ctx_updates[output_key] = result
                 if target_id not in completed_nodes:
                     completed_nodes.append(target_id)
                     new_completed_nodes.append(target_id)
                 frontier.append(target_id)
                 continue
 
-            # check if there's an existing pending task for this target node
-            existing_task = await ORMTask.objects.filter(
-                process_instance_id=process_id, node_id=target_id, status__in=["pending", "waiting"]
-            ).afirst()
-
+            existing_task = await db.tasks.find_one(
+                {
+                    "process_id": process_id,
+                    "node_id": target_id,
+                    "status": {"$in": ["pending", "waiting"]},
+                },
+                {"_id": 0},
+            )
             if existing_task:
-                # Assuming ORM doesn't store wait conditions, we just leave it pending
-                if existing_task.status == "waiting" and not missing_deps:
-                    await ORMTask.objects.filter(id=existing_task.id).aupdate(status="pending")
+                if existing_task["status"] == "waiting" and not missing_deps:
+                    await db.tasks.update_one(
+                        {"id": existing_task["id"], "org_id": org_id},
+                        {"$set": {"status": "pending", "updated_at": now_iso()}},
+                    )
                     new_node_ids.append(target_id)
                 continue
 
             task_data = await _node_to_task_data(
                 org=process["org_id"],
                 process=process,
-                workflow_id=str(workflow_obj.id),
-                workflow_name=workflow_obj.name,
+                workflow_id=workflow_id,
+                workflow_name=workflow_name,
                 node=target_node,
             )
             if task_data:
@@ -426,9 +475,8 @@ async def advance_process(
 
     created_tasks = []
     if next_tasks_data:
-        for t_data in next_tasks_data:
-            t_obj = await _create_task(t_data, workflow_obj)
-            created_tasks.append(t_obj)
+        await db.tasks.insert_many([dict(t) for t in next_tasks_data])
+        created_tasks = next_tasks_data
 
     target_types = [nodes_by_id[nid]["type"] for nid in new_node_ids if nid in nodes_by_id]
     has_end = any(t == "end" for t in target_types)
@@ -438,23 +486,23 @@ async def advance_process(
         new_current = pending_new_tasks[0]["node_id"]
         new_status = "running"
     elif has_end:
-        new_current = next((nid for nid in new_node_ids if nodes_by_id.get(nid, {}).get("type") == "end"), None)
+        new_current = next(
+            (nid for nid in new_node_ids if nodes_by_id.get(nid, {}).get("type") == "end"), None
+        )
         new_status = "completed"
     else:
         new_current = process.get("current_node_id")
         new_status = process.get("status", "running")
 
-    update_ops = {
+    update_ops: dict = {
         "$set": {
             "current_node_id": new_current,
             "status": new_status,
             "updated_at": now_iso(),
         }
     }
-
     if new_completed_nodes:
         update_ops["$addToSet"] = {"completed_nodes": {"$each": new_completed_nodes}}
-
     for k, v in ctx_updates.items():
         update_ops["$set"][f"context.{k}"] = v
 
@@ -462,6 +510,6 @@ async def advance_process(
 
     return {
         "ok": True,
-        "next_tasks": [{"id": str(t.id), "node_id": t.node_id} for t in created_tasks],
+        "next_tasks": [{"id": t["id"], "node_id": t["node_id"]} for t in created_tasks],
         "status": new_status,
     }

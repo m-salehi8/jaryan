@@ -24,23 +24,34 @@ export const api = axios.create({ baseURL: API_BASE });
 api.interceptors.request.use((config) => {
   const t = getToken();
   if (t) config.headers.Authorization = `Bearer ${t}`;
-
-  // Automatically append trailing slash to URL if missing (required by Django REST Framework)
-  if (config.url) {
-    let [path, query] = config.url.split('?');
-    if (!path.endsWith('/')) {
-      path += '/';
-    }
-    config.url = query ? `${path}?${query}` : path;
-  }
-
   return config;
 });
+
+// Now that tokens carry an exp claim they will eventually expire mid-session.
+// Without a response interceptor the app would sit there firing failing
+// requests; instead, clear the stale credentials once and send the user to the
+// login page. Guarded so a 401 from the login form itself doesn't loop.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || "";
+    const isLoginCall = url.includes("/auth/login");
+
+    if (status === 401 && !isLoginCall) {
+      clearToken();
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 
 export async function streamAI(message, sessionId, onDelta, onDone, onError) {
   const token = getToken();
-  const resp = await fetch(`${API_BASE}/ai/generate-workflow/`, {
+  const resp = await fetch(`${API_BASE}/ai/generate-workflow`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

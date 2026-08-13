@@ -25,10 +25,10 @@ import OCRNode from "@/components/OCRNode";
 
 import { useWorkflowManager } from "@/hooks/useWorkflowManager";
 import { Inspector } from "@/components/workflow/Inspector";
-import { NODE_TYPES_META, toRF } from "@/lib/workflowUtils";
+import { NODE_TYPES_META, getNodeMeta, toRF } from "@/lib/workflowUtils";
 // Custom node renderer (monochromatic, top colored bar by type)
 function FlowNode({ data, selected, id }) {
-  const meta = NODE_TYPES_META[data.nodeType] || NODE_TYPES_META.task;
+  const meta = getNodeMeta(data.nodeType);
   const Icon = meta.icon;
   return (
     <div
@@ -237,12 +237,13 @@ export default function WorkflowBuilder() {
           <div className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mono">گره‌ها</div>
           {Object.entries(NODE_TYPES_META).map(([k, m]) => {
             const Icon = m.icon;
+            if (!Icon) return null;
             return (
-              <Button variant="ghost" size="icon"
+              <Button variant="ghost"
                 key={k}
                 data-testid={`palette-${k}`}
                 onClick={() => addNode(k)}
-                className="flex flex-col gap-1 px-3 py-2 rounded-lg border border-border hover:border-neutral-900 hover:bg-muted text-right transition-colors"
+                className="h-auto w-full flex flex-col items-stretch gap-1 px-3 py-2 rounded-lg border border-border hover:border-neutral-900 hover:bg-muted text-right whitespace-normal transition-colors"
               >
                 <div className="flex items-center gap-2 w-full">
                   <span className="w-1 h-4 rounded-sm flex-shrink-0" style={{ background: m.bar }} />
@@ -286,11 +287,11 @@ export default function WorkflowBuilder() {
           {/* Mobile floating palette */}
           <div className="lg:hidden absolute bottom-4 right-4 flex flex-wrap gap-2 max-w-[80%] justify-end">
             {Object.entries(NODE_TYPES_META).map(([k, m]) => (
-              <Button variant="ghost" size="icon"
+              <Button variant="ghost"
                 key={k}
                 data-testid={`m-palette-${k}`}
                 onClick={() => addNode(k)}
-                className="text-xs px-2.5 py-1.5 rounded-md bg-card border border-border hover:bg-muted"
+                className="h-auto text-xs px-2.5 py-1.5 rounded-md bg-card border border-border hover:bg-muted"
                 style={{ direction: "rtl" }}
               >
                 + {m.label}
@@ -304,6 +305,7 @@ export default function WorkflowBuilder() {
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
           forms={forms}
+          users={users}
           nodes={nodes}
           edges={edges}
           onNode={updateNode}

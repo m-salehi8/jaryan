@@ -11,10 +11,16 @@ def check_timeouts_task():
     async_to_sync(check_timeouts)()
 
 @shared_task
-def advance_process_task(org_id, process_id, workflow_id, node_id=None):
+def advance_process_task(org_id, process_id, completed_node_id, context_update=None, task_status=None):
     """
     Background execution of advance_process if needed to avoid blocking
     the HTTP request thread.
     """
     from engine import advance_process
-    async_to_sync(advance_process)(org_id, process_id, workflow_id, node_id)
+    async_to_sync(advance_process)(
+        process_id=process_id,
+        org_id=org_id,
+        completed_node_id=completed_node_id,
+        context_update=context_update,
+        task_status=task_status,
+    )

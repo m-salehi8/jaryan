@@ -118,11 +118,11 @@ const [sessionId] = useState(() => {
               </p>
               <div className="mt-8 grid sm:grid-cols-2 gap-2 max-w-xl mx-auto">
                 {SUGGESTIONS.map((s) => (
-                  <Button variant="ghost" size="icon"
+                  <Button variant="ghost"
                     key={s}
                     data-testid={`suggestion-${s.slice(0, 8)}`}
                     onClick={() => send(s)}
-                    className="text-right px-4 py-3 rounded-lg border border-border hover:border-brand hover:bg-brand-soft hover:text-brand transition-colors text-sm text-muted-foreground"
+                    className="h-auto w-full justify-start text-right px-4 py-3 rounded-lg border border-border hover:border-brand hover:bg-brand-soft hover:text-brand transition-colors text-sm text-muted-foreground whitespace-normal"
                   >
                     {s}
                   </Button>
@@ -210,7 +210,7 @@ const [sessionId] = useState(() => {
               type="submit"
               data-testid="chat-send"
               disabled={streaming || !input.trim()}
-              className="p-2 rounded-md bg-brand text-white hover:bg-brand-strong disabled:opacity-40 transition shadow-[0_4px_14px_rgba(79,70,229,0.25)]"
+              className="h-9 w-9 flex-shrink-0 p-2 rounded-md bg-brand text-white hover:bg-brand-strong disabled:opacity-40 transition shadow-[0_4px_14px_rgba(79,70,229,0.25)]"
             >
               <Send className="w-4 h-4 rotate-180" />
             </Button>
