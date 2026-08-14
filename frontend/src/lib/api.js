@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
+const BACKEND_URL = (process.env.REACT_APP_BACKEND_URL || "http://65.109.187.118").replace(/\/$/, "");
 export const API_BASE = `${BACKEND_URL}/api`;
 
 const TOKEN_KEY = "jaryan_token";
@@ -15,8 +15,11 @@ export const clearToken = () => {
   localStorage.removeItem("raahkar_user");
 };
 export const getCachedUser = () => {
-  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY) || "null");
+  } catch {
+    return null;
+  }
 };
 export const setCachedUser = (u) => localStorage.setItem(USER_KEY, JSON.stringify(u));
 
@@ -45,9 +48,8 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
-
 
 export async function streamAI(message, sessionId, onDelta, onDone, onError) {
   const token = getToken();
@@ -79,8 +81,11 @@ export async function streamAI(message, sessionId, onDelta, onDone, onError) {
       else if (line.startsWith("data:")) {
         const data = line.slice(5).trim().replace(/\\n/g, "\n");
         if (eventType === "done") {
-          try { onDone?.(JSON.parse(data)); }
-          catch { onDone?.(null); }
+          try {
+            onDone?.(JSON.parse(data));
+          } catch {
+            onDone?.(null);
+          }
           return;
         } else if (eventType === "error") {
           onError?.(new Error(data));

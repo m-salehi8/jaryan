@@ -1,0 +1,229 @@
+
+> frontend@0.1.0 start
+> craco start
+
+Starting the development server...
+
+Failed to compile.
+
+Attempted import error: 'getNodeMeta' is not exported from '@/lib/workflowUtils' (imported as 'getNodeMeta').
+[1m[31mERROR[39m[22m in [1m./src/pages/ProcessMonitoring.js[39m[22m [1m[32m1265:31-42[39m[22m
+[1mexport 'getNodeMeta' (imported as 'getNodeMeta') was [1m[31mnot found[39m[22m[1m in '@/lib/workflowUtils' (possible exports: [1m[32mNODE_TYPES_META, fromRF, toRF[39m[22m[1m)[39m[22m
+
+[1m[31mERROR[39m[22m in [1m./src/pages/SimpleWorkflowBuilder.js[39m[22m [1m[32m528:25-36[39m[22m
+[1mexport 'getNodeMeta' (imported as 'getNodeMeta') was [1m[31mnot found[39m[22m[1m in '@/lib/workflowUtils' (possible exports: [1m[32mNODE_TYPES_META, fromRF, toRF[39m[22m[1m)[39m[22m
+
+[1m[31mERROR[39m[22m in [1m./src/pages/WorkflowBuilder.js[39m[22m [1m[32m33:15-26[39m[22m
+[1mexport 'getNodeMeta' (imported as 'getNodeMeta') was [1m[31mnot found[39m[22m[1m in '@/lib/workflowUtils' (possible exports: [1m[32mNODE_TYPES_META, fromRF, toRF[39m[22m[1m)[39m[22m
+
+webpack compiled with [1m[31m3 errors[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from localhost:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 192.168.100.83:3001 to http://127.0.0.1:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
+Compiling...
+Compiled successfully!
+webpack compiled [1m[32msuccessfully[39m[22m
