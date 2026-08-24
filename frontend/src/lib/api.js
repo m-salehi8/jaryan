@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BACKEND_URL = (process.env.REACT_APP_BACKEND_URL || "http://65.109.187.118").replace(/\/$/, "");
+const BACKEND_URL = (process.env.REACT_APP_BACKEND_URL || "http://5.75.205.101/").replace(/\/$/, "");
 export const API_BASE = `${BACKEND_URL}/api`;
 
 const TOKEN_KEY = "jaryan_token";
