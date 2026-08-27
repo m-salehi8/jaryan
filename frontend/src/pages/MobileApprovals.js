@@ -41,9 +41,9 @@ export default function MobileApprovals() {
     <div className="min-h-screen bg-muted max-w-md mx-auto" data-testid="mobile-root">
       <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm font-bold">ج</div>
+          <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm font-bold">ر</div>
           <div>
-            <div className="text-sm font-semibold">جریان</div>
+            <div className="text-sm font-semibold">روند</div>
             <div className="text-[10px] text-muted-foreground">تاییدهای سریع</div>
           </div>
         </div>

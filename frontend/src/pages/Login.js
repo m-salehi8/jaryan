@@ -156,9 +156,9 @@ export default function Login() {
       <section className="jaryan-login-card">
         <aside className="jaryan-hero">
           <div className="jaryan-brand">
-            <span className="jaryan-brand-mark">ج</span>
+            <span className="jaryan-brand-mark">ر</span>
             <span>
-              <strong>جریان</strong>
+              <strong>روند</strong>
               <small>پلتفرم اتوماسیون فرایند</small>
             </span>
           </div>
@@ -167,7 +167,7 @@ export default function Login() {
             <div className="jaryan-kicker"><Sparkles size={14} /> هوشمند، ساده، سریع</div>
             <h1>فرایندهای سازمانی شما؛<br />با هوش مصنوعی، در چند ثانیه.</h1>
             <p>
-              جریان، ترکیب مدرنی برای سازمان‌های ایرانی است؛ با تقویم شمسی،
+              روند، ترکیب مدرنی برای سازمان‌های ایرانی است؛ با تقویم شمسی،
               رابط راست‌چین فارسی و طراحی بصری فرایند.
             </p>
           </div>
@@ -179,8 +179,8 @@ export default function Login() {
 
         <div className="jaryan-form-panel">
           <div className="jaryan-mobile-brand">
-            <span className="jaryan-brand-mark">ج</span>
-            <strong>جریان</strong>
+            <span className="jaryan-brand-mark">ر</span>
+            <strong>روند</strong>
           </div>
 
           <div className="jaryan-form-wrap">
@@ -244,7 +244,7 @@ export default function Login() {
               >
                 {loading ? "در حال ورود…" : (
                   <span className="inline-flex items-center gap-2">
-                    ورود به جریان
+                    ورود به روند
                     <ArrowLeft className="w-4 h-4" />
                   </span>
                 )}

@@ -79,7 +79,7 @@ export default function QuickStartWidget({ onDismiss, onStartTour }) {
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <h2 className="text-lg font-bold text-foreground leading-tight">
-                آشنایی با جریان و شروع سریع
+                آشنایی با روند و شروع سریع
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 سه قدم ساده تا راه‌اندازی کامل سازمان شما

@@ -141,7 +141,7 @@ const [sessionId] = useState(() => {
                 <div className="me-auto max-w-[80%]">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 rounded-md bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-[10px] font-bold">AI</div>
-                    <span className="text-xs text-muted-foreground">دستیار جریان</span>
+                    <span className="text-xs text-muted-foreground">دستیار روند</span>
                   </div>
                   <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-7 text-foreground whitespace-pre-wrap">
                     {renderText(m.content) || (streaming && i === messages.length - 1 ? "…" : "")}

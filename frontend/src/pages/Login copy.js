@@ -40,9 +40,9 @@ export default function Login() {
       {/* Right (RTL leading) panel - hero */}
       <div className="hidden md:flex flex-col justify-between bg-muted border-l border-border p-12 relative overflow-hidden">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-bold">ج</div>
+          <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-bold">ر</div>
           <div>
-            <div className="font-semibold">جریان</div>
+            <div className="font-semibold">روند</div>
             <div className="text-xs text-muted-foreground">پلتفرم اتوماسیون فرایند</div>
           </div>
         </div>
@@ -57,21 +57,21 @@ export default function Login() {
               <br />با هوش مصنوعی، در چند ثانیه.
             </h1>
             <p className="mt-4 text-muted-foreground max-w-md leading-7 text-sm">
-              جریان، ترکیب مدرنی از Notion، Linear و n8n برای سازمان‌های ایرانی است؛
+              روند، ترکیب مدرنی از Notion، Linear و n8n برای سازمان‌های ایرانی است؛
               با تقویم شمسی، رابط راست‌چین فارسی و طراحی بصری فرایند.
             </p>
           </div>
         </div>
 
-        <div className="text-xs text-muted-foreground mono">Jaryan • Workflow OS</div>
+        <div className="text-xs text-muted-foreground mono">Ravand • Workflow OS</div>
       </div>
 
       {/* Form panel */}
       <div className="flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-sm">
           <div className="md:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-bold">ج</div>
-            <div className="font-semibold">جریان</div>
+            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-bold">ر</div>
+            <div className="font-semibold">روند</div>
           </div>
 
           <h2 className="text-2xl font-semibold text-foreground">ورود به حساب</h2>

@@ -51,7 +51,7 @@ class Command(BaseCommand):
         # Clear existing Mongo data
         asyncio.run(self.clear_mongo())
 
-        org = Organization.objects.create(slug="jaryan", name="سازمان نمونه جریان")
+        org = Organization.objects.create(slug="jaryan", name="سازمان نمونه روند")
         
         users_data = [
             ("admin@jaryan.ir", "آرش رضایی", "مدیر", "#171717"),

@@ -50,10 +50,10 @@ function AdminSidebar() {
             className="w-8 h-8 rounded-lg grid place-items-center text-indigo-900 text-sm font-bold shadow-sm"
             style={{ background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)" }}
           >
-            ج
+            ر
           </div>
           <div>
-            <div className="text-sm font-bold text-white leading-tight">جریان</div>
+            <div className="text-sm font-bold text-white leading-tight">روند</div>
             <div className="text-[11px] text-indigo-300">پنل مدیریت</div>
           </div>
         </div>
@@ -143,10 +143,10 @@ function AdminMobileTopbar() {
           className="w-7 h-7 rounded-lg grid place-items-center text-indigo-900 text-xs font-bold"
           style={{ background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)" }}
         >
-          ج
+          ر
         </div>
         <div>
-          <div className="text-sm font-bold text-white leading-tight">جریان</div>
+          <div className="text-sm font-bold text-white leading-tight">روند</div>
           <div className="text-[10px] text-indigo-300">پنل مدیریت</div>
         </div>
       </div>

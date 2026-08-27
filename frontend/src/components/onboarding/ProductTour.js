@@ -9,7 +9,7 @@ const TOUR_STEPS = [
     id: "step-dashboard",
     targetId: "tour-dashboard",
     placement: "bottom",
-    title: "به جریان خوش آمدید 👋",
+    title: "به روند خوش آمدید 👋",
     body: "اینجا می‌توانید تمام فرایندهای در حال اجرا و تاییدیه‌های معلق سازمان خود را یکجا رصد کنید.",
   },
   {

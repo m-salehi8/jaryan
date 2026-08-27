@@ -25,9 +25,9 @@ function Sidebar() {
     >
       <div className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-sm font-bold shadow-sm">ج</div>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-sm font-bold shadow-sm">ر</div>
           <div>
-            <div className="text-sm font-bold text-foreground leading-tight">جریان</div>
+            <div className="text-sm font-bold text-foreground leading-tight">روند</div>
             <div className="text-[11px] text-muted-foreground">پلتفرم اتوماسیون فرایند</div>
           </div>
         </div>
