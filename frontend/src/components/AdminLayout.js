@@ -45,12 +45,9 @@ function AdminSidebar() {
     >
       {/* Brand */}
       <div className="px-5 pt-6 pb-4">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-lg grid place-items-center text-indigo-900 text-sm font-bold shadow-sm"
-            style={{ background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)" }}
-          >
-            ر
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-950/70 border border-white/15 flex items-center justify-center p-1 shadow-md shrink-0">
+            <img src="/images/logo.webp" alt="روند" className="w-full h-full object-contain drop-shadow" />
           </div>
           <div>
             <div className="text-sm font-bold text-white leading-tight">روند</div>
@@ -138,12 +135,9 @@ function AdminMobileTopbar() {
       className="md:hidden flex items-center justify-between px-4 py-3 sticky top-0 z-30"
       style={{ background: "#1e1b4b", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
     >
-      <div className="flex items-center gap-2">
-        <div
-          className="w-7 h-7 rounded-lg grid place-items-center text-indigo-900 text-xs font-bold"
-          style={{ background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)" }}
-        >
-          ر
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-indigo-950/70 border border-white/15 flex items-center justify-center p-1 shadow-sm shrink-0">
+          <img src="/images/logo.webp" alt="روند" className="w-full h-full object-contain drop-shadow" />
         </div>
         <div>
           <div className="text-sm font-bold text-white leading-tight">روند</div>

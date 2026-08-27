@@ -40,11 +40,7 @@ function Creature({ type, className = "", peeker = false, children }) {
 
 function CreatureScene({ mood }) {
   return (
-    <div
-      className="jaryan-scene"
-      data-mood={mood}
-      aria-hidden="true"
-    >
+    <div className="jaryan-scene" data-mood={mood} aria-hidden="true">
       <span className="jaryan-orbit orbit-one" />
       <span className="jaryan-orbit orbit-two" />
       <span className="jaryan-star star-one">✦</span>
@@ -57,12 +53,6 @@ function CreatureScene({ mood }) {
         <Creature type="orange" className="creature-orange">
           <span className="jaryan-freckles">•••</span>
         </Creature>
-      </div>
-
-      <div className="jaryan-caption" aria-live="polite">
-        {mood === "email" && "همه حواس‌ها به ایمیل شماست!"}
-        {mood === "password-hidden" && "نگران نباشید؛ تقریباً هیچ‌کس نگاه نمی‌کند…"}
-        {mood === "password-visible" && "قول می‌دهیم چیزی ندیدیم!"}
       </div>
     </div>
   );
@@ -79,33 +69,23 @@ export default function Login() {
   const [focusedField, setFocusedField] = useState(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  const mood = passwordVisible
-    ? "password-visible"
-    : focusedField === "email"
-      ? "email"
-      : focusedField === "password"
-        ? "password-hidden"
-        : "pointer";
+  const mood = passwordVisible ? "password-visible" : focusedField === "email" ? "email" : focusedField === "password" ? "password-hidden" : "pointer";
 
-  useEffect(() => () => {
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!focusedField && !passwordVisible) return;
 
     const scene = sceneRef.current?.querySelector(".jaryan-scene");
     if (!scene) return;
-    [
-      "--body-x",
-      "--body-rotate",
-      "--face-x",
-      "--face-y",
-      "--pupil-x",
-      "--pupil-y",
-      "--pupil-small-x",
-      "--pupil-small-y",
-    ].forEach((property) => scene.style.removeProperty(property));
+    ["--body-x", "--body-rotate", "--face-x", "--face-y", "--pupil-x", "--pupil-y", "--pupil-small-x", "--pupil-small-y"].forEach((property) =>
+      scene.style.removeProperty(property),
+    );
   }, [focusedField, passwordVisible]);
 
   const trackPointer = (event) => {
@@ -156,20 +136,29 @@ export default function Login() {
       <section className="jaryan-login-card">
         <aside className="jaryan-hero">
           <div className="jaryan-brand">
-            <span className="jaryan-brand-mark">ر</span>
-            <span>
-              <strong>روند</strong>
-              <small>پلتفرم اتوماسیون فرایند</small>
-            </span>
+            <div className="jaryan-brand-logo-box">
+              <img src="/images/logo.webp" alt="لوگوی روند" className="jaryan-brand-logo-img" />
+            </div>
+            <div className="jaryan-brand-meta">
+              <div className="jaryan-brand-heading">
+                <strong>روند</strong>
+                <span className="jaryan-pill-tag">نسخه سازمانی</span>
+              </div>
+              <small>پلتفرم هوشمند اتوماسیون فرایندها</small>
+            </div>
           </div>
 
           <div className="jaryan-copy">
-            <div className="jaryan-kicker"><Sparkles size={14} /> هوشمند، ساده، سریع</div>
-            <h1>فرایندهای سازمانی شما؛<br />با هوش مصنوعی، در چند ثانیه.</h1>
-            <p>
-              روند، ترکیب مدرنی برای سازمان‌های ایرانی است؛ با تقویم شمسی،
-              رابط راست‌چین فارسی و طراحی بصری فرایند.
-            </p>
+            <div className="jaryan-kicker">
+              <Sparkles size={13} className="jaryan-kicker-icon" />
+              <span>نسل جدید مدیریت فرایندها</span>
+            </div>
+            <h1>
+              روند کارهایتان را
+              <br />
+              <span className="jaryan-title-highlight">ساده، سریع و هوشمند کنید.</span>
+            </h1>
+            <p>فضایی یکپارچه برای هم‌افزایی تیم‌ها، تصمیم‌گیری‌های سریع‌تر و اجرای بدون توقف فرایندها.</p>
           </div>
 
           <div ref={sceneRef} className="jaryan-scene-holder">
@@ -179,7 +168,9 @@ export default function Login() {
 
         <div className="jaryan-form-panel">
           <div className="jaryan-mobile-brand">
-            <span className="jaryan-brand-mark">ر</span>
+            <div className="jaryan-brand-logo-box" style={{ width: 40, height: 40 }}>
+              <img src="/images/logo.webp" alt="لوگوی روند" className="jaryan-brand-logo-img" />
+            </div>
             <strong>روند</strong>
           </div>
 
@@ -229,20 +220,16 @@ export default function Login() {
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => setPasswordVisible((visible) => !visible)}
                     aria-label={passwordVisible ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"}
-                    aria-pressed={passwordVisible}
-                  >
+                    aria-pressed={passwordVisible}>
                     {passwordVisible ? <EyeOff size={19} /> : <Eye size={19} />}
                   </button>
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                data-testid="login-submit"
-                disabled={loading}
-                className="jaryan-submit"
-              >
-                {loading ? "در حال ورود…" : (
+              <Button type="submit" data-testid="login-submit" disabled={loading} className="jaryan-submit">
+                {loading ? (
+                  "در حال ورود…"
+                ) : (
                   <span className="inline-flex items-center gap-2">
                     ورود به روند
                     <ArrowLeft className="w-4 h-4" />
@@ -257,12 +244,7 @@ export default function Login() {
               </div>
               <div className="jaryan-demo-grid">
                 {DEMOS.map((demo) => (
-                  <button
-                    key={demo.email}
-                    type="button"
-                    data-testid={`demo-${demo.email.split("@")[0]}`}
-                    onClick={() => fillDemo(demo)}
-                  >
+                  <button key={demo.email} type="button" data-testid={`demo-${demo.email.split("@")[0]}`} onClick={() => fillDemo(demo)}>
                     <strong>{demo.role}</strong>
                     <span dir="ltr">{demo.email}</span>
                   </button>
@@ -330,7 +312,70 @@ const loginStyles = `
     z-index: 2;
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 12px;
+  }
+
+  .jaryan-brand-logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #242231 0%, #15141c 100%);
+    box-shadow: 0 8px 20px rgba(23, 23, 32, .18), inset 0 1px 1px rgba(255,255,255,.15);
+    padding: 6px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .jaryan-brand-logo-box:hover {
+    transform: scale(1.04);
+  }
+
+  .jaryan-brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,.3));
+  }
+
+  .jaryan-brand-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .jaryan-brand-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .jaryan-brand strong {
+    display: inline-block;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: -.02em;
+  }
+
+  .jaryan-pill-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6355d8;
+    background: rgba(99, 85, 216, 0.1);
+    border: 1px solid rgba(99, 85, 216, 0.2);
+    border-radius: 20px;
+  }
+
+  .jaryan-brand small {
+    display: block;
+    color: #74717d;
+    font-size: 11px;
+    font-weight: 500;
   }
 
   .jaryan-brand-mark {
@@ -345,13 +390,71 @@ const loginStyles = `
     box-shadow: 0 7px 16px rgba(23, 23, 32, .16);
   }
 
-  .jaryan-brand strong { display: block; font-size: 17px; }
-  .jaryan-brand small { display: block; margin-top: 1px; color: #74717d; font-size: 10px; }
+  .jaryan-copy {
+    position: relative;
+    z-index: 2;
+    margin-top: clamp(28px, 4.5vh, 50px);
+  }
 
-  .jaryan-copy { position: relative; z-index: 2; margin-top: clamp(38px, 6vh, 72px); }
-  .jaryan-kicker { display: flex; align-items: center; gap: 7px; color: #6758e8; font-size: 12px; font-weight: 800; }
-  .jaryan-copy h1 { margin: 13px 0 0; font-size: clamp(27px, 2.8vw, 39px); line-height: 1.45; font-weight: 900; letter-spacing: -.035em; }
-  .jaryan-copy p { max-width: 500px; margin: 13px 0 0; color: #6d6974; font-size: 13px; line-height: 2; }
+  .jaryan-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #6758e8;
+    background: rgba(103, 88, 232, 0.08);
+    border: 1px solid rgba(103, 88, 232, 0.16);
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 800;
+  }
+
+  .jaryan-kicker-icon {
+    color: #6758e8;
+  }
+
+  .jaryan-copy h1 {
+    margin: 14px 0 0;
+    font-size: clamp(23px, 2.3vw, 33px);
+    line-height: 1.45;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    color: var(--ink);
+  }
+
+  .jaryan-title-highlight {
+    color: #5b4ce6;
+    background: linear-gradient(135deg, #5b4ce6 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .jaryan-copy p {
+    max-width: 480px;
+    margin: 12px 0 0;
+    color: #635f6d;
+    font-size: 13px;
+    line-height: 1.95;
+    font-weight: 450;
+  }
+
+  .jaryan-hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 15px;
+  }
+
+  .jaryan-hero-pill {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555060;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(23, 23, 32, 0.08);
+    padding: 3.5px 9px;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+  }
 
   .jaryan-scene-holder { flex: 1; min-height: 285px; display: flex; align-items: flex-end; }
   .jaryan-scene {

@@ -24,8 +24,10 @@ function Sidebar() {
       className="hidden md:flex w-64 shrink-0 border-l border-border bg-card flex-col h-screen sticky top-0"
     >
       <div className="px-5 pt-6 pb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-sm font-bold shadow-sm">ر</div>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-border flex items-center justify-center p-1.5 shadow-sm shrink-0">
+            <img src="/images/logo.webp" alt="روند" className="w-full h-full object-contain" />
+          </div>
           <div>
             <div className="text-sm font-bold text-foreground leading-tight">روند</div>
             <div className="text-[11px] text-muted-foreground">پلتفرم اتوماسیون فرایند</div>
@@ -115,8 +117,10 @@ function MobileTopbar() {
   const navigate = useNavigate();
   return (
     <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card sticky top-0 z-30">
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white grid place-items-center text-xs font-bold">ر</div>
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-neutral-900 border border-border flex items-center justify-center p-1 shadow-sm shrink-0">
+          <img src="/images/logo.webp" alt="روند" className="w-full h-full object-contain" />
+        </div>
         <span className="text-[10px] text-brand font-bold bg-brand/10 px-2 py-1 rounded-md">نسخه کاربری</span>
       </div>
       <div className="flex items-center gap-1">

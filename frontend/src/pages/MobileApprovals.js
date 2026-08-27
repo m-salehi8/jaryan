@@ -40,8 +40,10 @@ export default function MobileApprovals() {
   return (
     <div className="min-h-screen bg-muted max-w-md mx-auto" data-testid="mobile-root">
       <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm font-bold">ر</div>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-neutral-900 border border-border flex items-center justify-center p-1 shadow-sm shrink-0">
+            <img src="/images/logo.webp" alt="روند" className="w-full h-full object-contain" />
+          </div>
           <div>
             <div className="text-sm font-semibold">روند</div>
             <div className="text-[10px] text-muted-foreground">تاییدهای سریع</div>
