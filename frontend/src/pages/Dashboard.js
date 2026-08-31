@@ -71,58 +71,110 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl p-6 lg:p-7 mb-8 animate-in text-white"
-        style={{ background: "linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#7c3aed 100%)" }}>
-        <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-20 left-8 w-64 h-64 rounded-full bg-fuchsia-400/10 blur-3xl" />
-        <div className="relative flex items-end justify-between flex-wrap gap-4">
-          <div>
-            <div className="text-xs text-indigo-200 mb-1">داشبورد اصلی</div>
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              سلام {user?.full_name?.split(" ")[0]} 👋
+      <div className="relative overflow-hidden rounded-2xl p-6 lg:p-7 mb-6 text-white bg-slate-900 border border-slate-800 shadow-xl shadow-indigo-950/10">
+        {/* Subtle glowing ambient accents */}
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 left-10 w-60 h-60 bg-violet-600/10 rounded-full blur-2xl pointer-events-none" />
+        
+        {/* Subtle grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+            backgroundSize: "24px 24px"
+          }}
+        />
+
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-[11px] font-medium text-indigo-300 backdrop-blur-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              داشبورد هوشمند فرایندها
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
+              سلام {user?.full_name ? user.full_name.split(" ")[0] : "کاربر گرامی"} 👋
             </h1>
-            <p className="text-sm text-indigo-200 mt-1.5">یک نگاه سریع به وضعیت فرایندهای سازمان شما.</p>
+            <p className="text-xs lg:text-sm text-slate-300 leading-relaxed max-w-xl">
+              خلاصه وضعیت کارتابل، تاییدیه‌های در انتظار و فرایندهای فعال سازمان شما.
+            </p>
           </div>
-          {isAdmin(user) ? (
-            <Link
-              to="/admin/chat"
-              data-testid="dashboard-ai-cta"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 text-sm font-bold shadow-lg transition-all"
-            >
-              <Sparkles className="w-4 h-4" />
-              ساخت فرایند با هوش مصنوعی
-            </Link>
-          ) : (
-            <Link
-              to="/new"
-              data-testid="dashboard-new-request-cta"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 text-sm font-bold shadow-lg transition-all"
-            >
-              <Sparkles className="w-4 h-4" />
-              ثبت درخواست جدید
-            </Link>
-          )}
+
+          <div className="shrink-0">
+            {isAdmin(user) ? (
+              <Link
+                to="/admin/chat"
+                data-testid="dashboard-ai-cta"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs lg:text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 border border-indigo-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-200" />
+                ساخت فرایند با هوش مصنوعی
+              </Link>
+            ) : (
+              <Link
+                to="/new"
+                data-testid="dashboard-new-request-cta"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs lg:text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 border border-indigo-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-200" />
+                ثبت درخواست جدید
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Counters */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
         {[
-          { icon: Inbox, label: "تسک‌های من", value: c.my_tasks, testId: "counter-my-tasks", grad: "from-sky-500 to-blue-600" },
-          { icon: CheckCircle2, label: "تاییدیه‌های در انتظار", value: c.pending_approvals, testId: "counter-approvals", grad: "from-emerald-500 to-teal-600" },
-          { icon: Activity, label: "فرایندهای در حال اجرا", value: c.running_processes, testId: "counter-running", grad: "from-violet-500 to-fuchsia-600" },
-          { icon: Workflow, label: "تعداد فرایندها", value: c.workflows, testId: "counter-workflows", grad: "from-amber-500 to-orange-600" },
+          {
+            icon: Inbox,
+            label: "تسک‌های من",
+            value: c.my_tasks,
+            testId: "counter-my-tasks",
+            iconBg: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+          },
+          {
+            icon: CheckCircle2,
+            label: "تاییدیه‌های در انتظار",
+            value: c.pending_approvals,
+            testId: "counter-approvals",
+            iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          },
+          {
+            icon: Activity,
+            label: "فرایندهای در حال اجرا",
+            value: c.running_processes,
+            testId: "counter-running",
+            iconBg: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
+          },
+          {
+            icon: Workflow,
+            label: "تعداد فرایندها",
+            value: c.workflows,
+            testId: "counter-workflows",
+            iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+          },
         ].map((it) => {
           const Icon = it.icon;
           return (
-            <div key={it.label} data-testid={it.testId} className="group bg-card border border-border rounded-2xl p-4 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all">
+            <div
+              key={it.label}
+              data-testid={it.testId}
+              className="bg-card border border-border/80 hover:border-border rounded-xl p-4 transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+            >
               <div className="flex items-center justify-between">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${it.grad} grid place-items-center shadow-md`}>
-                  <Icon className="w-5 h-5 text-white" />
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground block truncate">
+                    {it.label}
+                  </span>
+                  <div className="mt-1 text-2xl font-extrabold text-foreground fa-nums tracking-tight">
+                    {toFaNumber(it.value)}
+                  </div>
                 </div>
-                <span className="text-[11px] text-muted-foreground text-left leading-4">{it.label}</span>
+                <div className={`w-10 h-10 rounded-xl border ${it.iconBg} grid place-items-center shrink-0`}>
+                  <Icon className="w-5 h-5" />
+                </div>
               </div>
-              <div className="mt-3 text-3xl font-extrabold text-foreground fa-nums">{toFaNumber(it.value)}</div>
             </div>
           );
         })}
